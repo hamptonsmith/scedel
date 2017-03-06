@@ -1,5 +1,8 @@
 package sbsdl;
 
+import com.shieldsbetter.flexcompilator.NoMatchException;
+import com.shieldsbetter.flexcompilator.ParseHead;
+import com.shieldsbetter.flexcompilator.WellFormednessException;
 import com.shieldsbetter.flexcompilator.matchers.CAny;
 import com.shieldsbetter.flexcompilator.matchers.COneOf;
 import com.shieldsbetter.flexcompilator.matchers.CSet;
@@ -14,8 +17,15 @@ import com.shieldsbetter.flexcompilator.matchers.MPlaceholder;
 import com.shieldsbetter.flexcompilator.matchers.MSequence;
 import com.shieldsbetter.flexcompilator.matchers.MRepeated;
 import com.shieldsbetter.flexcompilator.matchers.Matcher;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 
 public class Sbsdl {
+    private final ExtendedPredicateMatcher myExtendedPredicateMatcher =
+            new ExtendedPredicateMatcher();
+    
     private final MPlaceholder EXP = new MPlaceholder();
     
     private final Matcher STRING_LITERAL =
@@ -104,9 +114,11 @@ public class Sbsdl {
     
     private final Matcher NUMERIC_EXP = ADD_PRECEDENCE_EXP;
     
-    private final Matcher TRINARY_EXP = new MSequence(NUMERIC_EXP,
-            new MOptional(new MLiteral("between"), NUMERIC_EXP,
-                    new MLiteral("and"), NUMERIC_EXP));
+    private final Matcher TRINARY_TAIL = new MOptional(new MLiteral("between"),
+            NUMERIC_EXP, new MLiteral("and"), NUMERIC_EXP);
+    
+    private final Matcher TRINARY_EXP =
+            new MSequence(NUMERIC_EXP, TRINARY_TAIL);
     
     private final Matcher AND_PRECEDENCE_EXP =
             new MSequence(TRINARY_EXP, new MRepeated(
@@ -132,7 +144,10 @@ public class Sbsdl {
                             new MLiteral("}"))));
     
     private final Matcher WHERE_CLAUSE =
-            new MSequence(new MLiteral("where"), EXP);
+            new MSequence(new MLiteral("where"), 
+                    new MAlternatives(
+                            myExtendedPredicateMatcher,
+                            OR_PRECEDENCE_EXP));
     
     private final Matcher EXPLICIT_SINGLE_PICK_TAIL_EXP =
             new MSequence(FROM_POOL, new MOptional(WHERE_CLAUSE));
@@ -154,8 +169,10 @@ public class Sbsdl {
     
     private final MPlaceholder STATEMENT = new MPlaceholder();
     
+    private final Matcher CODE = new MRepeated(STATEMENT);
+    
     private final Matcher CODE_BLOCK = new MSequence(
-            new MLiteral("{"), new MRepeated(STATEMENT), new MLiteral("}"));
+            new MLiteral("{"), CODE, new MLiteral("}"));
     
     private final Matcher ASSIGN_STMT = new MSequence(
             ACCESS_EXP, new MLiteral("="), EXP, new MLiteral(";"));
@@ -170,10 +187,43 @@ public class Sbsdl {
             new MOptional(new MLiteral("else"), CODE_BLOCK));
     
     private final Matcher INSTRUCTION_STMT =
-            new MSequence(IDENTIFIER, PARAM_LIST_INNARDS);
+            new MSequence(IDENTIFIER, PARAM_LIST_INNARDS, new MLiteral(";"));
     
     {
         STATEMENT.fillIn(new MAlternatives(
                 ASSIGN_STMT, FOR_EACH_STMT, IF_STMT, INSTRUCTION_STMT));
+    }
+    
+    private final List<Matcher> myExtendedPredicates = new LinkedList<>();
+    private MAlternatives myPrecompiledExtendedPredicates = new MAlternatives();
+    
+    public void addPickPredicate(boolean hasArg, String ... keywords) {
+        List<Matcher> literalList = new ArrayList<>(keywords.length);
+        for (String literalDescription : keywords) {
+            literalList.add(new MLiteral(literalDescription));
+        }
+        
+        if (hasArg) {
+            literalList.add(NUMERIC_EXP);
+        }
+        myExtendedPredicates.add(
+                new MSequence(literalList.toArray(new Matcher[0])));
+        
+        myPrecompiledExtendedPredicates = new MAlternatives(
+                myExtendedPredicates.toArray(new Matcher[0]));
+    }
+    
+    public void parse(String input)
+            throws NoMatchException, WellFormednessException {
+        ParseHead h = new ParseHead(input);
+        h.advanceOver(CODE);
+    }
+    
+    private final class ExtendedPredicateMatcher implements Matcher {
+        @Override
+        public int match(ParseHead h)
+                throws NoMatchException, WellFormednessException {
+            return myPrecompiledExtendedPredicates.match(h);
+        }
     }
 }
