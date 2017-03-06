@@ -165,7 +165,8 @@ public class Sbsdl {
     
     private final Matcher IF_STMT = new MSequence(new MLiteral("if"), EXP,
             CODE_BLOCK,
-            new MRepeated(new MLiteral("else"), new MLiteral("if"), CODE_BLOCK),
+            new MRepeated(new MLiteral("else"), new MLiteral("if"), EXP,
+                    CODE_BLOCK),
             new MOptional(new MLiteral("else"), CODE_BLOCK));
     
     private final Matcher INSTRUCTION_STMT =
