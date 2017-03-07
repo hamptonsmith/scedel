@@ -100,7 +100,11 @@ public class Sbsdl {
                             new MLiteral(")")))));
     
     private final Matcher PREFIX_EXP =
-            new MSequence(new MRepeated(new MLiteral("!")), ACCESS_EXP);
+            new MSequence(
+                    new MAlternatives(
+                            myExtendedPredicateMatcher,
+                            new MRepeated(new MLiteral("!"))),
+                    ACCESS_EXP);
     
     private final Matcher POW_PRECEDENCE_EXP =
             new MSequence(PREFIX_EXP, new MRepeated(
@@ -152,10 +156,7 @@ public class Sbsdl {
                             new MLiteral("}"))));
     
     private final Matcher WHERE_CLAUSE =
-            new MSequence(new MLiteral("where"), 
-                    new MAlternatives(
-                            myExtendedPredicateMatcher,
-                            OR_PRECEDENCE_EXP));
+            new MSequence(new MLiteral("where"), OR_PRECEDENCE_EXP);
     
     private final Matcher EXPLICIT_SINGLE_PICK_TAIL_EXP =
             new MSequence(FROM_POOL, new MOptional(WHERE_CLAUSE));
@@ -251,7 +252,7 @@ public class Sbsdl {
         @Override
         public int match(ParseHead h)
                 throws NoMatchException, WellFormednessException {
-            return myPrecompiledExtendedPredicates.match(h);
+            return h.advanceOver(myPrecompiledExtendedPredicates);
         }
     }
     
@@ -267,7 +268,7 @@ public class Sbsdl {
 "                };\n" +
 "	conversation.destination =\n" +
 "                pick from #stations\n" +
-"                where distance from this_station;");/*\n" +
-"                      between #hopdist / 2 and #hopdist / 2 * 3;");*/
+"                where distance from this_station\n" +
+"                      between #hopdist / 2 and #hopdist / 2 * 3;");
     }
 }
