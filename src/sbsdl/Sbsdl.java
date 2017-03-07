@@ -126,23 +126,40 @@ public class Sbsdl {
     
     private final Matcher NUMERIC_EXP = ADD_PRECEDENCE_EXP;
     
-    private final Matcher TRINARY_TAIL = new MOptional(new MLiteral("between"),
-            NUMERIC_EXP, new MLiteral("and"), NUMERIC_EXP);
-    
     private final Matcher TRINARY_EXP =
-            new MSequence(NUMERIC_EXP, TRINARY_TAIL);
+            new MSequence(NUMERIC_EXP, new MLiteral("between"),
+                    NUMERIC_EXP, new MLiteral("and"), NUMERIC_EXP);
+    
+    private final Matcher BINARY_COMPARISON_EXP =
+            new MSequence(NUMERIC_EXP,
+                    new MRepeated(
+                            new MAlternatives(
+                                    // Order important!  Prefixes can't come
+                                    // first!
+                                    new MLiteral("<="),
+                                    new MLiteral("<"),
+                                    new MLiteral("="),
+                                    new MLiteral(">="),
+                                    new MLiteral(">")),
+                            NUMERIC_EXP));
+    
+    // Trinary needs to come first, otherwise the initial expression of a
+    // trinary comparison will get gobbled up by the binary comparison
+    // expression's "no operator actually present" version.
+    private final Matcher COMPARISON_EXP =
+            new MAlternatives(TRINARY_EXP, BINARY_COMPARISON_EXP);
     
     private final Matcher AND_PRECEDENCE_EXP =
-            new MSequence(TRINARY_EXP, new MRepeated(
-                    new MSequence(new MLiteral("and"), NUMERIC_EXP)));
+            new MSequence(COMPARISON_EXP,
+                    new MRepeated(new MLiteral("and"), COMPARISON_EXP));
     
     private final Matcher OR_PRECEDENCE_EXP =
-            new MSequence(AND_PRECEDENCE_EXP, new MRepeated(
-                    new MSequence(new MLiteral("or"), AND_PRECEDENCE_EXP)));
+            new MSequence(AND_PRECEDENCE_EXP,
+                    new MRepeated(new MLiteral("or"), AND_PRECEDENCE_EXP));
     
     private final Matcher POOL_ELEMENT =
-            new MSequence(EXP, new MOptional(
-                    new MSequence(new MLiteral("{"), EXP, new MLiteral("}"))));
+            new MSequence(EXP,
+                    new MOptional(new MLiteral("{"), EXP, new MLiteral("}")));
     
     private final Matcher FROM_POOL = new MSequence(
             new MOptional(IDENTIFIER, new MLiteral(":")),
@@ -269,6 +286,7 @@ public class Sbsdl {
 "	conversation.destination =\n" +
 "                pick from #stations\n" +
 "                where distance from this_station\n" +
-"                      between #hopdist / 2 and #hopdist / 2 * 3;");
+"                      between #hopdist / 2 and #hopdist / 2 * 3\n" +
+"                      and x <= 0.5;");
     }
 }
