@@ -3,7 +3,6 @@ package sbsdl;
 import com.shieldsbetter.flexcompilator.NoMatchException;
 import com.shieldsbetter.flexcompilator.ParseHead;
 import com.shieldsbetter.flexcompilator.WellFormednessException;
-import com.shieldsbetter.flexcompilator.matchers.CAny;
 import com.shieldsbetter.flexcompilator.matchers.COneOf;
 import com.shieldsbetter.flexcompilator.matchers.CSet;
 import com.shieldsbetter.flexcompilator.matchers.CSubtract;
@@ -16,9 +15,9 @@ import com.shieldsbetter.flexcompilator.matchers.MOptional;
 import com.shieldsbetter.flexcompilator.matchers.MPlaceholder;
 import com.shieldsbetter.flexcompilator.matchers.MSequence;
 import com.shieldsbetter.flexcompilator.matchers.MRepeated;
+import com.shieldsbetter.flexcompilator.matchers.MWithSkipper;
 import com.shieldsbetter.flexcompilator.matchers.Matcher;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -29,50 +28,59 @@ public class Sbsdl {
     private final MPlaceholder EXP = new MPlaceholder();
     
     private final Matcher STRING_LITERAL =
-            new MSequence(
+            new MWithSkipper(new MSequence(
                     new MLiteral("'"),
                     new MCapture(new MRepeated(new MAlternatives(
                             new MError(new MLiteral("\n"), "Encountered end of "
                                     + "line before close of string literal."),
                             new CSubtract(
-                                    CAny.INSTANCE, new COneOf('\'', '\\')),
+                                    CSet.ANY, new COneOf('\'', '\\')),
                             new MSequence(new MLiteral("\\"),
                                     new MAlternatives(
                                             new MLiteral("n"),
                                             new MLiteral("r"),
                                             new MLiteral("'"),
-                                            new MError(CAny.INSTANCE,
+                                            new MError(CSet.ANY,
                                                     "Unrecognized control "
                                                             + "character in "
                                                             + "string."))),
                             new MError(MEndOfInput.INSTANCE, "Encountered end "
                                     + "of input before string closed.")
                     ))),
-                    new MLiteral("'"));
+                    new MLiteral("'")),
+                null);
     
     private final Matcher NUMERIC_LITERAL =
-            new MAlternatives(
+            new MWithSkipper(new MAlternatives(
                     new MSequence(
                             new MRepeated(CSet.ISO_LATIN_DIGIT, 0, 10),
                             new MLiteral("."),
                             new MRepeated(CSet.ISO_LATIN_DIGIT, 1, 10)),
-                    new MRepeated(CSet.ISO_LATIN_DIGIT, 1, 10));
+                    new MRepeated(CSet.ISO_LATIN_DIGIT, 1, 10)),
+                null);
     
-    private final Matcher IDENTIFIER = new MAlternatives(
+    private final Matcher IDENTIFIER = new MWithSkipper(new MAlternatives(
             new MSequence(CSet.LETTER,
                     new MRepeated(new MAlternatives(
                             CSet.LETTER_OR_DIGIT, new MLiteral("_")))),
-            new MLiteral("@"));
+            new MLiteral("@")),
+        null);
     
     private final Matcher ENV_VALUE =
-            new MSequence(new MLiteral("#"), CSet.LETTER,
+            new MWithSkipper(new MSequence(new MLiteral("#"), CSet.LETTER,
                     new MRepeated(new MAlternatives(
-                            CSet.LETTER_OR_DIGIT, new MLiteral("_"))));
+                            CSet.LETTER_OR_DIGIT, new MLiteral("_")))),
+                null);
     
     private final Matcher PARENTHETICAL_EXP =
             new MSequence(new MLiteral("("), EXP, new MLiteral(")"));
     
-    private final Matcher BOUNDED_EXP = new MAlternatives(
+    private final Matcher META_LOOKUP =
+            new MWithSkipper(
+                    new MSequence(IDENTIFIER, new MLiteral(":"), IDENTIFIER),
+                    null);
+    
+    private final Matcher BOUNDED_EXP = new MAlternatives(META_LOOKUP,
             STRING_LITERAL, NUMERIC_LITERAL, PARENTHETICAL_EXP, IDENTIFIER,
             ENV_VALUE);
     
@@ -138,9 +146,9 @@ public class Sbsdl {
                     EXP,
                     new MSequence(
                             new MLiteral("{"),
-                            new MOptional(POOL_ELEMENT, 
+                            new MOptional(POOL_ELEMENT), 
                                     new MRepeated(
-                                            new MLiteral(","), POOL_ELEMENT)),
+                                            new MLiteral(","), POOL_ELEMENT),
                             new MLiteral("}"))));
     
     private final Matcher WHERE_CLAUSE =
@@ -160,8 +168,10 @@ public class Sbsdl {
     private final Matcher EXPLICIT_PICK_EXP = new MSequence(
             new MLiteral("pick"), new MLiteral("from"), EXPLICIT_PICK_TAIL_EXP);
     
+    // Explicit pick has to come first so we don't gobble up "pick" as an
+    // identifier.
     private final Matcher PICK_EXP =
-            new MAlternatives(OR_PRECEDENCE_EXP, EXPLICIT_PICK_EXP);
+            new MAlternatives(EXPLICIT_PICK_EXP, OR_PRECEDENCE_EXP);
     
     {
         EXP.fillIn(PICK_EXP);
@@ -194,6 +204,21 @@ public class Sbsdl {
                 ASSIGN_STMT, FOR_EACH_STMT, IF_STMT, INSTRUCTION_STMT));
     }
     
+    private final MPlaceholder COMMENT = new MPlaceholder();
+    {
+        COMMENT.fillIn(new MWithSkipper(new MSequence(new MLiteral("(*"),
+                new MRepeated(new MAlternatives(
+                        new CSubtract(CSet.ANY, new COneOf('*')),
+                        new MSequence(new MLiteral("*"),
+                                new CSubtract(CSet.ANY, new COneOf(')'))),
+                        COMMENT)), new MLiteral("*)")), null));
+    }
+    
+    private final Matcher DEFAULT_SKIPPER =
+            new MWithSkipper(
+                    new MRepeated(new MAlternatives(COMMENT, CSet.WHITESPACE)),
+                    null);
+    
     private final List<Matcher> myExtendedPredicates = new LinkedList<>();
     private MAlternatives myPrecompiledExtendedPredicates = new MAlternatives();
     
@@ -216,7 +241,10 @@ public class Sbsdl {
     public void parse(String input)
             throws NoMatchException, WellFormednessException {
         ParseHead h = new ParseHead(input);
+        h.setSkip(DEFAULT_SKIPPER);
         h.advanceOver(CODE);
+        
+        System.out.println("REMAINING TEXT: " + h.remainingText());
     }
     
     private final class ExtendedPredicateMatcher implements Matcher {
@@ -225,5 +253,21 @@ public class Sbsdl {
                 throws NoMatchException, WellFormednessException {
             return myPrecompiledExtendedPredicates.match(h);
         }
+    }
+    
+    public static void main(String[] args) throws NoMatchException, WellFormednessException {
+        Sbsdl p = new Sbsdl();
+        p.addPickPredicate(true, "distance", "from");
+        
+        p.parse("conversation.reward =\n" +
+"                pick from {\n" +
+"                    module:AS  {1},\n" +
+"                    module:LFT {1},\n" +
+"                    module:AHG {1}\n" +
+"                };\n" +
+"	conversation.destination =\n" +
+"                pick from #stations\n" +
+"                where distance from this_station;");/*\n" +
+"                      between #hopdist / 2 and #hopdist / 2 * 3;");*/
     }
 }
