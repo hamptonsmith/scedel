@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-public class VDict implements Value {
+public class VDict extends SkeletonValue {
     private final Map<Value, Value> myValue = new HashMap<>();
     
     public void put(Value key, Value val) {
@@ -47,5 +47,10 @@ public class VDict implements Value {
     @Override
     public int hashCode() {
         return Objects.hash(VDict.class, myValue);
+    }
+
+    @Override
+    public VDict assertIsDict() {
+        return this;
     }
 }

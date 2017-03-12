@@ -1,5 +1,5 @@
 package sbsdl.values;
 
-public class VProxy implements Value{
+public class VProxy extends SkeletonValue {
     
 }

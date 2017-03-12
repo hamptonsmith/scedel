@@ -1,14 +1,11 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package sbsdl.values;
 
-/**
- *
- * @author hamptos
- */
-public interface Value {
-    
+import sbsdl.expressions.Expression;
+
+public interface Value extends Expression {
+    public VNumber assertIsNumber();
+    public VBoolean assertIsBoolean();
+    public VDict assertIsDict();
+    public VSeq assertIsSeq();
+    public VFunction assertIsFunction();
 }

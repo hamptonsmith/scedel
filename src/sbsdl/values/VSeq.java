@@ -3,8 +3,12 @@ package sbsdl.values;
 import java.util.LinkedList;
 import java.util.Objects;
 
-public class VSeq implements Value {
+public class VSeq extends SkeletonValue {
     public final LinkedList<Value> myValue = new LinkedList<>();
+    
+    public Iterable<Value> elements() {
+        return myValue;
+    }
     
     public void enqueue(Value v) {
         myValue.addLast(v);

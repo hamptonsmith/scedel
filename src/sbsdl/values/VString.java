@@ -2,7 +2,7 @@ package sbsdl.values;
 
 import java.util.Objects;
 
-public class VString implements Value {
+public class VString extends SkeletonValue {
     private final String myValue;
     
     public VString(String s) {
