@@ -772,12 +772,12 @@ public class Sbsdl {
             }),
             new MOptional(new MAction(new MSequence(
                     new MLiteral("unique"),
-                    new MAction(PARENTHETICAL_EXP) {
+                    new MOptional(new MAction(PARENTHETICAL_EXP) {
                         @Override
                         public void onFailed(ParseHead h) {
                             myParseStack.push(VBoolean.TRUE);
                         }
-                    })) {
+                    }))) {
                 @Override
                 public void onFailed(ParseHead h) {
                     myParseStack.push(VBoolean.FALSE);
@@ -798,7 +798,7 @@ public class Sbsdl {
                     
                     myParseStack.push(new PickExpression(exemplar,
                             ipe.getPool(), count, unique, ipe.getWeighter(),
-                            where));
+                            where, myDecider));
                 }
             };
     
@@ -980,8 +980,20 @@ public class Sbsdl {
     private final ParseStack myParseStack = new ParseStack();
     private final HostEnvironment myHostEnvironment;
     
+    private final Decider myDecider;
+    
     public Sbsdl(HostEnvironment e) {
+        this(e, new Decider() {
+                    @Override
+                    public boolean randomize(double chance) {
+                        return Math.random() < chance;
+                    }
+                });
+    }
+    
+    public Sbsdl(HostEnvironment e, Decider d) {
         myHostEnvironment = e;
+        myDecider = d;
     }
     
     public void run(String input) throws WellFormednessException {
@@ -1243,5 +1255,9 @@ public class Sbsdl {
                 myStack.push(head.pop());
             }
         }
+    }
+    
+    public static interface Decider {
+        public boolean randomize(double chance);
     }
 }

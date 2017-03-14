@@ -38,6 +38,11 @@ public class VSeq extends SkeletonValue {
     public void set(int i, Value v) {
         myValue.set(i, v);
     }
+
+    @Override
+    public VSeq assertIsSeq() {
+        return this;
+    }
     
     @Override
     public String toString() {

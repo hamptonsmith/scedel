@@ -13,6 +13,7 @@ import sbsdl.values.VUnavailable;
 import sbsdl.values.Value;
 
 public class PickExpression implements Expression {
+    private final Sbsdl.Decider myDecider;
     private final String myExemplar;
     private final Expression myPool;
     private final Expression myCount;
@@ -21,7 +22,9 @@ public class PickExpression implements Expression {
     private final Expression myWhere;
     
     public PickExpression(String exemplar, Expression pool, Expression count,
-            Expression unique, Expression weighter, Expression where) {
+            Expression unique, Expression weighter, Expression where,
+            Sbsdl.Decider decider) {
+        myDecider = decider;
         myExemplar = exemplar;
         myPool = pool;
         myCount = count;
@@ -74,13 +77,18 @@ public class PickExpression implements Expression {
             for (int i = 0; i < requestedCt; i++) {
                 Value chosen = null;
                 double remainingChance = 1.0;
-                for (Map.Entry<Value, Integer> option : weights.entrySet()) {
-                    if (Math.random() < remainingChance) {
-                        chosen = option.getKey();
-                    }
+                
+                // For testability, we always iterate over the elements in
+                // order.
+                for (Value potentialOption : poolSeq.elements()) {
+                    if (weights.containsKey(potentialOption)) {
+                        if (myDecider.randomize(remainingChance)) {
+                            chosen = potentialOption;
+                        }
 
-                    remainingChance -=
-                            (option.getValue() / (double) totalWeight);
+                        remainingChance -= (weights.get(potentialOption)
+                                / (double) totalWeight);
+                    }
                 }
 
                 if (unique) {
