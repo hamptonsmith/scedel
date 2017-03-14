@@ -21,14 +21,20 @@ public class SbsdlTest {
             new EvaluationTest("basic string", "'hello \\'quoted'",
                     new VString("hello 'quoted")),
             new EvaluationTest("basic sequence", "[3.1, 'foo', []]",
-                    new VSeq(
-                            VNumber.of(31, 10), new VString("foo"), new VSeq()))
+                    new VSeq(VNumber.of(31, 10), new VString("foo"),
+                            new VSeq())),
+            new EvaluationTest("basic function", "fn(x) { return x; }(123)",
+                    VNumber.of(123, 1))
         });
         
         Sbsdl.HostEnvironment h = Mockito.mock(Sbsdl.HostEnvironment.class);
         Sbsdl s = new Sbsdl(h);
         
         for (EvaluationTest t : tests) {
+            System.out.println("\n\n\n");
+            System.out.println("=============================================");
+            System.out.println("Starting test: " + t.myName + "\n\n");
+            
             Mockito.reset(h);
             Mockito.when(h.evaluate(Mockito.anyString(), Mockito.anyList()))
                 .thenReturn(VUnavailable.INSTANCE);

@@ -37,7 +37,7 @@ public class ScriptEnvironment {
     }
     
     public Value lookupVariable(String name) {
-        throw new UnsupportedOperationException();
+        return myCurrentScope.lookupVariable(name);
     }
     
     private static class RootScope extends Scope {

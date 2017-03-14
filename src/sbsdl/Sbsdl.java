@@ -498,7 +498,7 @@ public class Sbsdl {
                             final List<Expression> args =
                                     (List) myParseStack.pop();
                             final Expression f =
-                                    (Expression) myParseStack.pop();
+                                    ((LHSAccess) myParseStack.pop()).toValue();
                             
                             myParseStack.push(new LHSAccess() {
                                         @Override
@@ -948,7 +948,8 @@ public class Sbsdl {
             });
     
     private final Matcher RETURN_STMT =
-            new MAction(new MSequence(new MLiteral("return"), EXP)) {
+            new MAction(new MSequence(
+                    new MLiteral("return"), EXP, new MLiteral(";"))) {
                 @Override
                 public void onMatched(ParseHead h) {
                     myParseStack.push(new ReturnStatement(
