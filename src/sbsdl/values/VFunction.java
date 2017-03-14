@@ -5,18 +5,18 @@ import java.util.Iterator;
 import java.util.List;
 import sbsdl.Sbsdl;
 import sbsdl.ScriptEnvironment;
-import sbsdl.statements.Statement;
+import sbsdl.statements.MultiplexingStatement;
 
 public class VFunction extends SkeletonValue {
     private final List<String> myArgumentNames;
-    private final Statement myCode;
+    private final MultiplexingStatement myCode;
     
-    public VFunction(List<String> argumentNames, Statement code) {
+    public VFunction(List<String> argumentNames, MultiplexingStatement code) {
         myArgumentNames = new ArrayList<>(argumentNames);
         myCode = code;
     }
     
-    public void call(Sbsdl.HostEnvironment h, ScriptEnvironment s,
+    public Value call(Sbsdl.HostEnvironment h, ScriptEnvironment s,
             List<Value> parameters) {
         s.pushScope(true);
         if (myArgumentNames.size() != parameters.size()) {
@@ -33,7 +33,14 @@ public class VFunction extends SkeletonValue {
         
         myCode.execute(h, s);
         
+        Value returnValue = s.getReturn();
+        if (returnValue == null) {
+            returnValue = VUnavailable.INSTANCE;
+        }
+        
         s.popScope();
+        
+        return returnValue;
     }
     
     @Override

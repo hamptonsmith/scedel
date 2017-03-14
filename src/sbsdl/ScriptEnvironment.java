@@ -5,10 +5,23 @@ import java.util.Map;
 import sbsdl.values.Value;
 
 public class ScriptEnvironment {
-    private Scope myCurrentScope = new Scope(null, false);
+    private Scope myCurrentScope = new RootScope(null);
     
-    public void pushScope(boolean blocking) {
-        myCurrentScope = new Scope(myCurrentScope, blocking);
+    public void pushScope(boolean root) {
+        if (root) {
+            myCurrentScope= new RootScope(myCurrentScope);
+        }
+        else {
+            myCurrentScope = new Scope(myCurrentScope);
+        }
+    }
+    
+    public void setReturn(Value v) {
+        myCurrentScope.setReturn(v);
+    }
+    
+    public Value getReturn() {
+        return myCurrentScope.getReturn();
     }
     
     public void putSymbol(String name, Value v) {
@@ -27,17 +40,37 @@ public class ScriptEnvironment {
         throw new UnsupportedOperationException();
     }
     
+    private static class RootScope extends Scope {
+        private Value myReturnValue;
+        
+        public RootScope(Scope parent) {
+            super(parent);
+        }
+        
+        @Override
+        public void setReturn(Value v) {
+            myReturnValue = v;
+        }
+        
+        @Override
+        public Value getReturn() {
+            return myReturnValue;
+        }
+
+        @Override
+        public boolean isRoot() {
+            return true;
+        }
+    }
+    
     private static class Scope {
         private final Scope myRootParent;
         private final Scope myParent;
         
-        private final boolean myRootFlag;
-        
         private final Map<String, Value> myVariables = new HashMap<>();
         
-        public Scope(Scope parent, boolean root) {
+        public Scope(Scope parent) {
             myParent = parent;
-            myRootFlag = root;
             
             if (parent == null) {
                 myRootParent = null;
@@ -50,8 +83,16 @@ public class ScriptEnvironment {
             }
         }
         
+        public void setReturn(Value v) {
+            myRootParent.setReturn(v);
+        }
+        
+        public Value getReturn() {
+            return myRootParent.getReturn();
+        }
+        
         public boolean isRoot() {
-            return myRootFlag;
+            return false;
         }
         
         public Scope getRootParent() {
@@ -101,7 +142,7 @@ public class ScriptEnvironment {
                 result = myParent.lookupVariable(name);
                 // This can't be null because we'd have thrown an exception.
                 
-                if (myRootFlag) {
+                if (!isRoot()) {
                     throw new Sbsdl.ExecutionException("Cannot access symbol \'"
                             + name + "\' outside of function literal.");
                 }

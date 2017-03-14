@@ -36,14 +36,14 @@ import sbsdl.expressions.VariableNameExpression;
 import sbsdl.statements.FieldAssignmentStatement;
 import sbsdl.statements.ForEachStatement;
 import sbsdl.statements.IfStatement;
+import sbsdl.statements.MultiplexingStatement;
+import sbsdl.statements.ReturnStatement;
 import sbsdl.statements.SequenceAssignmentStatement;
 import sbsdl.statements.Statement;
 import sbsdl.statements.TopLevelVariableAssignmentStatement;
 import sbsdl.values.VBoolean;
-import sbsdl.values.VDict;
 import sbsdl.values.VFunction;
 import sbsdl.values.VNumber;
-import sbsdl.values.VSeq;
 import sbsdl.values.VString;
 import sbsdl.values.Value;
 
@@ -233,7 +233,11 @@ public class Sbsdl {
                     CODE_BLOCK)) {
                 @Override
                 public void onMatched(ParseHead h) {
-                    myParseStack.push(new VFunction(asdf));
+                    MultiplexingStatement code =
+                            (MultiplexingStatement) myParseStack.pop();
+                    myParseStack.push(
+                            new VFunction(
+                                    (List<String>) myParseStack.pop(), code));
                 }
             };
     
@@ -739,7 +743,28 @@ public class Sbsdl {
     
     private final MPlaceholder STATEMENT = new MPlaceholder();
     
-    private final Matcher CODE = new MRepeated(STATEMENT);
+    private final Matcher CODE = new MSequence(
+            new MDo() {
+                @Override
+                public void run() {
+                    myParseStack.push(new LinkedList());
+                }
+            },
+            new MAction(new MRepeated(STATEMENT)) {
+                @Override
+                public void onMatched(ParseHead h) {
+                    Statement stmt = (Statement) myParseStack.pop();
+                    ((List) myParseStack).add(stmt);
+                }
+            },
+            new MDo() {
+                @Override
+                public void run() {
+                    List<Statement> stmts =
+                            (List<Statement>) myParseStack.pop();
+                    myParseStack.push(new MultiplexingStatement(stmts));
+                }
+            });
     
     {
         CODE_BLOCK.fillIn(new MLiteral("{"), CODE, new MLiteral("}"));
@@ -850,9 +875,18 @@ public class Sbsdl {
                 }
             });
     
+    private final Matcher RETURN_STMT =
+            new MAction(new MSequence(new MLiteral("return"), EXP)) {
+                @Override
+                public void onMatched(ParseHead h) {
+                    myParseStack.push(new ReturnStatement(
+                            (Expression) myParseStack.pop()));
+                }
+            };
+    
     {
-        STATEMENT.fillIn(
-                new MAlternatives(ASSIGN_OR_CALL_STMT, FOR_EACH_STMT, IF_STMT));
+        STATEMENT.fillIn(new MAlternatives(
+                RETURN_STMT, FOR_EACH_STMT, IF_STMT, ASSIGN_OR_CALL_STMT));
     }
     
     private final MPlaceholder COMMENT = new MPlaceholder();
@@ -884,22 +918,6 @@ public class Sbsdl {
         h.advanceOver(CODE);
         
         System.out.println("REMAINING TEXT: " + h.remainingText());
-    }
-    
-    public static void main(String[] args) throws NoMatchException, WellFormednessException {
-        Sbsdl p = new Sbsdl();
-        
-        p.parse("conversation.reward =\n" +
-"                pick from {\n" +
-"                    module:AS  {1},\n" +
-"                    module:LFT {1},\n" +
-"                    module:AHG {1}\n" +
-"                };\n" +
-"	conversation.destination =\n" +
-"                pick from #stations\n" +
-"                where distance from this_station\n" +
-"                      between #hopdist / 2 and #hopdist / 2 * 3\n" +
-"                      and x <= 0.5;");
     }
     
     public class HostEnvironmentException extends Exception {
