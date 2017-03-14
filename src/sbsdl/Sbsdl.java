@@ -33,6 +33,7 @@ import sbsdl.expressions.PickExpression;
 import sbsdl.expressions.SequenceExpression;
 import sbsdl.expressions.UnaryExpression;
 import sbsdl.expressions.VariableNameExpression;
+import sbsdl.statements.EvaluateStatement;
 import sbsdl.statements.FieldAssignmentStatement;
 import sbsdl.statements.ForEachStatement;
 import sbsdl.statements.IfStatement;
@@ -48,6 +49,8 @@ import sbsdl.values.VString;
 import sbsdl.values.Value;
 
 public class Sbsdl {    
+    public static final boolean DEBUG = true;
+    
     private final MPlaceholder EXP = new MPlaceholder();
     private final MPlaceholder CODE_BLOCK = new MPlaceholder();
     
@@ -112,7 +115,8 @@ public class Sbsdl {
             };
     
     private final Matcher INTEGRAL_LITERAL =
-            new MAction(new MRepeated(CSet.ISO_LATIN_DIGIT, 1, 10)) {
+            new MAction(
+                    new MCapture(new MRepeated(CSet.ISO_LATIN_DIGIT, 1, 10))) {
                 @Override
                 public void onMatched(ParseHead h) {
                     String integerText = h.nextCapture();
@@ -148,7 +152,7 @@ public class Sbsdl {
             new MAction(EXP) {
                 @Override
                 public void onMatched(ParseHead h) {
-                    Value expValue = (Value) myParseStack.pop();
+                    Expression expValue = (Expression) myParseStack.pop();
                     ((List) myParseStack.peek()).add(expValue);
                 }
             };
@@ -500,29 +504,29 @@ public class Sbsdl {
     
     private final Matcher MULT_PRECEDENCE_EXP =
             new MSequence(POW_PRECEDENCE_EXP, new MRepeated(
-                    new MBinaryExpression(new MSequence(
+                    new MBinaryExpression(
                             new MAlternatives(
                                     new MPush(new MLiteral("*"),
                                             BinaryExpression.Operator.TIMES),
                                     new MPush(new MLiteral("/"),
                                             BinaryExpression.Operator
                                                     .DIVIDED_BY)),
-                            POW_PRECEDENCE_EXP))));
+                            POW_PRECEDENCE_EXP)));
     
     private final Matcher ADD_PRECEDENCE_EXP =
             new MSequence(MULT_PRECEDENCE_EXP, new MRepeated(
-                    new MBinaryExpression(new MSequence(
+                    new MBinaryExpression(new MAlternatives(
                             new MPush(new MLiteral("+"),
                                     BinaryExpression.Operator.PLUS),
                             new MPush(new MLiteral("-"),
-                                    BinaryExpression.Operator.MINUS),
-                            MULT_PRECEDENCE_EXP))));
+                                    BinaryExpression.Operator.MINUS)),
+                            MULT_PRECEDENCE_EXP)));
     
     private final Matcher NUMERIC_EXP = ADD_PRECEDENCE_EXP;
     
     private final Matcher BINARY_COMPARISON_EXP =
             new MSequence(NUMERIC_EXP,
-                    new MBinaryExpression(new MRepeated(
+                    new MRepeated(new MBinaryExpression(
                             new MAlternatives(
                                     // Order important!  Prefixes can't come
                                     // first!
@@ -750,13 +754,13 @@ public class Sbsdl {
                     myParseStack.push(new LinkedList());
                 }
             },
-            new MAction(new MRepeated(STATEMENT)) {
+            new MRepeated(new MAction(STATEMENT) {
                 @Override
                 public void onMatched(ParseHead h) {
                     Statement stmt = (Statement) myParseStack.pop();
-                    ((List) myParseStack).add(stmt);
+                    ((List) myParseStack.peek()).add(stmt);
                 }
-            },
+            }),
             new MDo() {
                 @Override
                 public void run() {
@@ -777,14 +781,16 @@ public class Sbsdl {
                         @Override
                         public void onMatched(ParseHead h)
                                 throws WellFormednessException {
-                            myParseStack.push(
-                                    ((LHSAccess) myParseStack.pop()).toValue());
+                            Expression eval =
+                                    ((LHSAccess) myParseStack.pop()).toValue();
                             
-                            if (!(myParseStack.peek()
-                                    instanceof FunctionCallExpression)) {
+                            if (!(eval instanceof FunctionCallExpression)
+                                    && !(eval instanceof HostExpression)) {
                                 throw new WellFormednessException(
                                         "Expected statement.");
                             }
+                            
+                            myParseStack.push(new EvaluateStatement(eval));
                         }
                     },
                     new MAction(new MSequence(
@@ -904,11 +910,31 @@ public class Sbsdl {
                     new MRepeated(new MAlternatives(COMMENT, CSet.WHITESPACE)),
                     null);
     
-    private final Deque myParseStack = new LinkedList();
+    private final ParseStack myParseStack = new ParseStack();
     private final HostEnvironment myHostEnvironment;
     
     public Sbsdl(HostEnvironment e) {
         myHostEnvironment = e;
+    }
+    
+    public void run(String input) throws WellFormednessException {
+        ParseHead h = new ParseHead(input);
+        h.setSkip(DEFAULT_SKIPPER);
+        
+        try {
+            h.advanceOver(CODE);
+        }
+        catch (NoMatchException nme) {
+            throw new WellFormednessException("Couldn't parse input.");
+        }
+        
+        ScriptEnvironment s = new ScriptEnvironment();
+        ((MultiplexingStatement) myParseStack.pop())
+                .execute(myHostEnvironment, s);
+        
+        if (!myParseStack.isEmpty()) {
+            throw new RuntimeException();
+        }
     }
     
     public void parse(String input)
@@ -956,24 +982,6 @@ public class Sbsdl {
          */
         public Value evaluate(String name, List<Value> parameters)
                 throws HostEnvironmentException;
-        
-        /**
-         * <p>Called when a script issues a command like
-         * {@code foo 1 ('t' + 'wo') [3];} .  {@code command} will be
-         * the text of the command identifier, while {@code parameters} will
-         * contain the evaluated value of each of the provided parameters in
-         * order (or be the empty list in the case where no parameters are
-         * provided.)</p>
-         * 
-         * @param command The text of the command identifier.
-         * @param parameters The list of evaluated parameters, or the empty list
-         *              in the case that no parameters are provided.
-         * 
-         * @throws sbsdl.Sbsdl.HostEnvironmentException If the command is not
-         *              understood, or for any reason can not be obeyed.
-         */
-        public void doCommand(String command, List<Value> parameters)
-                throws HostEnvironmentException;
     }
     
     public static class ExecutionException extends RuntimeException {
@@ -982,34 +990,62 @@ public class Sbsdl {
         }
     }
     
-    private static class ScriptEnvironment {
-        
-    }
-    
     private class MPush extends MAction {
         private final Object myObject;
+        private final StackTraceElement myInstantiationLocation;
         
         public MPush(Matcher base, Object o) {
             super(base);
             
             myObject = o;
+            myInstantiationLocation = new RuntimeException().getStackTrace()[1];
         }
 
         @Override
+        public void before(ParseHead h) {
+            if (DEBUG) {
+                System.out.println("MPush start " + myInstantiationLocation);
+            }
+        }
+        
+        @Override
         public void onMatched(ParseHead h) {
             myParseStack.push(myObject);
+            
+            if (DEBUG) {
+                System.out.println("MPush matched " + myInstantiationLocation);
+            }
+        }
+
+        @Override
+        public void onFailed(ParseHead h) {
+            if (DEBUG) {
+                System.out.println("MPush failed " + myInstantiationLocation);
+            }
         }
     }
     
     private class MBinaryExpression extends MAction {
+        private final StackTraceElement myInstantiationLocation;
+        
         public MBinaryExpression(Matcher ... ms) {
-            super(new MSequence(ms));
+            this(new MSequence(ms));
         }
         
         public MBinaryExpression(Matcher base) {
             super(base);
+            
+            myInstantiationLocation = new RuntimeException().getStackTrace()[1];
         }
 
+        @Override
+        public void before(ParseHead h) {
+            if (DEBUG) {
+                System.out.println(
+                        "MBinaryExpression start " + myInstantiationLocation);
+            }
+        }
+        
         @Override
         public void onMatched(ParseHead h) {
             Expression right = (Expression) myParseStack.pop();
@@ -1018,6 +1054,19 @@ public class Sbsdl {
             Expression left = (Expression) myParseStack.pop();
 
             myParseStack.push(new BinaryExpression(left, op, right));
+            
+            if (DEBUG) {
+                System.out.println(
+                        "MBinaryExpression matched " + myInstantiationLocation);
+            }
+        }
+
+        @Override
+        public void onFailed(ParseHead h) {
+            if (DEBUG) {
+                System.out.println(
+                        "MBinaryExpression failed " + myInstantiationLocation);
+            }
         }
     }
     
@@ -1071,5 +1120,65 @@ public class Sbsdl {
         public Expression toValue();
         public Statement toAssignment(Expression value)
                 throws WellFormednessException;
+    }
+    
+    private static class ParseStack {
+        private final Deque myStack = new LinkedList();
+        
+        public boolean isEmpty() {
+            return myStack.isEmpty();
+        }
+        
+        public void push(Object o) {
+            myStack.push(o);
+            
+            if (DEBUG) {
+                System.out.print("\nPush ");
+                debugPrint();
+            }
+        }
+        
+        public Object pop() {
+            Object result = myStack.pop();
+            
+            if (DEBUG) {
+                System.out.print("\nPop ");
+                debugPrint();
+            }
+            
+            return result;
+        }
+        
+        public Object peek() {
+            return myStack.peek();
+        }
+        
+        private void debugPrint() {
+            System.out.println(new RuntimeException().getStackTrace()[2]);
+            
+            System.out.print("[");
+            
+            Deque head = new LinkedList();
+            while (head.size() < 4 && !myStack.isEmpty()) {
+                if (!head.isEmpty()) {
+                    System.out.print(", ");
+                }
+                
+                Object o = myStack.pop();
+                System.out.print(o);
+                
+                head.push(o);
+            }
+            
+            if (!myStack.isEmpty()) {
+                System.out.print(", ...");
+            }
+            
+            System.out.println("]");
+            
+            while (!head.isEmpty()) {
+                myStack.push(head.pop());
+            }
+        }
     }
 }

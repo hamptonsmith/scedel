@@ -1,6 +1,7 @@
 package sbsdl.values;
 
 import java.math.BigInteger;
+import java.util.Objects;
 import sbsdl.Sbsdl;
 
 public class VNumber extends SkeletonValue {
@@ -128,5 +129,42 @@ public class VNumber extends SkeletonValue {
     
     public BigInteger getNumerator() {
         return myNumerator;
+    }
+
+    @Override
+    public VNumber assertIsNumber() {
+        return this;
+    }
+    
+    @Override
+    public String toString() {
+        String result = "" + myNumerator;
+        
+        if (!myDenominator.equals(BigInteger.ONE)) {
+            result += " / " + myDenominator;
+            result = "(" + result + ")";
+        }
+        
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof VNumber)) {
+            return false;
+        }
+        
+        if (o == this) {
+            return true;
+        }
+        
+        VNumber oAsVn = (VNumber) o;
+        return myNumerator.equals(oAsVn.getNumerator())
+                && myDenominator.equals(oAsVn.getDenominator());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(myNumerator, myDenominator);
     }
 }
