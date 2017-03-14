@@ -1,10 +1,15 @@
 package sbsdl.values;
 
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Objects;
 
 public class VSeq extends SkeletonValue {
     public final LinkedList<Value> myValue = new LinkedList<>();
+    
+    public VSeq(Value ... vs) {
+        myValue.addAll(Arrays.asList(vs));
+    }
     
     public Iterable<Value> elements() {
         return myValue;
@@ -32,6 +37,11 @@ public class VSeq extends SkeletonValue {
     
     public void set(int i, Value v) {
         myValue.set(i, v);
+    }
+    
+    @Override
+    public String toString() {
+        return myValue.toString();
     }
     
     @Override

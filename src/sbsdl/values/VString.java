@@ -14,6 +14,11 @@ public class VString extends SkeletonValue {
     }
     
     @Override
+    public String toString() {
+        return myValue;
+    }
+    
+    @Override
     public boolean equals(Object o) {
         if (o == this) {
             return true;
