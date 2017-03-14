@@ -1,19 +1,23 @@
 package sbsdl.values;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import sbsdl.Sbsdl;
 import sbsdl.ScriptEnvironment;
-import sbsdl.expressions.Expression;
+import sbsdl.statements.Statement;
 
 public class VFunction extends SkeletonValue {
     private final List<String> myArgumentNames;
+    private final Statement myCode;
     
-    public VFunction(List<String> argumentNames) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public VFunction(List<String> argumentNames, Statement code) {
+        myArgumentNames = new ArrayList<>(argumentNames);
+        myCode = code;
     }
     
-    public void stackCallScope(ScriptEnvironment s, List<Value> parameters) {
+    public void call(Sbsdl.HostEnvironment h, ScriptEnvironment s,
+            List<Value> parameters) {
         s.pushScope(true);
         if (myArgumentNames.size() != parameters.size()) {
             throw new Sbsdl.ExecutionException(
@@ -26,8 +30,12 @@ public class VFunction extends SkeletonValue {
         for (String arg : myArgumentNames) {
             s.putSymbol(arg, paramIter.next());
         }
+        
+        myCode.execute(h, s);
+        
+        s.popScope();
     }
-
+    
     @Override
     public VFunction assertIsFunction() {
         return this;

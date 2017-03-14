@@ -9,6 +9,7 @@ import com.shieldsbetter.flexcompilator.matchers.CSubtract;
 import com.shieldsbetter.flexcompilator.matchers.MAction;
 import com.shieldsbetter.flexcompilator.matchers.MAlternatives;
 import com.shieldsbetter.flexcompilator.matchers.MCapture;
+import com.shieldsbetter.flexcompilator.matchers.MDo;
 import com.shieldsbetter.flexcompilator.matchers.MEndOfInput;
 import com.shieldsbetter.flexcompilator.matchers.MForbid;
 import com.shieldsbetter.flexcompilator.matchers.MLiteral;
@@ -32,6 +33,12 @@ import sbsdl.expressions.PickExpression;
 import sbsdl.expressions.SequenceExpression;
 import sbsdl.expressions.UnaryExpression;
 import sbsdl.expressions.VariableNameExpression;
+import sbsdl.statements.FieldAssignmentStatement;
+import sbsdl.statements.ForEachStatement;
+import sbsdl.statements.IfStatement;
+import sbsdl.statements.SequenceAssignmentStatement;
+import sbsdl.statements.Statement;
+import sbsdl.statements.TopLevelVariableAssignmentStatement;
 import sbsdl.values.VBoolean;
 import sbsdl.values.VDict;
 import sbsdl.values.VFunction;
@@ -192,15 +199,6 @@ public class Sbsdl {
     private final Matcher PARENTHETICAL_EXP =
             new MSequence(new MLiteral("("), EXP, new MLiteral(")"));
     
-    private final Matcher VARIABLE_NAME_IDENTIFIER =
-            new MAction(IDENTIFIER) {
-                @Override
-                public void onMatched(ParseHead h) {
-                    myParseStack.push(new VariableNameExpression(
-                            (String) myParseStack.pop()));
-                }
-            };
-    
     private final Matcher NAKED_STRING_IDENTIFIER =
             new MAction(IDENTIFIER) {
                 @Override
@@ -239,37 +237,185 @@ public class Sbsdl {
                 }
             };
     
-    private final Matcher BOUNDED_EXP = new MAlternatives(FUNCTION_LITERAL,
-            STRING_LITERAL, NUMERIC_LITERAL, PARENTHETICAL_EXP,
-            VARIABLE_NAME_IDENTIFIER, HOST_EXP);
+    private final Matcher BOUNDED_EXP = new MAlternatives(
+            new MAction(FUNCTION_LITERAL) {
+                @Override
+                public void onMatched(ParseHead h) {
+                    final Expression e = (Expression) myParseStack.pop();
+                    myParseStack.push(new LHSAccess() {
+                                @Override
+                                public Expression toValue() {
+                                    return e;
+                                }
+
+                                @Override
+                                public Statement toAssignment(Expression value)
+                                        throws WellFormednessException {
+                                    throw new WellFormednessException("Cannot "
+                                            + "assign to function literal.");
+                                }
+                            });
+                }
+            },
+            new MAction(STRING_LITERAL) {
+                @Override
+                public void onMatched(ParseHead h)
+                        throws WellFormednessException {
+                    final Expression e = (Expression) myParseStack.pop();
+                    myParseStack.push(new LHSAccess() {
+                                @Override
+                                public Expression toValue() {
+                                    return e;
+                                }
+
+                                @Override
+                                public Statement toAssignment(Expression value)
+                                        throws WellFormednessException {
+                                    throw new WellFormednessException("Cannot "
+                                            + "assign to string literal.");
+                                }
+                            });
+                }
+            },
+            new MAction(NUMERIC_LITERAL) {
+                @Override
+                public void onMatched(ParseHead h)
+                        throws WellFormednessException {
+                    final Expression e = (Expression) myParseStack.pop();
+                    myParseStack.push(new LHSAccess() {
+                                @Override
+                                public Expression toValue() {
+                                    return e;
+                                }
+
+                                @Override
+                                public Statement toAssignment(Expression value)
+                                        throws WellFormednessException {
+                                    throw new WellFormednessException("Cannot "
+                                            + "assign to numeric literal.");
+                                }
+                            });
+                }
+            },
+            new MAction(PARENTHETICAL_EXP) {
+                @Override
+                public void onMatched(ParseHead h)
+                        throws WellFormednessException {
+                    final Expression e = (Expression) myParseStack.pop();
+                    myParseStack.push(new LHSAccess() {
+                                @Override
+                                public Expression toValue() {
+                                    return e;
+                                }
+
+                                @Override
+                                public Statement toAssignment(Expression value)
+                                        throws WellFormednessException {
+                                    throw new WellFormednessException("Cannot "
+                                            + "assign to parenthetical "
+                                            + "expression.");
+                                }
+                            });
+                }
+            },
+            new MAction(HOST_EXP) {
+                @Override
+                public void onMatched(ParseHead h)
+                        throws WellFormednessException {
+                    final Expression e = (Expression) myParseStack.pop();
+                    myParseStack.push(new LHSAccess() {
+                                @Override
+                                public Expression toValue() {
+                                    return e;
+                                }
+
+                                @Override
+                                public Statement toAssignment(Expression value)
+                                        throws WellFormednessException {
+                                    throw new WellFormednessException("Cannot "
+                                            + "assign to a host expression.");
+                                }
+                            });
+                }
+            },
+            new MAction(IDENTIFIER) {
+                @Override
+                public void onMatched(ParseHead h)
+                        throws WellFormednessException {
+                    final String e = (String) myParseStack.pop();
+                    myParseStack.push(new LHSAccess() {
+                                @Override
+                                public Expression toValue() {
+                                    return new VariableNameExpression(e);
+                                }
+
+                                @Override
+                                public Statement toAssignment(
+                                        Expression value) {
+                                    return new TopLevelVariableAssignmentStatement(
+                                            e, value);
+                                }
+                            });
+                }
+            });
     
-    private final Matcher ACCESS_EXP =
+    private final Matcher LHS =
             new MSequence(BOUNDED_EXP, new MRepeated(new MAlternatives(
                     new MAction(new MSequence(new MLiteral("."), 
                             new MAlternatives(NAKED_STRING_IDENTIFIER,
                                     PARENTHETICAL_EXP))) {
                         @Override
                         public void onMatched(ParseHead h) {
-                            Expression key = (Expression) myParseStack.pop();
-                            Expression dict = (Expression) myParseStack.pop();
+                            final Expression key =
+                                    (Expression) myParseStack.pop();
+                            final Expression dict =
+                                    (Expression) myParseStack.pop();
                             
                             myParseStack.push(
-                                    new BinaryExpression(dict,
-                                            BinaryExpression.Operator.LOOK_UP_KEY,
-                                            key));
+                                    new LHSAccess() {
+                                        @Override
+                                        public Expression toValue() {
+                                            return new BinaryExpression(dict,
+                                                    BinaryExpression.Operator
+                                                            .LOOK_UP_KEY,
+                                                    key);
+                                        }
+
+                                        @Override
+                                        public Statement toAssignment(
+                                                Expression value) {
+                                            return new FieldAssignmentStatement(
+                                                    dict, key, value);
+                                        }
+                                    });
                         }
                     },
                     new MAction(new MSequence(
                             new MLiteral("["), EXP, new MLiteral("]"))) {
                         @Override
                         public void onMatched(ParseHead h) {
-                            Expression key = (Expression) myParseStack.pop();
-                            Expression seq = (Expression) myParseStack.pop();
+                            final Expression index =
+                                    (Expression) myParseStack.pop();
+                            final Expression seq =
+                                    (Expression) myParseStack.pop();
                             
                             myParseStack.push(
-                                    new BinaryExpression(seq,
-                                            BinaryExpression.Operator.INDEX_SEQ,
-                                            key));
+                                    new LHSAccess() {
+                                        @Override
+                                        public Expression toValue() {
+                                            return new BinaryExpression(seq,
+                                                    BinaryExpression.Operator
+                                                            .INDEX_SEQ,
+                                                    index);
+                                        }
+
+                                        @Override
+                                        public Statement toAssignment(
+                                                Expression value) {
+                                            return new SequenceAssignmentStatement(
+                                                    seq, index, value);
+                                        }
+                                    });
                         }
                     },
                     new MAction(new MSequence(
@@ -277,21 +423,46 @@ public class Sbsdl {
                             new MLiteral(")"))) {
                         @Override
                         public void onMatched(ParseHead h) {
-                            List<Expression> args = (List) myParseStack.pop();
-                            Expression f = (Expression) myParseStack.pop();
+                            final List<Expression> args =
+                                    (List) myParseStack.pop();
+                            final Expression f =
+                                    (Expression) myParseStack.pop();
                             
-                            myParseStack.push(
-                                    new FunctionCallExpression(f, args));
+                            myParseStack.push(new LHSAccess() {
+                                        @Override
+                                        public Expression toValue() {
+                                            return new FunctionCallExpression(
+                                                    f, args);
+                                        }
+
+                                        @Override
+                                        public Statement toAssignment(
+                                                Expression value)
+                                                throws WellFormednessException {
+                                            throw new WellFormednessException(
+                                                    "Expected end of "
+                                                    + "statement.");
+                                        }
+                                    });
                         }
                     }
             )));
+    
+    private final Matcher LHS_EXP =
+            new MAction(LHS) {
+                @Override
+                public void onMatched(ParseHead h) {
+                    myParseStack.push(
+                            ((LHSAccess) myParseStack.pop()).toValue());
+                }
+            };
     
     private final Matcher PREFIX_EXP =
             new MSequence(
                     new MRepeated(
                             new MPush(new MLiteral("!"),
                                     UnaryExpression.Operator.BOOLEAN_NEGATE)),
-                    new MAction(ACCESS_EXP) {
+                    new MAction(LHS_EXP) {
                         @Override
                         public void onMatched(ParseHead h) {
                             Expression baseExp =
@@ -511,6 +682,10 @@ public class Sbsdl {
                 }
             };
     
+    /**
+     * <p>Results in {@code [where_expression, IntermediatePickExpression,
+     * exemplar_string, ...]}.</p>
+     */
     private final Matcher REQUIRED_SINGLE_PICK_TAIL_EXP =
             new MSequence(FROM_POOL, new MOptional(WHERE_CLAUSE));
     
@@ -535,7 +710,7 @@ public class Sbsdl {
                 }
             }));
     
-    private final Matcher EXPLICIT_PICK_EXP = new MAction(new MSequence(
+    private final Matcher REQUIRED_PICK_EXP = new MAction(new MSequence(
                     new MLiteral("pick"), PICK_COUNT_SPECIFIER,
                     new MLiteral("from"), REQUIRED_SINGLE_PICK_TAIL_EXP)) {
                 @Override
@@ -543,18 +718,20 @@ public class Sbsdl {
                     Expression where = (Expression) myParseStack.pop();
                     IntermediatePickExpression ipe =
                             (IntermediatePickExpression) myParseStack.pop();
+                    String exemplar = (String) myParseStack.pop();
                     Expression unique = (Expression) myParseStack.pop();
                     Expression count = (Expression) myParseStack.pop();
                     
-                    myParseStack.push(new PickExpression(null, ipe.getPool(),
-                            count, unique, ipe.getWeighter(), where));
+                    myParseStack.push(new PickExpression(exemplar,
+                            ipe.getPool(), count, unique, ipe.getWeighter(),
+                            where));
                 }
             };
     
     // Explicit pick has to come first so we don't gobble up "pick" as an
     // identifier.
     private final Matcher PICK_EXP =
-            new MAlternatives(EXPLICIT_PICK_EXP, BOOLEAN_LEVEL_EXPRESSION);
+            new MAlternatives(REQUIRED_PICK_EXP, BOOLEAN_LEVEL_EXPRESSION);
     
     {
         EXP.fillIn(PICK_EXP);
@@ -568,24 +745,114 @@ public class Sbsdl {
         CODE_BLOCK.fillIn(new MLiteral("{"), CODE, new MLiteral("}"));
     }
     
-    private final Matcher ASSIGN_STMT = new MSequence(
-            ACCESS_EXP, new MLiteral("="), EXP, new MLiteral(";"));
+    private final Matcher ASSIGN_OR_CALL_STMT = new MSequence(
+            LHS,
+            new MAlternatives(
+                    new MAction(new MLiteral(";")) {
+                        @Override
+                        public void onMatched(ParseHead h)
+                                throws WellFormednessException {
+                            myParseStack.push(
+                                    ((LHSAccess) myParseStack.pop()).toValue());
+                            
+                            if (!(myParseStack.peek()
+                                    instanceof FunctionCallExpression)) {
+                                throw new WellFormednessException(
+                                        "Expected statement.");
+                            }
+                        }
+                    },
+                    new MAction(new MSequence(
+                            new MLiteral("="), EXP, new MLiteral(";"))) {
+                        @Override
+                        public void onMatched(ParseHead h)
+                                throws WellFormednessException {
+                            Expression value = (Expression) myParseStack.pop();
+                            
+                            myParseStack.push(((LHSAccess) myParseStack.pop())
+                                    .toAssignment(value));
+                        }
+                    }
+            ));
     
-    private final Matcher FOR_EACH_STMT = new MSequence(new MLiteral("for"),
-            new MLiteral("each"), REQUIRED_PICK_TAIL_EXP, CODE_BLOCK);
+    private final Matcher FOR_EACH_STMT =
+            new MAction(new MSequence(new MLiteral("for"), new MLiteral("each"),
+                    REQUIRED_SINGLE_PICK_TAIL_EXP, CODE_BLOCK)) {
+                @Override
+                public void onMatched(ParseHead h)
+                        throws WellFormednessException {
+                    Statement codeBlock = (Statement) myParseStack.pop();
+                    Expression where = (Expression) myParseStack.pop();
+                    IntermediatePickExpression ipe =
+                            (IntermediatePickExpression) myParseStack.pop();
+                    String exemplar = (String) myParseStack.pop();
+                    
+                    if (ipe.getWeighter() != null) {
+                        throw new WellFormednessException("Weights not allowed "
+                                + "in for-each statement.");
+                    }
+                    
+                    ((List) myParseStack.peek()).add(new ForEachStatement(
+                            exemplar, ipe.getPool(), where, codeBlock));
+                }
+            };
     
-    private final Matcher IF_STMT = new MSequence(new MLiteral("if"), EXP,
-            CODE_BLOCK,
+    private final Matcher IF_STMT = new MSequence(
+            new MLiteral("if"),
+            EXP, CODE_BLOCK,
+            new MDo() {
+                @Override
+                public void run() {
+                    myParseStack.push(new LinkedList());
+                    
+                    Statement codeBlock = (Statement) myParseStack.pop();
+                    Expression exp = (Expression) myParseStack.pop();
+                    ((Deque) myParseStack.peek()).push(exp);
+                    ((Deque) myParseStack.peek()).push(codeBlock);
+                }
+            },
             new MRepeated(new MLiteral("else"), new MLiteral("if"), EXP,
-                    CODE_BLOCK),
-            new MOptional(new MLiteral("else"), CODE_BLOCK));
-    
-    private final Matcher INSTRUCTION_STMT =
-            new MSequence(IDENTIFIER, PARAM_LIST_INNARDS, new MLiteral(";"));
+                    CODE_BLOCK,
+                    new MDo() {
+                        @Override
+                        public void run() {
+                            Statement codeBlock =
+                                    (Statement) myParseStack.pop();
+                            Expression exp = (Expression) myParseStack.pop();
+                            ((Deque) myParseStack.peek()).push(exp);
+                            ((Deque) myParseStack.peek()).push(codeBlock);
+                        }
+                    }),
+            new MOptional(new MLiteral("else"), CODE_BLOCK,
+                    new MDo() {
+                        @Override
+                        public void run() {
+                            Statement codeBlock =
+                                    (Statement) myParseStack.pop();
+                            ((Deque) myParseStack.peek()).push(VBoolean.TRUE);
+                            ((Deque) myParseStack.peek()).push(codeBlock);
+                        }
+                    }),
+            new MDo() {
+                @Override
+                public void run() {
+                    Deque ifComponents = (Deque) myParseStack.pop();
+                    
+                    Statement curIf = Statement.NO_OP;
+                    do {
+                        Statement onTrue = (Statement) ifComponents.pop();
+                        Expression condition = (Expression) ifComponents.pop();
+                        
+                        curIf = new IfStatement(condition, onTrue, curIf);
+                    } while (!ifComponents.isEmpty());
+                    
+                    myParseStack.push(curIf);
+                }
+            });
     
     {
-        STATEMENT.fillIn(new MAlternatives(
-                ASSIGN_STMT, FOR_EACH_STMT, IF_STMT, INSTRUCTION_STMT));
+        STATEMENT.fillIn(
+                new MAlternatives(ASSIGN_OR_CALL_STMT, FOR_EACH_STMT, IF_STMT));
     }
     
     private final MPlaceholder COMMENT = new MPlaceholder();
@@ -602,9 +869,6 @@ public class Sbsdl {
             new MWithSkipper(
                     new MRepeated(new MAlternatives(COMMENT, CSet.WHITESPACE)),
                     null);
-    
-    private static enum ParseMode { EVALUATE, CONSTRUCT }
-    private ParseMode myParseMode = ParseMode.EVALUATE;
     
     private final Deque myParseStack = new LinkedList();
     private final HostEnvironment myHostEnvironment;
@@ -783,5 +1047,11 @@ public class Sbsdl {
             
             myWeighter = w;
         }
+    }
+    
+    private static interface LHSAccess {
+        public Expression toValue();
+        public Statement toAssignment(Expression value)
+                throws WellFormednessException;
     }
 }

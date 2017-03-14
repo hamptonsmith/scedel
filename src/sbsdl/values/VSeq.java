@@ -30,6 +30,10 @@ public class VSeq extends SkeletonValue {
         return myValue.get(i);
     }
     
+    public void set(int i, Value v) {
+        myValue.set(i, v);
+    }
+    
     @Override
     public boolean equals(Object o) {
         if (o == this) {

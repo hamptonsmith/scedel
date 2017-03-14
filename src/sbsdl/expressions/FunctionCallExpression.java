@@ -26,8 +26,6 @@ public class FunctionCallExpression implements Expression {
             paramVals.add(p.evaluate(h, s));
         }
         
-        fValue.stackCallScope(s, paramVals);
-        
+        return fValue.call(h, s, paramVals);
     }
-    
 }
