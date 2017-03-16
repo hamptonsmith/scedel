@@ -1,6 +1,6 @@
 package sbsdl.values;
 
-public class VBoolean extends SkeletonValue {
+public class VBoolean extends SkeletonValue<VBoolean> {
     public static final VBoolean TRUE = new VBoolean(true);
     public static final VBoolean FALSE = new VBoolean(false);
     
@@ -32,6 +32,11 @@ public class VBoolean extends SkeletonValue {
     
     @Override
     public VBoolean assertIsBoolean() {
+        return this;
+    }
+
+    @Override
+    public VBoolean copy() {
         return this;
     }
 }

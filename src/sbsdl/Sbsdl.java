@@ -9,6 +9,7 @@ import com.shieldsbetter.flexcompilator.matchers.CSubtract;
 import com.shieldsbetter.flexcompilator.matchers.MAction;
 import com.shieldsbetter.flexcompilator.matchers.MAlternatives;
 import com.shieldsbetter.flexcompilator.matchers.MCapture;
+import com.shieldsbetter.flexcompilator.matchers.MRequireAhead;
 import com.shieldsbetter.flexcompilator.matchers.MDo;
 import com.shieldsbetter.flexcompilator.matchers.MEndOfInput;
 import com.shieldsbetter.flexcompilator.matchers.MForbid;
@@ -43,10 +44,13 @@ import sbsdl.statements.ReturnStatement;
 import sbsdl.statements.SequenceAssignmentStatement;
 import sbsdl.statements.Statement;
 import sbsdl.statements.TopLevelVariableAssignmentStatement;
+import sbsdl.statements.VariableIntroductionStatement;
 import sbsdl.values.VBoolean;
 import sbsdl.values.VFunction;
+import sbsdl.values.VNone;
 import sbsdl.values.VNumber;
 import sbsdl.values.VString;
+import sbsdl.values.VUnavailable;
 import sbsdl.values.Value;
 
 public class Sbsdl {    
@@ -255,6 +259,57 @@ public class Sbsdl {
                 }
             };
     
+    private final Matcher DICTIONARY_FIELD_PAIR = new MSequence(
+            NAKED_STRING_IDENTIFIER, 
+            new MAction(new MLiteral(":")) {
+                @Override
+                public void onFailed(ParseHead h) {
+                    myParseStack.pop();
+                }
+            },
+            EXP,
+            new MDo() {
+                @Override
+                public void run() {
+                    Expression value = (Expression) myParseStack.pop();
+                    VString fieldName = (VString) myParseStack.pop();
+                    ((Map<Expression, Expression>) myParseStack.peek())
+                            .put(fieldName, value);
+                }
+            });
+    
+    private final Matcher DICTIONARY_LITERAL = new MAction(new MSequence(
+            new MLiteral("{"),
+            new MOptional(DICTIONARY_FIELD_PAIR,
+                    new MRepeated(
+                            new MRequireAhead(new MAlternatives(
+                                    new MLiteral(","), new MLiteral("}")),
+                                    "Expected ',' or '}'."),
+                            new MLiteral(","),
+                            DICTIONARY_FIELD_PAIR)),
+            new MLiteral("}"),
+            new MDo() {
+                @Override
+                public void run() {
+                    Map<Expression, Expression> fields =
+                            (Map<Expression, Expression>) myParseStack.pop();
+                    
+                    DictionaryExpression dict =
+                            new DictionaryExpression(fields);
+                    myParseStack.push(dict);
+                }
+            })) {
+                @Override
+                public void before(ParseHead h) {
+                    myParseStack.push(new HashMap());
+                }
+                
+                @Override
+                public void onFailed(ParseHead h) {
+                    myParseStack.pop();
+                }
+            };
+    
     private final Matcher SINGLE_ARGUMENT_DECLARATION =
             new MAction(IDENTIFIER) {
                 @Override
@@ -289,127 +344,26 @@ public class Sbsdl {
                 }
             };
     
+    private final Matcher BOOLEAN_LITERAL =
+            new MAlternatives(
+                    new MPush(new MLiteral("true"), VBoolean.TRUE),
+                    new MPush(new MLiteral("false"), VBoolean.FALSE));
+    
     private final Matcher BOUNDED_EXP = new MAlternatives(
-            new MAction(SEQUENCE_LITERAL) {
-                @Override
-                public void onMatched(final ParseHead h) {
-                    final Expression e = (Expression) myParseStack.pop();
-                    myParseStack.push(new LHSAccess() {
-                                @Override
-                                public Expression toValue() {
-                                    return e;
-                                }
-
-                                @Override
-                                public Statement toAssignment(Expression value)
-                                        throws WellFormednessException {
-                                    throw new WellFormednessException("Cannot "
-                                            + "assign to sequence literal.", h);
-                                }
-                            });
-                }
-            },
-            new MAction(FUNCTION_LITERAL) {
-                @Override
-                public void onMatched(final ParseHead h) {
-                    final Expression e = (Expression) myParseStack.pop();
-                    myParseStack.push(new LHSAccess() {
-                                @Override
-                                public Expression toValue() {
-                                    return e;
-                                }
-
-                                @Override
-                                public Statement toAssignment(Expression value)
-                                        throws WellFormednessException {
-                                    throw new WellFormednessException("Cannot "
-                                            + "assign to function literal.", h);
-                                }
-                            });
-                }
-            },
-            new MAction(STRING_LITERAL) {
-                @Override
-                public void onMatched(final ParseHead h)
-                        throws WellFormednessException {
-                    final Expression e = (Expression) myParseStack.pop();
-                    myParseStack.push(new LHSAccess() {
-                                @Override
-                                public Expression toValue() {
-                                    return e;
-                                }
-
-                                @Override
-                                public Statement toAssignment(Expression value)
-                                        throws WellFormednessException {
-                                    throw new WellFormednessException("Cannot "
-                                            + "assign to string literal.", h);
-                                }
-                            });
-                }
-            },
-            new MAction(NUMERIC_LITERAL) {
-                @Override
-                public void onMatched(final ParseHead h)
-                        throws WellFormednessException {
-                    final Expression e = (Expression) myParseStack.pop();
-                    myParseStack.push(new LHSAccess() {
-                                @Override
-                                public Expression toValue() {
-                                    return e;
-                                }
-
-                                @Override
-                                public Statement toAssignment(Expression value)
-                                        throws WellFormednessException {
-                                    throw new WellFormednessException("Cannot "
-                                            + "assign to numeric literal.", h);
-                                }
-                            });
-                }
-            },
-            new MAction(PARENTHETICAL_EXP) {
-                @Override
-                public void onMatched(final ParseHead h)
-                        throws WellFormednessException {
-                    final Expression e = (Expression) myParseStack.pop();
-                    myParseStack.push(new LHSAccess() {
-                                @Override
-                                public Expression toValue() {
-                                    return e;
-                                }
-
-                                @Override
-                                public Statement toAssignment(Expression value)
-                                        throws WellFormednessException {
-                                    throw new WellFormednessException("Cannot "
-                                            + "assign to parenthetical "
-                                            + "expression.", h);
-                                }
-                            });
-                }
-            },
-            new MAction(HOST_EXP) {
-                @Override
-                public void onMatched(final ParseHead h)
-                        throws WellFormednessException {
-                    final Expression e = (Expression) myParseStack.pop();
-                    myParseStack.push(new LHSAccess() {
-                                @Override
-                                public Expression toValue() {
-                                    return e;
-                                }
-
-                                @Override
-                                public Statement toAssignment(Expression value)
-                                        throws WellFormednessException {
-                                    throw new WellFormednessException("Cannot "
-                                            + "assign to a host expression.",
-                                            h);
-                                }
-                            });
-                }
-            },
+            new MNoAssign(
+                    new MPush(new MLiteral("unavailable"),
+                            VUnavailable.INSTANCE),
+                    "an unavailable literal"),
+            new MNoAssign(new MPush(new MLiteral("none"), VNone.INSTANCE),
+                    "a none literal"),
+            new MNoAssign(BOOLEAN_LITERAL, "a boolean literal"),
+            new MNoAssign(DICTIONARY_LITERAL, "a dictionary literal"),
+            new MNoAssign(SEQUENCE_LITERAL, "a sequence literal"),
+            new MNoAssign(FUNCTION_LITERAL, "a function literal"),
+            new MNoAssign(STRING_LITERAL, "a string literal"),
+            new MNoAssign(NUMERIC_LITERAL, "a numeric literal"),
+            new MNoAssign(PARENTHETICAL_EXP, "a parenthetical expression"),
+            new MNoAssign(HOST_EXP, "a host expression"),
             new MAction(IDENTIFIER) {
                 @Override
                 public void onMatched(ParseHead h)
@@ -441,7 +395,7 @@ public class Sbsdl {
                             final Expression key =
                                     (Expression) myParseStack.pop();
                             final Expression dict =
-                                    (Expression) myParseStack.pop();
+                                    ((LHSAccess) myParseStack.pop()).toValue();
                             
                             myParseStack.push(
                                     new LHSAccess() {
@@ -469,7 +423,7 @@ public class Sbsdl {
                             final Expression index =
                                     (Expression) myParseStack.pop();
                             final Expression seq =
-                                    (Expression) myParseStack.pop();
+                                    ((LHSAccess) myParseStack.pop()).toValue();
                             
                             myParseStack.push(
                                     new LHSAccess() {
@@ -532,7 +486,7 @@ public class Sbsdl {
     private final Matcher PREFIX_EXP =
             new MSequence(
                     new MRepeated(
-                            new MPush(new MLiteral("!"),
+                            new MPush(new MLiteral("not"),
                                     UnaryExpression.Operator.BOOLEAN_NEGATE)),
                     new MAction(LHS_EXP) {
                         @Override
@@ -842,6 +796,9 @@ public class Sbsdl {
     
     private final Matcher ASSIGN_OR_CALL_STMT = new MSequence(
             LHS,
+            new MRequireAhead(
+                    new MAlternatives(new MLiteral(";"), new MLiteral("=")),
+                    "Expected ';' or '='."),
             new MAlternatives(
                     new MAction(new MLiteral(";")) {
                         @Override
@@ -859,8 +816,8 @@ public class Sbsdl {
                             myParseStack.push(new EvaluateStatement(eval));
                         }
                     },
-                    new MAction(new MSequence(
-                            new MLiteral("="), EXP, new MLiteral(";"))) {
+                    new MAction(new MSequence(new MLiteral("="), EXP,
+                            new MRequire(new MLiteral(";"), "Expected ';'."))) {
                         @Override
                         public void onMatched(ParseHead h)
                                 throws WellFormednessException {
@@ -889,7 +846,7 @@ public class Sbsdl {
                                 + "in for-each statement.", h);
                     }
                     
-                    ((List) myParseStack.peek()).add(new ForEachStatement(
+                    myParseStack.push(new ForEachStatement(
                             exemplar, ipe.getPool(), where, codeBlock));
                 }
             };
@@ -900,10 +857,11 @@ public class Sbsdl {
             new MDo() {
                 @Override
                 public void run() {
-                    myParseStack.push(new LinkedList());
-                    
                     Statement codeBlock = (Statement) myParseStack.pop();
                     Expression exp = (Expression) myParseStack.pop();
+                    
+                    myParseStack.push(new LinkedList());
+                    
                     ((Deque) myParseStack.peek()).push(exp);
                     ((Deque) myParseStack.peek()).push(codeBlock);
                 }
@@ -957,9 +915,32 @@ public class Sbsdl {
                 }
             };
     
+    private final Matcher INTRO_STMT =
+            new MSequence(
+                    new MLiteral("intro"), IDENTIFIER, 
+                    new MOptional(new MAction(new MSequence(
+                            new MLiteral("="), EXP)) {
+                        @Override
+                        public void onFailed(ParseHead h) {
+                            myParseStack.push(VUnavailable.INSTANCE);
+                        }
+                    }),
+                    new MLiteral(";"),
+                    new MDo() {
+                        @Override
+                        public void run() {
+                            Expression initialValue =
+                                    (Expression) myParseStack.pop();
+                            String name = (String) myParseStack.pop();
+                            
+                            myParseStack.push(new VariableIntroductionStatement(
+                                    name, initialValue));
+                        }
+                    });
+    
     {
-        STATEMENT.fillIn(new MAlternatives(
-                RETURN_STMT, FOR_EACH_STMT, IF_STMT, ASSIGN_OR_CALL_STMT));
+        STATEMENT.fillIn(new MAlternatives(INTRO_STMT, RETURN_STMT,
+                FOR_EACH_STMT, IF_STMT, ASSIGN_OR_CALL_STMT));
     }
     
     private final MPlaceholder COMMENT = new MPlaceholder();
@@ -1188,6 +1169,33 @@ public class Sbsdl {
             }
             
             myWeighter = w;
+        }
+    }
+    
+    private class MNoAssign extends MAction {
+        private final String myDescription;
+        
+        public MNoAssign(Matcher m, String description) {
+            super(m);
+            myDescription = description;
+        }
+        
+        @Override
+        public void onMatched(final ParseHead h) {
+            final Expression e = (Expression) myParseStack.pop();
+            myParseStack.push(new LHSAccess() {
+                        @Override
+                        public Expression toValue() {
+                            return e;
+                        }
+
+                        @Override
+                        public Statement toAssignment(Expression value)
+                                throws WellFormednessException {
+                            throw new WellFormednessException("Cannot "
+                                    + "assign to " + myDescription + ".", h);
+                        }
+                    });
         }
     }
     

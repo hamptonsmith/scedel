@@ -4,16 +4,25 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-public class VDict extends SkeletonValue {
+public class VDict extends SkeletonValue<VDict> {
     private final Map<Value, Value> myValue = new HashMap<>();
     
-    public void put(Value key, Value val) {
+    public VDict() { }
+    public VDict(Map<Value, Value> value) {
+        for (Map.Entry<Value, Value> entry : value.entrySet()) {
+            myValue.put(entry.getKey().copy(), entry.getValue().copy());
+        }
+    }
+    
+    public VDict put(Value key, Value val) {
         if (val == VUnavailable.INSTANCE) {
             myValue.remove(key);
         }
         else {
             myValue.put(key, val);
         }
+        
+        return this;
     }
     
     public Value get(Value key) {
@@ -52,5 +61,10 @@ public class VDict extends SkeletonValue {
     @Override
     public VDict assertIsDict() {
         return this;
+    }
+
+    @Override
+    public VDict copy() {
+        return new VDict(myValue);
     }
 }

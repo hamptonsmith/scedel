@@ -2,6 +2,7 @@ package sbsdl;
 
 import java.util.HashMap;
 import java.util.Map;
+import sbsdl.values.VUnavailable;
 import sbsdl.values.Value;
 
 public class ScriptEnvironment {
@@ -104,6 +105,11 @@ public class ScriptEnvironment {
                 throw new IllegalArgumentException();
             }
             
+            if (myVariables.containsKey(name)) {
+                throw new Sbsdl.ExecutionException(
+                        "Symbol with that name already exists.");
+            }
+            
             myVariables.put(name, v);
         }
         
@@ -142,7 +148,7 @@ public class ScriptEnvironment {
                 result = myParent.lookupVariable(name);
                 // This can't be null because we'd have thrown an exception.
                 
-                if (!isRoot()) {
+                if (isRoot()) {
                     throw new Sbsdl.ExecutionException("Cannot access symbol \'"
                             + name + "\' outside of function literal.");
                 }

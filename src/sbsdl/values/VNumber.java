@@ -167,4 +167,9 @@ public class VNumber extends SkeletonValue {
     public int hashCode() {
         return Objects.hash(myNumerator, myDenominator);
     }
+
+    @Override
+    public Value copy() {
+        return this;
+    }
 }

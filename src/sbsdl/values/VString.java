@@ -12,6 +12,11 @@ public class VString extends SkeletonValue {
     public String getValue() {
         return myValue;
     }
+
+    @Override
+    public VString assertIsString() {
+        return this;
+    }
     
     @Override
     public String toString() {
@@ -36,5 +41,10 @@ public class VString extends SkeletonValue {
     @Override
     public int hashCode() {
         return Objects.hash(VString.class, myValue);
+    }
+
+    @Override
+    public Value copy() {
+        return this;
     }
 }

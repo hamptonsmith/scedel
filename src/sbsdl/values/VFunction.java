@@ -6,8 +6,22 @@ import java.util.List;
 import sbsdl.Sbsdl;
 import sbsdl.ScriptEnvironment;
 import sbsdl.statements.MultiplexingStatement;
+import sbsdl.statements.ReturnStatement;
+import sbsdl.statements.Statement;
 
 public class VFunction extends SkeletonValue {
+    public static VFunction buildConstantFunction(int argCount, Value result) {
+        List<String> args = new ArrayList<>(argCount);
+        for (int i = 0; i < argCount; i++) {
+            args.add("a" + i);
+        }
+        
+        List<Statement> code = new ArrayList<>(1);
+        code.add(new ReturnStatement(result));
+        
+        return new VFunction(args, new MultiplexingStatement(code));
+    }
+    
     private final List<String> myArgumentNames;
     private final MultiplexingStatement myCode;
     
@@ -45,6 +59,11 @@ public class VFunction extends SkeletonValue {
     
     @Override
     public VFunction assertIsFunction() {
+        return this;
+    }
+
+    @Override
+    public Value copy() {
         return this;
     }
 }

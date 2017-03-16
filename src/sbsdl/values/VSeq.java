@@ -2,13 +2,20 @@ package sbsdl.values;
 
 import java.util.Arrays;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Objects;
 
 public class VSeq extends SkeletonValue {
     public final LinkedList<Value> myValue = new LinkedList<>();
     
+    public VSeq(List<Value> vs) {
+        for (Value v : vs) {
+            myValue.add(v.copy());
+        }
+    }
+    
     public VSeq(Value ... vs) {
-        myValue.addAll(Arrays.asList(vs));
+        this(Arrays.asList(vs));
     }
     
     public Iterable<Value> elements() {
@@ -67,5 +74,10 @@ public class VSeq extends SkeletonValue {
     @Override
     public int hashCode() {
         return Objects.hash(VSeq.class, myValue);
+    }
+
+    @Override
+    public Value copy() {
+        return new VSeq(myValue);
     }
 }

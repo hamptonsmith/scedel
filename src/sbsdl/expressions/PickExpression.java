@@ -8,6 +8,7 @@ import sbsdl.Sbsdl;
 import sbsdl.ScriptEnvironment;
 import sbsdl.values.VDict;
 import sbsdl.values.VFunction;
+import sbsdl.values.VNumber;
 import sbsdl.values.VSeq;
 import sbsdl.values.VUnavailable;
 import sbsdl.values.Value;
@@ -29,8 +30,14 @@ public class PickExpression implements Expression {
         myPool = pool;
         myCount = count;
         myUniqueFlag = unique;
-        myWeighter = weighter;
         myWhere = where;
+        
+        if (weighter == null) {
+            myWeighter = VFunction.buildConstantFunction(1, VNumber.of(1, 1));
+        }
+        else {
+            myWeighter = weighter;
+        }
     }
     
     @Override

@@ -6,6 +6,7 @@ import sbsdl.ScriptEnvironment;
 import sbsdl.values.VBoolean;
 import sbsdl.values.VNumber;
 import sbsdl.values.VSeq;
+import sbsdl.values.VString;
 import sbsdl.values.Value;
 
 public class BinaryExpression implements Expression {
@@ -13,7 +14,22 @@ public class BinaryExpression implements Expression {
         PLUS {
             @Override
             public Value apply(Value operand1, Value operand2) {
-                return operand1.assertIsNumber().add(operand2.assertIsNumber());
+                Value result;
+                if (operand1 instanceof VNumber) {
+                    result = operand1.assertIsNumber().add(
+                            operand2.assertIsNumber());
+                }
+                else if (operand1 instanceof VString) {
+                    result = new VString(
+                            operand1.assertIsString().getValue() + operand2);
+                }
+                else {
+                    throw new Sbsdl.ExecutionException("Plus operator must "
+                            + "operate on a number or a string.  Found: "
+                            + operand1);
+                }
+                
+                return result;
             }
         },
         MINUS {
