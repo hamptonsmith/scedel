@@ -3,8 +3,10 @@ package sbsdl;
 import com.shieldsbetter.flexcompilator.WellFormednessException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -12,6 +14,7 @@ import sbsdl.values.VBoolean;
 import sbsdl.values.VDict;
 import sbsdl.values.VNone;
 import sbsdl.values.VNumber;
+import sbsdl.values.VProxy;
 import sbsdl.values.VSeq;
 import sbsdl.values.VString;
 import sbsdl.values.VUnavailable;
@@ -656,6 +659,78 @@ public class SbsdlTest {
                     "x[0][1]", VNumber.of(2, 1), true);
     }
     
+    @Test
+    public void proxyIntroInitializerReferenceSemantics()
+            throws Sbsdl.ExecutionException, WellFormednessException{
+        executionTest(
+                    "intro x = #proxy('x');"
+                  + "x.foo = 'abc';"
+                  + "intro y = x;"
+                  + "x.foo = 'def';",
+                    "[x.foo, y.foo]",
+                    new VSeq(new VString("def"), new VString("def")));
+    }
+    
+    @Test
+    public void proxyTopLevelAssignmentReferenceSemantics()
+            throws Sbsdl.ExecutionException, WellFormednessException{
+        executionTest(
+                    "intro x = #proxy('x');"
+                  + "x.foo = 'abc';"
+                  + "intro y;"
+                  + "y = x;"
+                  + "x.foo = 'def';",
+                    "[x.foo, y.foo]",
+                    new VSeq(new VString("def"), new VString("def")));
+    }
+    
+    @Test
+    public void proxyDictionaryFieldReferenceSemantics()
+            throws Sbsdl.ExecutionException, WellFormednessException{
+        executionTest(
+                    "intro x = #proxy('x');"
+                  + "x.foo = 'abc';"
+                  + "intro y = {};"
+                  + "y.bar = x;"
+                  + "x.foo = 'def';",
+                    "[x.foo, y.bar.foo]",
+                    new VSeq(new VString("def"), new VString("def")));
+    }
+    
+    @Test
+    public void proxySequenceElementReferenceSemantics()
+            throws Sbsdl.ExecutionException, WellFormednessException{
+        executionTest(
+                    "intro x = #proxy('x');"
+                  + "x.foo = 'abc';"
+                  + "intro y = ['z'];"
+                  + "y[0] = x;"
+                  + "x.foo = 'def';",
+                    "[x.foo, y[0].foo]",
+                    new VSeq(new VString("def"), new VString("def")));
+    }
+    
+    @Test
+    public void proxyFunctionParameterReferenceSemantics()
+            throws Sbsdl.ExecutionException, WellFormednessException{
+        executionTest(
+                    "intro x = #proxy('x');"
+                  + "x.foo = 'abc';"
+                  + "intro y = fn (xs) { xs.foo = 'def'; };"
+                  + "y(x);",
+                    "x.foo", new VString("def"));
+    }
+    
+    @Test
+    public void proxyPickStatementReferenceSemantics()
+            throws Sbsdl.ExecutionException, WellFormednessException{
+        executionTest(
+                    "intro x = #proxy('x');"
+                  + "x.foo = 'abc';"
+                  + "(pick from [x]).foo = 'def';",
+                    "x.foo", new VString("def"), true);
+    }
+    
     private static <T> List<T> list(final T ... ts) {
         return Arrays.asList(ts);
     }
@@ -774,6 +849,8 @@ public class SbsdlTest {
         private List<Value> myOut;
         private Value myMem = VUnavailable.INSTANCE;
         
+        private Map<String, VProxy> myProxies = new HashMap<>();
+        
         public void reset() {
             myOut = null;
             myMem = VUnavailable.INSTANCE;
@@ -791,6 +868,16 @@ public class SbsdlTest {
             else if (name.equals("mem")) {
                 result = myMem;
                 myMem = parameters.get(0);
+            }
+            else if (name.equals("proxy")) {
+                String proxyName = ((VString) parameters.get(0)).getValue();
+                result = myProxies.get(proxyName);
+                
+                if (result == null) {
+                    result = new VProxy();
+                }
+                
+                myProxies.put(proxyName, (VProxy) result);
             }
             else {
                 throw new RuntimeException();
