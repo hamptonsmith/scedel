@@ -327,45 +327,45 @@ public class SbsdlTest {
     
     @Test
     public void introStatement()
-            throws Sbsdl.ExecutionException, WellFormednessException{
+            throws Sbsdl.ExecutionException, WellFormednessException {
         executionTest("intro x;", "x", VUnavailable.INSTANCE);
     }
     
     @Test
     public void introStatementWithInitialValue()
-            throws Sbsdl.ExecutionException, WellFormednessException{
+            throws Sbsdl.ExecutionException, WellFormednessException {
         executionTest("intro x = 5;", "x", VNumber.of(5, 1));
     }
     
     @Test
     public void topLevelAssign()
-            throws Sbsdl.ExecutionException, WellFormednessException{
+            throws Sbsdl.ExecutionException, WellFormednessException {
         executionTest("intro x; x = 5;", "x", VNumber.of(5, 1));
     }
     
     @Test
     public void selfAssign()
-            throws Sbsdl.ExecutionException, WellFormednessException{
+            throws Sbsdl.ExecutionException, WellFormednessException {
         executionTest("intro x = 'a'; x = x + 'b';", "x", new VString("ab"));
     }
     
     @Test
     public void simpleIfT()
-            throws Sbsdl.ExecutionException, WellFormednessException{
+            throws Sbsdl.ExecutionException, WellFormednessException {
         executionTest("intro p = true; intro x; if p { x = 5; }", "x",
                 VNumber.of(5, 1));
     }
     
     @Test
     public void simpleIfF()
-            throws Sbsdl.ExecutionException, WellFormednessException{
+            throws Sbsdl.ExecutionException, WellFormednessException {
         executionTest("intro p = false; intro x; if p { x = 5; }", "x",
                 VUnavailable.INSTANCE);
     }
     
     @Test
     public void ifElseTrue()
-            throws Sbsdl.ExecutionException, WellFormednessException{
+            throws Sbsdl.ExecutionException, WellFormednessException {
         executionTest(
                 "intro p = true; intro x; if p { x = 1; } else { x = 2; }", "x",
                 VNumber.of(1, 1));
@@ -373,7 +373,7 @@ public class SbsdlTest {
     
     @Test
     public void ifElseFalse()
-            throws Sbsdl.ExecutionException, WellFormednessException{
+            throws Sbsdl.ExecutionException, WellFormednessException {
         executionTest(
                 "intro p = false; intro x; if p { x = 1; } else { x = 2; }",
                 "x", VNumber.of(2, 1));
@@ -381,7 +381,7 @@ public class SbsdlTest {
     
     @Test
     public void ifElseIfTrue()
-            throws Sbsdl.ExecutionException, WellFormednessException{
+            throws Sbsdl.ExecutionException, WellFormednessException {
         executionTest(
                     "intro y = 1;"
                   + "intro x;"
@@ -396,7 +396,7 @@ public class SbsdlTest {
     
     @Test
     public void ifElseIfTrue2()
-            throws Sbsdl.ExecutionException, WellFormednessException{
+            throws Sbsdl.ExecutionException, WellFormednessException {
         executionTest(
                     "intro y = 2;"
                   + "intro x;"
@@ -411,7 +411,7 @@ public class SbsdlTest {
     
     @Test
     public void ifElseIfFalse()
-            throws Sbsdl.ExecutionException, WellFormednessException{
+            throws Sbsdl.ExecutionException, WellFormednessException {
         executionTest(
                     "intro y = 3;"
                   + "intro x;"
@@ -426,7 +426,7 @@ public class SbsdlTest {
     
     @Test
     public void fullIfTrue1()
-            throws Sbsdl.ExecutionException, WellFormednessException{
+            throws Sbsdl.ExecutionException, WellFormednessException {
         executionTest(
                     "intro y = 1;"
                   + "intro x;"
@@ -447,7 +447,7 @@ public class SbsdlTest {
     
     @Test
     public void fullIfTrue2()
-            throws Sbsdl.ExecutionException, WellFormednessException{
+            throws Sbsdl.ExecutionException, WellFormednessException {
         executionTest(
                     "intro y = 2;"
                   + "intro x;"
@@ -468,7 +468,7 @@ public class SbsdlTest {
     
     @Test
     public void fullIfTrue3()
-            throws Sbsdl.ExecutionException, WellFormednessException{
+            throws Sbsdl.ExecutionException, WellFormednessException {
         executionTest(
                     "intro y = 3;"
                   + "intro x;"
@@ -489,7 +489,7 @@ public class SbsdlTest {
     
     @Test
     public void fullIfFalse()
-            throws Sbsdl.ExecutionException, WellFormednessException{
+            throws Sbsdl.ExecutionException, WellFormednessException {
         executionTest(
                     "intro y = 4;"
                   + "intro x;"
@@ -510,7 +510,7 @@ public class SbsdlTest {
     
     @Test
     public void forEachExplicitPool()
-            throws Sbsdl.ExecutionException, WellFormednessException{
+            throws Sbsdl.ExecutionException, WellFormednessException {
         executionTest(
                     "intro x = '';"
                   + "for each {'abc', 'def', 'ghi'} {"
@@ -521,7 +521,7 @@ public class SbsdlTest {
     
     @Test
     public void forEachExplicitPoolWithExemplar()
-            throws Sbsdl.ExecutionException, WellFormednessException{
+            throws Sbsdl.ExecutionException, WellFormednessException {
         executionTest(
                     "intro x = '';"
                   + "for each s : {'abc', 'def', 'ghi'} {"
@@ -532,7 +532,7 @@ public class SbsdlTest {
     
     @Test
     public void forEachSequence()
-            throws Sbsdl.ExecutionException, WellFormednessException{
+            throws Sbsdl.ExecutionException, WellFormednessException {
         executionTest(
                     "intro x = '';"
                   + "for each ['abc', 'def', 'ghi'] {"
@@ -543,7 +543,7 @@ public class SbsdlTest {
     
     @Test
     public void nestedForEach()
-            throws Sbsdl.ExecutionException, WellFormednessException{
+            throws Sbsdl.ExecutionException, WellFormednessException {
         executionTest(
                     "intro x = '';"
                   + "for each s : ['a', 'b', 'c'] {"
@@ -556,7 +556,7 @@ public class SbsdlTest {
     
     @Test
     public void forEachWhere()
-            throws Sbsdl.ExecutionException, WellFormednessException{
+            throws Sbsdl.ExecutionException, WellFormednessException {
         executionTest(
                     "intro x = '';"
                   + "for each {3, 1, 4, 1, 5, 9, 2} where @ > 4 {"
@@ -567,7 +567,7 @@ public class SbsdlTest {
     
     @Test
     public void forEachWhereExemplar()
-            throws Sbsdl.ExecutionException, WellFormednessException{
+            throws Sbsdl.ExecutionException, WellFormednessException {
         executionTest(
                     "intro x = '';"
                   + "for each s : {3, 1, 4, 1, 5, 9, 2} where s > 4 {"
@@ -578,7 +578,7 @@ public class SbsdlTest {
     
     @Test
     public void evaluationStatement()
-            throws Sbsdl.ExecutionException, WellFormednessException{
+            throws Sbsdl.ExecutionException, WellFormednessException {
         executionTest(
                     "intro x = fn (y) { #mem(y); };"
                   + "x(6);",
@@ -587,7 +587,7 @@ public class SbsdlTest {
     
     @Test
     public void pickFromExpression()
-            throws Sbsdl.ExecutionException, WellFormednessException{
+            throws Sbsdl.ExecutionException, WellFormednessException {
         executionTest(
                     "intro asdf = ['a'];", "pick from asdf", new VString("a"),
                     true);
@@ -595,7 +595,7 @@ public class SbsdlTest {
     
     @Test
     public void introInitializerValueSemantics()
-            throws Sbsdl.ExecutionException, WellFormednessException{
+            throws Sbsdl.ExecutionException, WellFormednessException {
         executionTest(
                     "intro x = [1, 2, 3];"
                   + "intro y = x;"
@@ -606,7 +606,7 @@ public class SbsdlTest {
     
     @Test
     public void topLevelAssignmentValueSemantics()
-            throws Sbsdl.ExecutionException, WellFormednessException{
+            throws Sbsdl.ExecutionException, WellFormednessException {
         executionTest(
                     "intro x = [1, 2, 3];"
                   + "intro y;"
@@ -618,7 +618,7 @@ public class SbsdlTest {
     
     @Test
     public void dictionaryFieldValueSemantics()
-            throws Sbsdl.ExecutionException, WellFormednessException{
+            throws Sbsdl.ExecutionException, WellFormednessException {
         executionTest(
                     "intro x = [1, 2, 3];"
                   + "intro y = {};"
@@ -630,7 +630,7 @@ public class SbsdlTest {
     
     @Test
     public void sequenceElementValueSemantics()
-            throws Sbsdl.ExecutionException, WellFormednessException{
+            throws Sbsdl.ExecutionException, WellFormednessException {
         executionTest(
                     "intro x = [1, 2, 3];"
                   + "intro y = ['z'];"
@@ -642,7 +642,7 @@ public class SbsdlTest {
     
     @Test
     public void functionParameterValueSemantics()
-            throws Sbsdl.ExecutionException, WellFormednessException{
+            throws Sbsdl.ExecutionException, WellFormednessException {
         executionTest(
                     "intro x = [1, 2, 3];"
                   + "intro y = fn (xs) { xs[1] = 9; };"
@@ -652,7 +652,7 @@ public class SbsdlTest {
     
     @Test
     public void pickStatementValueSemantics()
-            throws Sbsdl.ExecutionException, WellFormednessException{
+            throws Sbsdl.ExecutionException, WellFormednessException {
         executionTest(
                     "intro x = [[1, 2, 3]];"
                   + "(pick from x)[1] = 9;",
@@ -661,7 +661,7 @@ public class SbsdlTest {
     
     @Test
     public void proxyIntroInitializerReferenceSemantics()
-            throws Sbsdl.ExecutionException, WellFormednessException{
+            throws Sbsdl.ExecutionException, WellFormednessException {
         executionTest(
                     "intro x = #proxy('x');"
                   + "x.foo = 'abc';"
@@ -673,7 +673,7 @@ public class SbsdlTest {
     
     @Test
     public void proxyTopLevelAssignmentReferenceSemantics()
-            throws Sbsdl.ExecutionException, WellFormednessException{
+            throws Sbsdl.ExecutionException, WellFormednessException {
         executionTest(
                     "intro x = #proxy('x');"
                   + "x.foo = 'abc';"
@@ -686,7 +686,7 @@ public class SbsdlTest {
     
     @Test
     public void proxyDictionaryFieldReferenceSemantics()
-            throws Sbsdl.ExecutionException, WellFormednessException{
+            throws Sbsdl.ExecutionException, WellFormednessException {
         executionTest(
                     "intro x = #proxy('x');"
                   + "x.foo = 'abc';"
@@ -699,7 +699,7 @@ public class SbsdlTest {
     
     @Test
     public void proxySequenceElementReferenceSemantics()
-            throws Sbsdl.ExecutionException, WellFormednessException{
+            throws Sbsdl.ExecutionException, WellFormednessException {
         executionTest(
                     "intro x = #proxy('x');"
                   + "x.foo = 'abc';"
@@ -712,7 +712,7 @@ public class SbsdlTest {
     
     @Test
     public void proxyFunctionParameterReferenceSemantics()
-            throws Sbsdl.ExecutionException, WellFormednessException{
+            throws Sbsdl.ExecutionException, WellFormednessException {
         executionTest(
                     "intro x = #proxy('x');"
                   + "x.foo = 'abc';"
@@ -723,7 +723,7 @@ public class SbsdlTest {
     
     @Test
     public void proxyPickStatementReferenceSemantics()
-            throws Sbsdl.ExecutionException, WellFormednessException{
+            throws Sbsdl.ExecutionException, WellFormednessException {
         executionTest(
                     "intro x = #proxy('x');"
                   + "x.foo = 'abc';"
@@ -731,8 +731,51 @@ public class SbsdlTest {
                     "x.foo", new VString("def"), true);
     }
     
+    @Test
+    public void proxyCannotContainProxyField()
+            throws Sbsdl.ExecutionException, WellFormednessException {
+        executionTest(
+                    "intro x = #proxy('x');"
+                  + "x.foo = #proxy('y');",
+                "cannot contain");
+    }
+    
+    @Test
+    public void proxyCannotContainProxyElement()
+            throws Sbsdl.ExecutionException, WellFormednessException {
+        executionTest(
+                    "intro x = #proxy('x');"
+                  + "x.foo = [#proxy('y')];",
+                "cannot contain");
+    }
+    
+    @Test
+    public void previouslyProxyUnsafeHierarchyOkWhenCopiedOut()
+            throws Sbsdl.ExecutionException, WellFormednessException {
+        executionTest(
+                    "intro x = #proxy('x');"
+                  + "x.foo = {bar: ['z']};"
+                  + "intro y = x.foo;"
+                  + "y.bar[0] = x;",
+                    "true", VBoolean.TRUE);
+    }
+    
     private static <T> List<T> list(final T ... ts) {
         return Arrays.asList(ts);
+    }
+    
+    private void executionTest(
+            String setup, String errorContains, boolean ... deciderValues)
+            throws WellFormednessException {
+        try {
+            executionTest(setup, "true", VBoolean.TRUE, deciderValues);
+            Assert.fail("Expected error containing: " + errorContains);
+        }
+        catch (Sbsdl.ExecutionException see) {
+            Assert.assertTrue("Error supposed to contain '"
+                    + errorContains + "'.  Was: " + see.getMessage(),
+                    see.getMessage().toLowerCase().contains(errorContains));
+        }
     }
     
     private void executionTest(String setup, String expression, Value expected,
