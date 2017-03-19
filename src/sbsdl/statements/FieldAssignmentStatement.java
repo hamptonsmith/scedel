@@ -25,6 +25,6 @@ public class FieldAssignmentStatement implements Statement {
         
         Value newVal = myValue.evaluate(h, s);
         
-        baseDict.put(field, newVal.copy());
+        baseDict.put(field, newVal.copy(baseDict.forbidsProxies()));
     }
 }

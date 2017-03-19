@@ -112,7 +112,7 @@ public class PickExpression implements Expression {
             }
         }
         
-        return result;
+        return result.copy(false);
     }
     
     private int weight(Value weighter, Value query, Sbsdl.HostEnvironment h,

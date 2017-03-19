@@ -4,7 +4,7 @@ import java.math.BigInteger;
 import java.util.Objects;
 import sbsdl.Sbsdl;
 
-public class VNumber extends SkeletonValue {
+public class VNumber extends ImmutableValue<VNumber> {
     public static VNumber of(long numerator, long denominator) {
         return new VNumber(numerator, denominator);
     }
@@ -166,10 +166,5 @@ public class VNumber extends SkeletonValue {
     @Override
     public int hashCode() {
         return Objects.hash(myNumerator, myDenominator);
-    }
-
-    @Override
-    public Value copy() {
-        return this;
     }
 }

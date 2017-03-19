@@ -26,6 +26,6 @@ public class SequenceAssignmentStatement implements Statement {
         
         Value newVal = myValue.evaluate(h, s);
         
-        baseSeq.set(index, newVal.copy());
+        baseSeq.set(index, newVal.copy(baseSeq.forbidsProxies()));
     }
 }

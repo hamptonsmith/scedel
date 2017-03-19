@@ -5,7 +5,7 @@
             <url>src/sbsdl/Sbsdl.java</url>
             <bookmark id="1">
                 <name/>
-                <line>588</line>
+                <line>611</line>
                 <key/>
             </bookmark>
         </file>
@@ -14,9 +14,12 @@
         <group>
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/values/VFunction.java</file>
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/expressions/PickExpression.java</file>
+            <file>file:/home/hamptos/NetBeansProjects/sbsdl/test/sbsdl/SbsdlTest.java</file>
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/expressions/HostExpression.java</file>
+            <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/statements/ReturnStatement.java</file>
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/statements/TopLevelVariableAssignmentStatement.java</file>
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/expressions/BinaryExpression.java</file>
+            <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/statements/VariableIntroductionStatement.java</file>
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/expressions/FunctionCallExpression.java</file>
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/values/VSeq.java</file>
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/expressions/Expression.java</file>
@@ -27,16 +30,20 @@
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/values/VUnavailable.java</file>
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/values/SkeletonValue.java</file>
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/ScriptEnvironment.java</file>
+            <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/statements/EvaluateStatement.java</file>
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/values/VProxy.java</file>
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/statements/FieldAssignmentStatement.java</file>
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/statements/SequenceAssignmentStatement.java</file>
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/values/VBoolean.java</file>
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/statements/Statement.java</file>
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/statements/IfStatement.java</file>
+            <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/values/ImmutableValue.java</file>
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/expressions/DictionaryExpression.java</file>
+            <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/values/VNone.java</file>
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/values/VDict.java</file>
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/statements/MultiplexingStatement.java</file>
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/statements/ForEachStatement.java</file>
+            <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/values/ContainerValue.java</file>
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/values/VNumber.java</file>
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/expressions/SequenceExpression.java</file>
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/Sbsdl.java</file>

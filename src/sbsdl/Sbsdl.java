@@ -12,6 +12,7 @@ import com.shieldsbetter.flexcompilator.matchers.MCapture;
 import com.shieldsbetter.flexcompilator.matchers.MRequireAhead;
 import com.shieldsbetter.flexcompilator.matchers.MDo;
 import com.shieldsbetter.flexcompilator.matchers.MEndOfInput;
+import com.shieldsbetter.flexcompilator.matchers.MExclude;
 import com.shieldsbetter.flexcompilator.matchers.MForbid;
 import com.shieldsbetter.flexcompilator.matchers.MLiteral;
 import com.shieldsbetter.flexcompilator.matchers.MOptional;
@@ -56,6 +57,19 @@ import sbsdl.values.Value;
 public class Sbsdl {    
     public static final boolean DEBUG = true;
     
+    private final String[] KEYWORDS =
+            {"from", "if", "for", "each", "pick", "unique", "true", "false",
+             "unavailable", "none", "intro", "not", "and", "or"};
+    
+    private final Matcher KEYWORD;
+    {
+        List<Matcher> keywords = new LinkedList<>();
+        for (String keyword : KEYWORDS) {
+            keywords.add(new MLiteral(keyword));
+        }
+        KEYWORD = new MAlternatives(keywords.toArray(new Matcher[0]));
+    }
+    
     private final MPlaceholder EXP = new MPlaceholder();
     private final MPlaceholder CODE_BLOCK = new MPlaceholder();
     
@@ -92,7 +106,7 @@ public class Sbsdl {
                     innards = innards.replace("\\t", "\t");
                     innards = innards.replace("\\'", "'");
                     
-                    myParseStack.push(new VString(innards));
+                    h.pushOnParseStack(new VString(innards));
                 }
             };
     
@@ -120,7 +134,7 @@ public class Sbsdl {
                     n = n.add(Long.parseLong(fractionalPartText));
                     n = n.divide(pow);
                     
-                    myParseStack.push(n);
+                    h.pushOnParseStack(n);
                 }
             };
     
@@ -132,7 +146,7 @@ public class Sbsdl {
                     String integerText = h.popCapture();
                     VNumber n = VNumber.of(Long.parseLong(integerText), 1);
                     
-                    myParseStack.push(n);
+                    h.pushOnParseStack(n);
                 }
             };
     
@@ -147,52 +161,57 @@ public class Sbsdl {
             new MSequence(new MLiteral("["),
                     new MDo() {
                         @Override
-                        public void run() {
-                            myParseStack.push(new LinkedList());
+                        public void run(ParseHead h) {
+                            h.pushOnParseStack(new LinkedList());
                         }
                     },
                     new MOptional(EXP, 
                             new MDo() {
                                 @Override
-                                public void run() {
+                                public void run(ParseHead h) {
                                     Expression exp =
-                                        (Expression) myParseStack.pop();
+                                        (Expression) h.popFromParseStack();
                                     
-                                    ((List) myParseStack.peek()).add(exp);
+                                    ((List) h.peekFromParseStack()).add(exp);
                                 }
                             },
                             new MRepeated(new MLiteral(","), EXP,
                                     new MDo() {
                                         @Override
-                                        public void run() {
+                                        public void run(ParseHead h) {
                                             Expression exp =
-                                                (Expression) myParseStack.pop();
+                                                (Expression)
+                                                    h.popFromParseStack();
 
-                                            ((List) myParseStack.peek())
+                                            ((List) h.peekFromParseStack())
                                                     .add(exp);
                                         }
                                     })),
                     new MLiteral("]"),
                     new MDo() {
                         @Override
-                        public void run() {
-                            myParseStack.push(new SequenceExpression(
-                                    (List<Expression>) myParseStack.pop()));
+                        public void run(ParseHead h) {
+                            h.pushOnParseStack(new SequenceExpression(
+                                    (List<Expression>) h.popFromParseStack()));
                         }
                     });
     
     private final Matcher IDENTIFIER =
-            new MAction(new MCapture(new MWithSkipper(
-                    new MAlternatives(
-                            new MSequence(CSet.LETTER,
-                                    new MRepeated(new MAlternatives(
-                                            CSet.LETTER_OR_DIGIT,
-                                            new MLiteral("_")))),
-                            new MLiteral("@")),
-                    null))) {
+            new MAction(
+                    new MExclude(
+                            KEYWORD,
+                            new MCapture(
+                                    new MWithSkipper(
+                                        new MAlternatives(
+                                                new MSequence(CSet.LETTER,
+                                                        new MRepeated(new MAlternatives(
+                                                                CSet.LETTER_OR_DIGIT,
+                                                                new MLiteral("_")))),
+                                                new MLiteral("@")),
+                                    null)))) {
                 @Override
                 public void onMatched(ParseHead h) {
-                    myParseStack.push(h.popCapture());
+                    h.pushOnParseStack(h.popCapture());
                 }
             };
     
@@ -200,8 +219,8 @@ public class Sbsdl {
             new MAction(new MRequire(EXP, "Expected expression.")) {
                 @Override
                 public void onMatched(ParseHead h) {
-                    Expression expValue = (Expression) myParseStack.pop();
-                    ((List) myParseStack.peek()).add(expValue);
+                    Expression expValue = (Expression) h.popFromParseStack();
+                    ((List) h.peekFromParseStack()).add(expValue);
                 }
             };
     
@@ -210,7 +229,7 @@ public class Sbsdl {
                     new MRepeated(new MLiteral(","), EXP_FOR_PARAM_LIST))) {
                 @Override
                 public void before(ParseHead h) {
-                    myParseStack.push(new LinkedList());
+                    h.pushOnParseStack(new LinkedList());
                 }
             };
     
@@ -226,24 +245,23 @@ public class Sbsdl {
                             null)) {
                         @Override
                         public void onMatched(ParseHead h) {
-                            myParseStack.push(h.popCapture());
+                            h.pushOnParseStack(h.popCapture());
                         }
                     },
-                    new MOptional(
-                            new MAction(new MLiteral("(")) {
-                                @Override
-                                public void onFailed(ParseHead h) {
-                                    myParseStack.push(null);
-                                }
-                            },
+                    new MOptional(new MLiteral("("),
                             PARAM_LIST_INNARDS,
-                            new MLiteral(")")))) {
+                            new MLiteral(")")) {
+                        @Override
+                        public void onOmitted(ParseHead h) {
+                            h.pushOnParseStack(null);
+                        }
+                    })) {
                 @Override
                 public void onMatched(ParseHead h) {
-                    List parameterList = (List) myParseStack.pop();
-                    String hostId = (String) myParseStack.pop();
+                    List parameterList = (List) h.popFromParseStack();
+                    String hostId = (String) h.popFromParseStack();
 
-                    myParseStack.push(
+                    h.pushOnParseStack(
                             new HostExpression(hostId, parameterList));
                 }
             };
@@ -255,31 +273,33 @@ public class Sbsdl {
             new MAction(IDENTIFIER) {
                 @Override
                 public void onMatched(ParseHead h) {
-                    myParseStack.push(new VString((String) myParseStack.pop()));
+                    h.pushOnParseStack(
+                            new VString((String) h.popFromParseStack()));
                 }
             };
     
     private final Matcher DICTIONARY_FIELD_PAIR = new MSequence(
             NAKED_STRING_IDENTIFIER, 
-            new MAction(new MLiteral(":")) {
-                @Override
-                public void onFailed(ParseHead h) {
-                    myParseStack.pop();
-                }
-            },
+            new MLiteral(":"),
             EXP,
             new MDo() {
                 @Override
-                public void run() {
-                    Expression value = (Expression) myParseStack.pop();
-                    VString fieldName = (VString) myParseStack.pop();
-                    ((Map<Expression, Expression>) myParseStack.peek())
+                public void run(ParseHead h) {
+                    Expression value = (Expression) h.popFromParseStack();
+                    VString fieldName = (VString) h.popFromParseStack();
+                    ((Map<Expression, Expression>) h.peekFromParseStack())
                             .put(fieldName, value);
                 }
             });
     
-    private final Matcher DICTIONARY_LITERAL = new MAction(new MSequence(
+    private final Matcher DICTIONARY_LITERAL = new MSequence(
             new MLiteral("{"),
+            new MDo() {
+                @Override
+                public void run(ParseHead h) {
+                    h.pushOnParseStack(new HashMap());
+                }
+            },
             new MOptional(DICTIONARY_FIELD_PAIR,
                     new MRepeated(
                             new MRequireAhead(new MAlternatives(
@@ -290,32 +310,22 @@ public class Sbsdl {
             new MLiteral("}"),
             new MDo() {
                 @Override
-                public void run() {
+                public void run(ParseHead h) {
                     Map<Expression, Expression> fields =
-                            (Map<Expression, Expression>) myParseStack.pop();
+                            (Map<Expression, Expression>) h.popFromParseStack();
                     
                     DictionaryExpression dict =
                             new DictionaryExpression(fields);
-                    myParseStack.push(dict);
+                    h.pushOnParseStack(dict);
                 }
-            })) {
-                @Override
-                public void before(ParseHead h) {
-                    myParseStack.push(new HashMap());
-                }
-                
-                @Override
-                public void onFailed(ParseHead h) {
-                    myParseStack.pop();
-                }
-            };
+            });
     
     private final Matcher SINGLE_ARGUMENT_DECLARATION =
             new MAction(IDENTIFIER) {
                 @Override
                 public void onMatched(ParseHead h) {
-                    String id = (String) myParseStack.pop();
-                    ((List) myParseStack.peek()).add(id);
+                    String id = (String) h.popFromParseStack();
+                    ((List) h.peekFromParseStack()).add(id);
                 }
             };
     
@@ -326,7 +336,7 @@ public class Sbsdl {
                                     SINGLE_ARGUMENT_DECLARATION))) {
                 @Override
                 public void before(ParseHead h) {
-                    myParseStack.push(new LinkedList());
+                    h.pushOnParseStack(new LinkedList());
                 }
             };
     
@@ -337,10 +347,10 @@ public class Sbsdl {
                 @Override
                 public void onMatched(ParseHead h) {
                     MultiplexingStatement code =
-                            (MultiplexingStatement) myParseStack.pop();
-                    myParseStack.push(
-                            new VFunction(
-                                    (List<String>) myParseStack.pop(), code));
+                            (MultiplexingStatement) h.popFromParseStack();
+                    h.pushOnParseStack(
+                            new VFunction((List<String>) h.popFromParseStack(),
+                                    code));
                 }
             };
     
@@ -368,8 +378,8 @@ public class Sbsdl {
                 @Override
                 public void onMatched(ParseHead h)
                         throws WellFormednessException {
-                    final String e = (String) myParseStack.pop();
-                    myParseStack.push(new LHSAccess() {
+                    final String e = (String) h.popFromParseStack();
+                    h.pushOnParseStack(new LHSAccess() {
                                 @Override
                                 public Expression toValue() {
                                     return new VariableNameExpression(e);
@@ -393,11 +403,12 @@ public class Sbsdl {
                         @Override
                         public void onMatched(ParseHead h) {
                             final Expression key =
-                                    (Expression) myParseStack.pop();
+                                    (Expression) h.popFromParseStack();
                             final Expression dict =
-                                    ((LHSAccess) myParseStack.pop()).toValue();
+                                    ((LHSAccess) h.popFromParseStack())
+                                            .toValue();
                             
-                            myParseStack.push(
+                            h.pushOnParseStack(
                                     new LHSAccess() {
                                         @Override
                                         public Expression toValue() {
@@ -421,11 +432,12 @@ public class Sbsdl {
                         @Override
                         public void onMatched(ParseHead h) {
                             final Expression index =
-                                    (Expression) myParseStack.pop();
+                                    (Expression) h.popFromParseStack();
                             final Expression seq =
-                                    ((LHSAccess) myParseStack.pop()).toValue();
+                                    ((LHSAccess) h.popFromParseStack())
+                                            .toValue();
                             
-                            myParseStack.push(
+                            h.pushOnParseStack(
                                     new LHSAccess() {
                                         @Override
                                         public Expression toValue() {
@@ -450,11 +462,12 @@ public class Sbsdl {
                         @Override
                         public void onMatched(final ParseHead h) {
                             final List<Expression> args =
-                                    (List) myParseStack.pop();
+                                    (List) h.popFromParseStack();
                             final Expression f =
-                                    ((LHSAccess) myParseStack.pop()).toValue();
+                                    ((LHSAccess) h.popFromParseStack())
+                                            .toValue();
                             
-                            myParseStack.push(new LHSAccess() {
+                            h.pushOnParseStack(new LHSAccess() {
                                         @Override
                                         public Expression toValue() {
                                             return new FunctionCallExpression(
@@ -478,8 +491,8 @@ public class Sbsdl {
             new MAction(LHS) {
                 @Override
                 public void onMatched(ParseHead h) {
-                    myParseStack.push(
-                            ((LHSAccess) myParseStack.pop()).toValue());
+                    h.pushOnParseStack(
+                            ((LHSAccess) h.popFromParseStack()).toValue());
                 }
             };
     
@@ -492,17 +505,17 @@ public class Sbsdl {
                         @Override
                         public void onMatched(ParseHead h) {
                             Expression baseExp =
-                                    (Expression) myParseStack.pop();
-                            while (!myParseStack.isEmpty()
-                                    && myParseStack.peek() instanceof
-                                        UnaryExpression.Operator) {
+                                    (Expression) h.popFromParseStack();
+                            while (!h.isParseStackEmpty()
+                                    && (h.peekFromParseStack() instanceof
+                                        UnaryExpression.Operator)) {
                                 baseExp = new UnaryExpression(
                                         (UnaryExpression.Operator)
-                                                myParseStack.pop(),
+                                                h.popFromParseStack(),
                                         baseExp);
                             }
                             
-                            myParseStack.push(baseExp);
+                            h.pushOnParseStack(baseExp);
                         }
                     });
     
@@ -511,10 +524,12 @@ public class Sbsdl {
                     new MAction(new MSequence(new MLiteral("^"), PREFIX_EXP)) {
                         @Override
                         public void onMatched(ParseHead h) {
-                            Expression right = (Expression) myParseStack.pop();
-                            Expression left = (Expression) myParseStack.pop();
+                            Expression right =
+                                    (Expression) h.popFromParseStack();
+                            Expression left =
+                                    (Expression) h.popFromParseStack();
                             
-                            myParseStack.push(new BinaryExpression(left,
+                            h.pushOnParseStack(new BinaryExpression(left,
                                     BinaryExpression.Operator.RAISED_TO,
                                     right));
                         }
@@ -593,45 +608,44 @@ public class Sbsdl {
                                 @Override
                                 public void onMatched(ParseHead h) {
                                     Expression weight =
-                                            (Expression) myParseStack.pop();
+                                            (Expression) h.popFromParseStack();
                                     Expression exp =
-                                            (Expression) myParseStack.pop();
+                                            (Expression) h.popFromParseStack();
                                     
-                                    ((List) myParseStack.peek()).add(
+                                    ((List) h.peekFromParseStack()).add(
                                             new PickSetEntry(exp, weight));
                                 }
                                         
                                 @Override
                                 public void onFailed(ParseHead h) {
                                     Expression exp =
-                                            (Expression) myParseStack.pop();
+                                            (Expression) h.popFromParseStack();
                                     
-                                    ((List) myParseStack.peek()).add(
+                                    ((List) h.peekFromParseStack()).add(
                                             new PickSetEntry(exp, null));
                                 }
                             }));
     
     private final Matcher FROM_POOL = new MSequence(
-            new MOptional(
-                    new MAction(new MSequence(IDENTIFIER, new MLiteral(":"))) {
-                        @Override
-                        public void onFailed(ParseHead h) {
-                            myParseStack.push("@");
-                        }
-                    }),
+            new MOptional(new MSequence(IDENTIFIER, new MLiteral(":"))) {
+                @Override
+                public void onOmitted(ParseHead h) {
+                    h.pushOnParseStack("@");
+                }
+            },
             new MAlternatives(
                     new MAction(EXP) {
                         @Override
                         public void onMatched(ParseHead h) {
-                            myParseStack.push(new IntermediatePickExpression(
-                                    (Expression) myParseStack.pop()));
+                            h.pushOnParseStack(new IntermediatePickExpression(
+                                    (Expression) h.popFromParseStack()));
                         }
                     },
                     new MSequence(
                             new MAction(new MLiteral("{")) {
                                 @Override
                                 public void onMatched(ParseHead h) {
-                                    myParseStack.push(new LinkedList());
+                                    h.pushOnParseStack(new LinkedList());
                                 }
                             },
                             new MOptional(POOL_ELEMENT), 
@@ -648,7 +662,7 @@ public class Sbsdl {
                                     boolean explicitWeight = false;
                                     
                                     List<PickSetEntry> pickSetEntries =
-                                            (List) myParseStack.pop();
+                                            (List) h.popFromParseStack();
                                     for (PickSetEntry elObj : pickSetEntries) {
                                         seq.add(elObj.getExpression());
                                         
@@ -697,16 +711,16 @@ public class Sbsdl {
                                                         weighter), h);
                                     }
                                     
-                                    myParseStack.push(ipe);
+                                    h.pushOnParseStack(ipe);
                                 }
                             })));
     
     private final Matcher WHERE_CLAUSE =
-            new MAction(new MSequence(new MLiteral("where"),
+            new MOptional(new MSequence(new MLiteral("where"),
                     BOOLEAN_LEVEL_EXPRESSION)) {
                 @Override
-                public void onFailed(ParseHead h) {
-                    myParseStack.push(VBoolean.TRUE);
+                public void onOmitted(ParseHead h) {
+                    h.pushOnParseStack(VBoolean.TRUE);
                 }
             };
     
@@ -715,42 +729,42 @@ public class Sbsdl {
      * exemplar_string, ...]}.</p>
      */
     private final Matcher REQUIRED_SINGLE_PICK_TAIL_EXP =
-            new MSequence(FROM_POOL, new MOptional(WHERE_CLAUSE));
+            new MSequence(FROM_POOL, WHERE_CLAUSE);
     
     private final Matcher PICK_COUNT_SPECIFIER = new MSequence(
-            new MOptional(new MAction(NUMERIC_EXP) {
+            new MOptional(NUMERIC_EXP) {
                 @Override
-                public void onFailed(ParseHead h) {
-                    myParseStack.push(VNumber.of(1, 1));
+                public void onOmitted(ParseHead h) {
+                    h.pushOnParseStack(VNumber.of(1, 1));
                 }
-            }),
-            new MOptional(new MAction(new MSequence(
+            },
+            new MOptional(new MSequence(
                     new MLiteral("unique"),
-                    new MOptional(new MAction(PARENTHETICAL_EXP) {
+                    new MOptional(PARENTHETICAL_EXP) {
                         @Override
-                        public void onFailed(ParseHead h) {
-                            myParseStack.push(VBoolean.TRUE);
+                        public void onOmitted(ParseHead h) {
+                            h.pushOnParseStack(VBoolean.TRUE);
                         }
-                    }))) {
+                    })) {
                 @Override
-                public void onFailed(ParseHead h) {
-                    myParseStack.push(VBoolean.FALSE);
+                public void onOmitted(ParseHead h) {
+                    h.pushOnParseStack(VBoolean.FALSE);
                 }
-            }));
+            });
     
     private final Matcher REQUIRED_PICK_EXP = new MAction(new MSequence(
                     new MLiteral("pick"), PICK_COUNT_SPECIFIER,
                     new MLiteral("from"), REQUIRED_SINGLE_PICK_TAIL_EXP)) {
                 @Override
                 public void onMatched(ParseHead h) {
-                    Expression where = (Expression) myParseStack.pop();
+                    Expression where = (Expression) h.popFromParseStack();
                     IntermediatePickExpression ipe =
-                            (IntermediatePickExpression) myParseStack.pop();
-                    String exemplar = (String) myParseStack.pop();
-                    Expression unique = (Expression) myParseStack.pop();
-                    Expression count = (Expression) myParseStack.pop();
+                            (IntermediatePickExpression) h.popFromParseStack();
+                    String exemplar = (String) h.popFromParseStack();
+                    Expression unique = (Expression) h.popFromParseStack();
+                    Expression count = (Expression) h.popFromParseStack();
                     
-                    myParseStack.push(new PickExpression(exemplar,
+                    h.pushOnParseStack(new PickExpression(exemplar,
                             ipe.getPool(), count, unique, ipe.getWeighter(),
                             where, myDecider));
                 }
@@ -770,23 +784,23 @@ public class Sbsdl {
     private final Matcher CODE = new MSequence(
             new MDo() {
                 @Override
-                public void run() {
-                    myParseStack.push(new LinkedList());
+                public void run(ParseHead h) {
+                    h.pushOnParseStack(new LinkedList());
                 }
             },
             new MRepeated(new MAction(STATEMENT) {
                 @Override
                 public void onMatched(ParseHead h) {
-                    Statement stmt = (Statement) myParseStack.pop();
-                    ((List) myParseStack.peek()).add(stmt);
+                    Statement stmt = (Statement) h.popFromParseStack();
+                    ((List) h.peekFromParseStack()).add(stmt);
                 }
             }),
             new MDo() {
                 @Override
-                public void run() {
+                public void run(ParseHead h) {
                     List<Statement> stmts =
-                            (List<Statement>) myParseStack.pop();
-                    myParseStack.push(new MultiplexingStatement(stmts));
+                            (List<Statement>) h.popFromParseStack();
+                    h.pushOnParseStack(new MultiplexingStatement(stmts));
                 }
             });
     
@@ -805,7 +819,8 @@ public class Sbsdl {
                         public void onMatched(ParseHead h)
                                 throws WellFormednessException {
                             Expression eval =
-                                    ((LHSAccess) myParseStack.pop()).toValue();
+                                    ((LHSAccess) h.popFromParseStack())
+                                            .toValue();
                             
                             if (!(eval instanceof FunctionCallExpression)
                                     && !(eval instanceof HostExpression)) {
@@ -813,7 +828,7 @@ public class Sbsdl {
                                         "Expected statement.", h);
                             }
                             
-                            myParseStack.push(new EvaluateStatement(eval));
+                            h.pushOnParseStack(new EvaluateStatement(eval));
                         }
                     },
                     new MAction(new MSequence(new MLiteral("="), EXP,
@@ -821,10 +836,12 @@ public class Sbsdl {
                         @Override
                         public void onMatched(ParseHead h)
                                 throws WellFormednessException {
-                            Expression value = (Expression) myParseStack.pop();
+                            Expression value =
+                                    (Expression) h.popFromParseStack();
                             
-                            myParseStack.push(((LHSAccess) myParseStack.pop())
-                                    .toAssignment(value));
+                            h.pushOnParseStack(
+                                    ((LHSAccess) h.popFromParseStack())
+                                            .toAssignment(value));
                         }
                     }
             ));
@@ -835,18 +852,18 @@ public class Sbsdl {
                 @Override
                 public void onMatched(ParseHead h)
                         throws WellFormednessException {
-                    Statement codeBlock = (Statement) myParseStack.pop();
-                    Expression where = (Expression) myParseStack.pop();
+                    Statement codeBlock = (Statement) h.popFromParseStack();
+                    Expression where = (Expression) h.popFromParseStack();
                     IntermediatePickExpression ipe =
-                            (IntermediatePickExpression) myParseStack.pop();
-                    String exemplar = (String) myParseStack.pop();
+                            (IntermediatePickExpression) h.popFromParseStack();
+                    String exemplar = (String) h.popFromParseStack();
                     
                     if (ipe.getWeighter() != null) {
                         throw new WellFormednessException("Weights not allowed "
                                 + "in for-each statement.", h);
                     }
                     
-                    myParseStack.push(new ForEachStatement(
+                    h.pushOnParseStack(new ForEachStatement(
                             exemplar, ipe.getPool(), where, codeBlock));
                 }
             };
@@ -856,42 +873,43 @@ public class Sbsdl {
             EXP, CODE_BLOCK,
             new MDo() {
                 @Override
-                public void run() {
-                    Statement codeBlock = (Statement) myParseStack.pop();
-                    Expression exp = (Expression) myParseStack.pop();
+                public void run(ParseHead h) {
+                    Statement codeBlock = (Statement) h.popFromParseStack();
+                    Expression exp = (Expression) h.popFromParseStack();
                     
-                    myParseStack.push(new LinkedList());
+                    h.pushOnParseStack(new LinkedList());
                     
-                    ((Deque) myParseStack.peek()).push(exp);
-                    ((Deque) myParseStack.peek()).push(codeBlock);
+                    ((Deque) h.peekFromParseStack()).push(exp);
+                    ((Deque) h.peekFromParseStack()).push(codeBlock);
                 }
             },
             new MRepeated(new MLiteral("else"), new MLiteral("if"), EXP,
                     CODE_BLOCK,
                     new MDo() {
                         @Override
-                        public void run() {
+                        public void run(ParseHead h) {
                             Statement codeBlock =
-                                    (Statement) myParseStack.pop();
-                            Expression exp = (Expression) myParseStack.pop();
-                            ((Deque) myParseStack.peek()).push(exp);
-                            ((Deque) myParseStack.peek()).push(codeBlock);
+                                    (Statement) h.popFromParseStack();
+                            Expression exp = (Expression) h.popFromParseStack();
+                            ((Deque) h.peekFromParseStack()).push(exp);
+                            ((Deque) h.peekFromParseStack()).push(codeBlock);
                         }
                     }),
             new MOptional(new MLiteral("else"), CODE_BLOCK,
                     new MDo() {
                         @Override
-                        public void run() {
+                        public void run(ParseHead h) {
                             Statement codeBlock =
-                                    (Statement) myParseStack.pop();
-                            ((Deque) myParseStack.peek()).push(VBoolean.TRUE);
-                            ((Deque) myParseStack.peek()).push(codeBlock);
+                                    (Statement) h.popFromParseStack();
+                            ((Deque) h.peekFromParseStack())
+                                    .push(VBoolean.TRUE);
+                            ((Deque) h.peekFromParseStack()).push(codeBlock);
                         }
                     }),
             new MDo() {
                 @Override
-                public void run() {
-                    Deque ifComponents = (Deque) myParseStack.pop();
+                public void run(ParseHead h) {
+                    Deque ifComponents = (Deque) h.popFromParseStack();
                     
                     Statement curIf = Statement.NO_OP;
                     do {
@@ -901,7 +919,7 @@ public class Sbsdl {
                         curIf = new IfStatement(condition, onTrue, curIf);
                     } while (!ifComponents.isEmpty());
                     
-                    myParseStack.push(curIf);
+                    h.pushOnParseStack(curIf);
                 }
             });
     
@@ -910,31 +928,39 @@ public class Sbsdl {
                     new MLiteral("return"), EXP, new MLiteral(";"))) {
                 @Override
                 public void onMatched(ParseHead h) {
-                    myParseStack.push(new ReturnStatement(
-                            (Expression) myParseStack.pop()));
+                    h.pushOnParseStack(new ReturnStatement(
+                            (Expression) h.popFromParseStack()));
                 }
             };
     
     private final Matcher INTRO_STMT =
             new MSequence(
-                    new MLiteral("intro"), IDENTIFIER, 
-                    new MOptional(new MAction(new MSequence(
+                    new MLiteral("intro"),
+                    new MRequire(IDENTIFIER, "Expected identifier."),
+                    new MRequireAhead(
+                            new MAlternatives(
+                                    new MLiteral("="),
+                                    new MLiteral(";")
+                            ),
+                            "Expected '=' or ';'."),
+                    new MOptional(new MSequence(
                             new MLiteral("="), EXP)) {
                         @Override
-                        public void onFailed(ParseHead h) {
-                            myParseStack.push(VUnavailable.INSTANCE);
+                        public void onOmitted(ParseHead h) {
+                            h.pushOnParseStack(VUnavailable.INSTANCE);
                         }
-                    }),
+                    },
                     new MLiteral(";"),
                     new MDo() {
                         @Override
-                        public void run() {
+                        public void run(ParseHead h) {
                             Expression initialValue =
-                                    (Expression) myParseStack.pop();
-                            String name = (String) myParseStack.pop();
+                                    (Expression) h.popFromParseStack();
+                            String name = (String) h.popFromParseStack();
                             
-                            myParseStack.push(new VariableIntroductionStatement(
-                                    name, initialValue));
+                            h.pushOnParseStack(
+                                    new VariableIntroductionStatement(
+                                            name, initialValue));
                         }
                     });
     
@@ -958,7 +984,6 @@ public class Sbsdl {
                     new MRepeated(new MAlternatives(COMMENT, CSet.WHITESPACE)),
                     null);
     
-    private final ParseStack myParseStack = new ParseStack();
     private final HostEnvironment myHostEnvironment;
     
     private final Decider myDecider;
@@ -978,7 +1003,14 @@ public class Sbsdl {
     }
     
     public void run(String input) throws WellFormednessException {
-        ParseHead h = new ParseHead(input);
+        ParseHead h;
+        
+        if (DEBUG) {
+            h = new DebugParseHead(input);
+        }
+        else {
+            h = new ParseHead(input);
+        }
         h.setSkip(DEFAULT_SKIPPER);
         
         try {
@@ -994,10 +1026,10 @@ public class Sbsdl {
         }
         
         ScriptEnvironment s = new ScriptEnvironment();
-        ((MultiplexingStatement) myParseStack.pop())
+        ((MultiplexingStatement) h.popFromParseStack())
                 .execute(myHostEnvironment, s);
         
-        if (!myParseStack.isEmpty()) {
+        if (!h.getParseStackCopy().isEmpty()) {
             throw new RuntimeException();
         }
     }
@@ -1066,7 +1098,7 @@ public class Sbsdl {
         
         @Override
         public void onMatched(ParseHead h) {
-            myParseStack.push(myObject);
+            h.pushOnParseStack(myObject);
             
             if (DEBUG) {
                 System.out.println("MPush matched " + myInstantiationLocation);
@@ -1104,12 +1136,12 @@ public class Sbsdl {
         
         @Override
         public void onMatched(ParseHead h) {
-            Expression right = (Expression) myParseStack.pop();
+            Expression right = (Expression) h.popFromParseStack();
             BinaryExpression.Operator op =
-                    (BinaryExpression.Operator) myParseStack.pop();
-            Expression left = (Expression) myParseStack.pop();
+                    (BinaryExpression.Operator) h.popFromParseStack();
+            Expression left = (Expression) h.popFromParseStack();
 
-            myParseStack.push(new BinaryExpression(left, op, right));
+            h.pushOnParseStack(new BinaryExpression(left, op, right));
             
             if (DEBUG) {
                 System.out.println(
@@ -1182,8 +1214,8 @@ public class Sbsdl {
         
         @Override
         public void onMatched(final ParseHead h) {
-            final Expression e = (Expression) myParseStack.pop();
-            myParseStack.push(new LHSAccess() {
+            final Expression e = (Expression) h.popFromParseStack();
+            h.pushOnParseStack(new LHSAccess() {
                         @Override
                         public Expression toValue() {
                             return e;
@@ -1267,5 +1299,61 @@ public class Sbsdl {
     
     public static interface Decider {
         public boolean randomize(double chance);
+    }
+    
+    public class DebugParseHead extends ParseHead {
+        public DebugParseHead(String input) {
+            super(input);
+        }
+
+        @Override
+        public void pushOnParseStack(Object o) {
+            super.pushOnParseStack(o);
+            
+            System.out.print("\nPush ");
+            debugPrint();
+        }
+
+        @Override
+        public Object popFromParseStack() {
+            Object result = super.popFromParseStack();
+            
+            if (DEBUG) {
+                System.out.print("\nPop ");
+                debugPrint();
+            }
+            
+            return result;
+        }
+        
+        private void debugPrint() {
+            Deque parseStack = getParseStackCopy();
+            
+            System.out.println(new RuntimeException().getStackTrace()[2]);
+            
+            System.out.print("[");
+            
+            Deque head = new LinkedList();
+            while (head.size() < 4 && !parseStack.isEmpty()) {
+                if (!head.isEmpty()) {
+                    System.out.print(", ");
+                }
+                
+                Object o = parseStack.pop();
+                System.out.print(o);
+                
+                head.push(o);
+            }
+            
+            if (!parseStack.isEmpty()) {
+                System.out.print(", ...");
+            }
+            
+            System.out.println("]");
+            
+            while (!head.isEmpty()) {
+                parseStack.push(head.pop());
+            }
+        }
     }
 }

@@ -23,7 +23,7 @@ public class FunctionCallExpression implements Expression {
         
         List<Value> paramVals = new ArrayList<>(myParameters.size());
         for (Expression p : myParameters) {
-            paramVals.add(p.evaluate(h, s));
+            paramVals.add(p.evaluate(h, s).copy(false));
         }
         
         return fValue.call(h, s, paramVals);

@@ -16,6 +16,6 @@ public class TopLevelVariableAssignmentStatement implements Statement {
 
     @Override
     public void execute(Sbsdl.HostEnvironment h, ScriptEnvironment s) {
-        s.assignValue(myVarName, myExpression.evaluate(h, s).copy());
+        s.assignValue(myVarName, myExpression.evaluate(h, s).copy(false));
     }
 }

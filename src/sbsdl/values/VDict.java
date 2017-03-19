@@ -1,16 +1,23 @@
 package sbsdl.values;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-public class VDict extends SkeletonValue<VDict> {
+public class VDict extends ContainerValue<VDict> {
     private final Map<Value, Value> myValue = new HashMap<>();
     
-    public VDict() { }
-    public VDict(Map<Value, Value> value) {
+    public VDict() {
+        this(false, Collections.EMPTY_MAP);
+    }
+    
+    public VDict(boolean forbidProxies, Map<Value, Value> value) {
+        super(forbidProxies);
+        
         for (Map.Entry<Value, Value> entry : value.entrySet()) {
-            myValue.put(entry.getKey().copy(), entry.getValue().copy());
+            myValue.put(entry.getKey().copy(forbidProxies),
+                    entry.getValue().copy(forbidProxies));
         }
     }
     
@@ -58,13 +65,17 @@ public class VDict extends SkeletonValue<VDict> {
         return Objects.hash(VDict.class, myValue);
     }
 
+    public int referenceHashCode() {
+        return super.hashCode();
+    }
+    
     @Override
     public VDict assertIsDict() {
         return this;
     }
 
     @Override
-    public VDict copy() {
-        return new VDict(myValue);
+    public VDict copy(boolean forbidProxies) {
+        return new VDict(forbidProxies, myValue);
     }
 }

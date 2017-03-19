@@ -1,12 +1,7 @@
 package sbsdl.values;
 
-public class VUnavailable extends SkeletonValue {
+public class VUnavailable extends ImmutableValue<VUnavailable> {
     public static VUnavailable INSTANCE = new VUnavailable();
     
     private VUnavailable() { }
-
-    @Override
-    public Value copy() {
-        return this;
-    }
 }

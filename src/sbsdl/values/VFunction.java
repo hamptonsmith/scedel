@@ -9,7 +9,7 @@ import sbsdl.statements.MultiplexingStatement;
 import sbsdl.statements.ReturnStatement;
 import sbsdl.statements.Statement;
 
-public class VFunction extends SkeletonValue {
+public class VFunction extends ImmutableValue<VFunction> {
     public static VFunction buildConstantFunction(int argCount, Value result) {
         List<String> args = new ArrayList<>(argCount);
         for (int i = 0; i < argCount; i++) {
@@ -59,11 +59,6 @@ public class VFunction extends SkeletonValue {
     
     @Override
     public VFunction assertIsFunction() {
-        return this;
-    }
-
-    @Override
-    public Value copy() {
         return this;
     }
 }

@@ -19,68 +19,280 @@ import sbsdl.values.Value;
 
 public class SbsdlTest {
     @Test
-    public void evaluationTests()
+    public void unavailableLiteral()
             throws WellFormednessException, Sbsdl.HostEnvironmentException {
-        List<EvaluationTest> tests = Arrays.asList(new EvaluationTest[] {
-            new EvaluationTest(
-                    "unavailable", "unavailable", VUnavailable.INSTANCE),
-            new EvaluationTest("none", "none", VNone.INSTANCE),
-            new EvaluationTest("basic true", "true", VBoolean.TRUE),
-            new EvaluationTest("basic false", "false", VBoolean.FALSE),
-            new EvaluationTest("and1", "true and true", VBoolean.TRUE),
-            new EvaluationTest("and2", "true and false", VBoolean.FALSE),
-            new EvaluationTest("and3", "false and true", VBoolean.FALSE),
-            new EvaluationTest("and4", "false and false", VBoolean.FALSE),
-            new EvaluationTest("or1", "true or true", VBoolean.TRUE),
-            new EvaluationTest("or2", "true or false", VBoolean.TRUE),
-            new EvaluationTest("or3", "false or true", VBoolean.TRUE),
-            new EvaluationTest("or4", "false or false", VBoolean.FALSE),
-            new EvaluationTest("not1", "not true", VBoolean.FALSE),
-            new EvaluationTest("not2", "not false", VBoolean.TRUE),
-            new EvaluationTest(
-                    "basic number", "123.457", VNumber.of(123457, 1000)),
-            new EvaluationTest("basic string", "'hello \\'quoted'",
-                    new VString("hello 'quoted")),
-            new EvaluationTest("basic sequence", "[3.1, 'foo', []]",
-                    new VSeq(VNumber.of(31, 10), new VString("foo"),
-                            new VSeq())),
-            new EvaluationTest("empty sequence", "[]", new VSeq()),
-            new EvaluationTest(
-                    "singleton sequence", "[1]", new VSeq(VNumber.of(1, 1))),
-            new EvaluationTest("basic function", "fn(x) { return x; }(123)",
-                    VNumber.of(123, 1)),
-            new EvaluationTest("basic pick", "pick 2 unique from "
-                    + "{ 'foo' {1}, 'bar' {5}, 'bazz' {5} }",
-                    new VSeq(new VString("foo"), new VString("bazz")),
-                    true, false, false, false, true),
-            new EvaluationTest("basic pick implicit weight",
-                    "pick 2 unique from { 'foo', 'bar', 'bazz' }",
-                    new VSeq(new VString("foo"), new VString("bazz")),
-                    true, false, false, false, true),
-            new EvaluationTest("basic sequence pick",
-                    "pick 2 unique from [ 'foo', 'bar', 'bazz' ]",
-                    new VSeq(new VString("foo"), new VString("bazz")),
-                    true, false, false, false, true),
-            new EvaluationTest("basic dictionary", "{foo: 5, bar: 2 + 4}",
+        evaluationTest("unavailable", VUnavailable.INSTANCE);
+    }
+    
+    @Test
+    public void noneLiteral()
+            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+        evaluationTest("none", VNone.INSTANCE);
+    }
+    
+    @Test
+    public void trueLiteral()
+            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+        evaluationTest("true", VBoolean.TRUE);
+    }
+    
+    @Test
+    public void falseLiteral()
+            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+        evaluationTest("false", VBoolean.FALSE);
+    }
+    
+    @Test
+    public void andTT()
+            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+        evaluationTest("true and true", VBoolean.TRUE);
+    }
+    
+    @Test
+    public void andTF()
+            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+        evaluationTest("true and false", VBoolean.FALSE);
+    }
+    
+    @Test
+    public void andFT()
+            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+        evaluationTest("false and true", VBoolean.FALSE);
+    }
+    
+    @Test
+    public void andFF()
+            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+        evaluationTest("false and false", VBoolean.FALSE);
+    }
+    
+    @Test
+    public void orTT()
+            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+        evaluationTest("true or true", VBoolean.TRUE);
+    }
+    
+    @Test
+    public void orTF()
+            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+        evaluationTest("true or false", VBoolean.TRUE);
+    }
+    
+    @Test
+    public void orFT()
+            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+        evaluationTest("false or true", VBoolean.TRUE);
+    }
+    
+    @Test
+    public void orFF()
+            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+        evaluationTest("false or false", VBoolean.FALSE);
+    }
+    
+    @Test
+    public void notT()
+            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+        evaluationTest("not true", VBoolean.FALSE);
+    }
+    
+    @Test
+    public void notF()
+            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+        evaluationTest("not false", VBoolean.TRUE);
+    }
+    
+    @Test
+    public void fractionalNumber()
+            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+        evaluationTest("123.457", VNumber.of(123457, 1000));
+    }
+    
+    @Test
+    public void wholeNumber()
+            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+        evaluationTest("123", VNumber.of(123, 1));
+    }
+    
+    @Test
+    public void stringLiteral()
+            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+        evaluationTest("'hello \\'quoted'", new VString("hello 'quoted"));
+    }
+    
+    @Test
+    public void emptyStringLiteral()
+            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+        evaluationTest("''", new VString(""));
+    }
+    
+    @Test
+    public void sequenceLiteral()
+            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+        evaluationTest("[3.1, 'foo', []]",
+                new VSeq(VNumber.of(31, 10), new VString("foo"), new VSeq()));
+    }
+    
+    @Test
+    public void emptySequence()
+            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+        evaluationTest("[]", new VSeq());
+    }
+    
+    @Test
+    public void singletonSequence()
+            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+        evaluationTest("[1]", new VSeq(VNumber.of(1, 1)));
+    }
+    
+    @Test
+    public void functionLiteral()
+            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+        evaluationTest("fn(x) { return x; }(123)", VNumber.of(123, 1));
+    }
+    
+    @Test
+    public void uniquePickExplicitWeight()
+            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+        evaluationTest(
+                "pick 2 unique from { 'foo' {1}, 'bar' {5}, 'bazz' {5} }", 
+                new VSeq(new VString("foo"), new VString("bazz")),
+                true, false, false, false, true);
+    }
+    
+    @Test
+    public void uniquePickImplicitWeight()
+            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+        evaluationTest(
+                "pick 2 unique from { 'foo', 'bar', 'bazz' }", 
+                new VSeq(new VString("foo"), new VString("bazz")),
+                true, false, false, false, true);
+    }
+    
+    @Test
+    public void expressionParameterizedUniqueTrue()
+            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+        evaluationTest(
+                "pick 2 unique(true) from { 'foo', 'bar', 'bazz' }", 
+                new VSeq(new VString("foo"), new VString("bazz")),
+                true, false, false, false, true);
+    }
+    
+    @Test
+    public void expressionParameterizedUniqueFalse()
+            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+        evaluationTest(
+                "pick 2 unique(false) from { 'foo', 'bar', 'bazz' }", 
+                new VSeq(new VString("foo"), new VString("foo")),
+                true, false, false, true, false, false);
+    }
+    
+    @Test
+    public void pickExplicitWeight()
+            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+        evaluationTest(
+                "pick 2 from { 'foo' {1}, 'bar' {5}, 'bazz' {5} }", 
+                new VSeq(new VString("foo"), new VString("foo")),
+                true, false, false, true, false, false);
+    }
+    
+    @Test
+    public void pickImplicitWeight()
+            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+        evaluationTest(
+                "pick 2 from { 'foo', 'bar', 'bazz' }", 
+                new VSeq(new VString("foo"), new VString("foo")),
+                true, false, false, true, false, false);
+    }
+    
+    @Test
+    public void pickSingleYeildsElementInsteadOfSequence()
+            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+        evaluationTest(
+                "pick 1 from { 'foo', 'bar', 'bazz' }", 
+                new VString("foo"),
+                true, false, false);
+    }
+    
+    @Test
+    public void pickImplicitCount()
+            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+        evaluationTest(
+                "pick from { 'foo', 'bar', 'bazz' }", 
+                new VString("foo"),
+                true, false, false);
+    }
+    
+    @Test
+    public void pickFromSequence()
+            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+        evaluationTest(
+                "pick 2 unique from [ 'foo', 'bar', 'bazz' ]",
+                new VSeq(new VString("foo"), new VString("bazz")),
+                true, false, false, false, true);
+    }
+    
+    @Test
+    public void dictionaryLiteral()
+            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+        evaluationTest("{foo: 5, bar: 2 + 4}",
                     new VDict().put(new VString("foo"), VNumber.of(5, 1))
-                            .put(new VString("bar"), VNumber.of(6, 1))),
-            new EvaluationTest("empty disctionary", "{}", new VDict()),
-            new EvaluationTest("singleton dictionary", "{foo: 5}",
-                    new VDict().put(new VString("foo"), VNumber.of(5, 1))),
-            new EvaluationTest("sequence indexing", "[3, 4, 5][1]",
-                    VNumber.of(4, 1)),
-            new EvaluationTest("dictionary access",
-                    "{foo: 5, bar: 6, bazz: 9}.bar", VNumber.of(6, 1)),
-            new EvaluationTest("dictionary access expression",
-                    "{foo: 5, bar: 6, bazz: 9}.('bar')", VNumber.of(6, 1)),
-            new EvaluationTest("order of operations",
-                    "1 + 3 * 5 * 2 ^ 4 * (6 + 7)", VNumber.of(3121, 1)),
-            new EvaluationTest("simple string concat", "'foo' + 'bar'",
-                    new VString("foobar")),
-            new EvaluationTest("string concat w/ number", "'foo' + 4.1",
-                    new VString("foo(41 / 10)")),
-            new EvaluationTest("nested structures",
-                    "{"
+                            .put(new VString("bar"), VNumber.of(6, 1)));
+    }
+    
+    @Test
+    public void emptyDictionary()
+            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+        evaluationTest("{}", new VDict());
+    }
+    
+    @Test
+    public void singletonDictionary()
+            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+        evaluationTest("{foo: 5}",
+                    new VDict().put(new VString("foo"), VNumber.of(5, 1)));
+    }
+    
+    @Test
+    public void sequenceIndexing()
+            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+        evaluationTest("[3, 4, 5][1]", VNumber.of(4, 1));
+    }
+    
+    @Test
+    public void dictionaryAccess()
+            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+        evaluationTest("{foo: 5, bar: 6, bazz: 9}.bar", VNumber.of(6, 1));
+    }
+    
+    @Test
+    public void dictionaryAccessExpression()
+            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+        evaluationTest("{foo: 5, bar: 6, bazz: 9}.('bar')", VNumber.of(6, 1));
+    }
+    
+    @Test
+    public void orderOfOperations()
+            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+        evaluationTest("1 + 3 * 5 * 2 ^ 4 * (6 + 7)", VNumber.of(3121, 1));
+    }
+    
+    @Test
+    public void stringConcatenation()
+            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+        evaluationTest("'foo' + 'bar'", new VString("foobar"));
+    }
+    
+    @Test
+    public void stringConcatenationWithNumbers()
+            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+        evaluationTest("'foo' + 4.1", new VString("foo(41 / 10)"));
+    }
+    
+    @Test
+    public void nestedStructures()
+            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+        evaluationTest("{"
                         + "foo: ["
                             + "[1, 2, {}],"
                             + "{"
@@ -107,61 +319,67 @@ public class SbsdlTest {
                                                             VNumber.of(6, 1)))))
                         .put(new VString("bar"),
                                 new VSeq(new VSeq(new VSeq(new VSeq(
-                                        new VSeq()))))))
-        });
-        
-        Sbsdl.HostEnvironment h = Mockito.mock(Sbsdl.HostEnvironment.class);
-        TestDecider d = new TestDecider();
-        
-        Sbsdl s = new Sbsdl(h, d);
-        
-        for (EvaluationTest t : tests) {
-            System.out.println("\n\n\n");
-            System.out.println("=============================================");
-            System.out.println("Starting test: " + t.myName + "\n\n");
-            
-            Mockito.reset(h);
-            Mockito.when(h.evaluate(Mockito.anyString(), Mockito.anyList()))
-                .thenReturn(VUnavailable.INSTANCE);
-            
-            d.setResults(t.myDeciderResults);
-            
-            try {
-                s.run("#out(" + t.myExpression + ");");
-            }
-            catch (WellFormednessException wfe) {
-                System.out.println(wfe);
-                throw wfe;
-            }
-            
-            Mockito.verify(h).evaluate("out", list(t.myExpectedResult));
-        }
+                                        new VSeq()))))));
     }
     
     @Test
-    public void executionTests()
-            throws WellFormednessException, Sbsdl.HostEnvironmentException {
-        List<ExecutionTest> tests = Arrays.asList(new ExecutionTest[] {
-            new ExecutionTest("simple intro stmt", "intro x;", "x",
-                    VUnavailable.INSTANCE),
-            new ExecutionTest("intro with initial value", "intro x = 5;", "x",
-                    VNumber.of(5, 1)),
-            new ExecutionTest("top level assign", "intro x; x = 5;", "x",
-                    VNumber.of(5, 1)),
-            new ExecutionTest("self assign", "intro x = 'a'; x = x + 'b';", "x",
-                    new VString("ab")),
-            new ExecutionTest("if1", "intro p = true; intro x; if p { x = 5; }",
-                    "x", VNumber.of(5, 1)),
-            new ExecutionTest("if2",
-                    "intro p = false; intro x; if p { x = 5; }", "x",
-                    VUnavailable.INSTANCE),
-            new ExecutionTest("ifelse1",
-                    "intro p = true; intro x; if p { x = 1; } else { x = 2; }",
-                    "x", VNumber.of(1, 1)),
-            new ExecutionTest("ifelse2",
-                    "intro p = false; intro x; if p { x = 1; } else { x = 2; }",
-                    "x", VNumber.of(2, 1)),
-            new ExecutionTest("ifelseif1",
+    public void introStatement()
+            throws Sbsdl.ExecutionException, WellFormednessException{
+        executionTest("intro x;", "x", VUnavailable.INSTANCE);
+    }
+    
+    @Test
+    public void introStatementWithInitialValue()
+            throws Sbsdl.ExecutionException, WellFormednessException{
+        executionTest("intro x = 5;", "x", VNumber.of(5, 1));
+    }
+    
+    @Test
+    public void topLevelAssign()
+            throws Sbsdl.ExecutionException, WellFormednessException{
+        executionTest("intro x; x = 5;", "x", VNumber.of(5, 1));
+    }
+    
+    @Test
+    public void selfAssign()
+            throws Sbsdl.ExecutionException, WellFormednessException{
+        executionTest("intro x = 'a'; x = x + 'b';", "x", new VString("ab"));
+    }
+    
+    @Test
+    public void simpleIfT()
+            throws Sbsdl.ExecutionException, WellFormednessException{
+        executionTest("intro p = true; intro x; if p { x = 5; }", "x",
+                VNumber.of(5, 1));
+    }
+    
+    @Test
+    public void simpleIfF()
+            throws Sbsdl.ExecutionException, WellFormednessException{
+        executionTest("intro p = false; intro x; if p { x = 5; }", "x",
+                VUnavailable.INSTANCE);
+    }
+    
+    @Test
+    public void ifElseTrue()
+            throws Sbsdl.ExecutionException, WellFormednessException{
+        executionTest(
+                "intro p = true; intro x; if p { x = 1; } else { x = 2; }", "x",
+                VNumber.of(1, 1));
+    }
+    
+    @Test
+    public void ifElseFalse()
+            throws Sbsdl.ExecutionException, WellFormednessException{
+        executionTest(
+                "intro p = false; intro x; if p { x = 1; } else { x = 2; }",
+                "x", VNumber.of(2, 1));
+    }
+    
+    @Test
+    public void ifElseIfTrue()
+            throws Sbsdl.ExecutionException, WellFormednessException{
+        executionTest(
                     "intro y = 1;"
                   + "intro x;"
                   + "if y = 1 {"
@@ -170,8 +388,13 @@ public class SbsdlTest {
                   + "else if y = 2 {"
                   + "    x = 'else if';"
                   + "}",
-                    "x", new VString("if")),
-            new ExecutionTest("ifelseif2",
+                    "x", new VString("if"));
+    }
+    
+    @Test
+    public void ifElseIfTrue2()
+            throws Sbsdl.ExecutionException, WellFormednessException{
+        executionTest(
                     "intro y = 2;"
                   + "intro x;"
                   + "if y = 1 {"
@@ -180,8 +403,13 @@ public class SbsdlTest {
                   + "else if y = 2 {"
                   + "    x = 'else if';"
                   + "}",
-                    "x", new VString("else if")),
-            new ExecutionTest("ifelseif3",
+                    "x", new VString("else if"));
+    }
+    
+    @Test
+    public void ifElseIfFalse()
+            throws Sbsdl.ExecutionException, WellFormednessException{
+        executionTest(
                     "intro y = 3;"
                   + "intro x;"
                   + "if y = 1 {"
@@ -190,8 +418,13 @@ public class SbsdlTest {
                   + "else if y = 2 {"
                   + "    x = 'else if';"
                   + "}",
-                    "x", VUnavailable.INSTANCE),
-            new ExecutionTest("fullif1",
+                    "x", VUnavailable.INSTANCE);
+    }
+    
+    @Test
+    public void fullIfTrue1()
+            throws Sbsdl.ExecutionException, WellFormednessException{
+        executionTest(
                     "intro y = 1;"
                   + "intro x;"
                   + "if y = 1 {"
@@ -206,8 +439,13 @@ public class SbsdlTest {
                   + "else {"
                   + "    x = 'else';"
                   + "}",
-                    "x", new VString("if")),
-            new ExecutionTest("fullif2",
+                    "x", new VString("if"));
+    }
+    
+    @Test
+    public void fullIfTrue2()
+            throws Sbsdl.ExecutionException, WellFormednessException{
+        executionTest(
                     "intro y = 2;"
                   + "intro x;"
                   + "if y = 1 {"
@@ -222,8 +460,13 @@ public class SbsdlTest {
                   + "else {"
                   + "    x = 'else';"
                   + "}",
-                    "x", new VString("else if 1")),
-            new ExecutionTest("fullif3",
+                    "x", new VString("else if 1"));
+    }
+    
+    @Test
+    public void fullIfTrue3()
+            throws Sbsdl.ExecutionException, WellFormednessException{
+        executionTest(
                     "intro y = 3;"
                   + "intro x;"
                   + "if y = 1 {"
@@ -238,8 +481,13 @@ public class SbsdlTest {
                   + "else {"
                   + "    x = 'else';"
                   + "}",
-                    "x", new VString("else if 2")),
-            new ExecutionTest("fullif4",
+                    "x", new VString("else if 2"));
+    }
+    
+    @Test
+    public void fullIfFalse()
+            throws Sbsdl.ExecutionException, WellFormednessException{
+        executionTest(
                     "intro y = 4;"
                   + "intro x;"
                   + "if y = 1 {"
@@ -254,79 +502,208 @@ public class SbsdlTest {
                   + "else {"
                   + "    x = 'else';"
                   + "}",
-                    "x", new VString("else")),
-            new ExecutionTest("foreach pick",
+                    "x", new VString("else"));
+    }
+    
+    @Test
+    public void forEachExplicitPool()
+            throws Sbsdl.ExecutionException, WellFormednessException{
+        executionTest(
                     "intro x = '';"
                   + "for each {'abc', 'def', 'ghi'} {"
                   + "    x = x + @;"
                   + "}",
-                    "x", new VString("abcdefghi")),
-            new ExecutionTest("foreach pick w/ exemplar",
+                    "x", new VString("abcdefghi"));
+    }
+    
+    @Test
+    public void forEachExplicitPoolWithExemplar()
+            throws Sbsdl.ExecutionException, WellFormednessException{
+        executionTest(
                     "intro x = '';"
                   + "for each s : {'abc', 'def', 'ghi'} {"
                   + "    x = x + s;"
                   + "}",
-                    "x", new VString("abcdefghi")),
-            new ExecutionTest("foreach seq",
+                    "x", new VString("abcdefghi"));
+    }
+    
+    @Test
+    public void forEachSequence()
+            throws Sbsdl.ExecutionException, WellFormednessException{
+        executionTest(
                     "intro x = '';"
                   + "for each ['abc', 'def', 'ghi'] {"
                   + "    x = x + @;"
                   + "}",
-                    "x", new VString("abcdefghi")),
-            new ExecutionTest("nested for each",
+                    "x", new VString("abcdefghi"));
+    }
+    
+    @Test
+    public void nestedForEach()
+            throws Sbsdl.ExecutionException, WellFormednessException{
+        executionTest(
                     "intro x = '';"
                   + "for each s : ['a', 'b', 'c'] {"
                   + "    for each {'d', 'e'} {"
                   + "        x = x + s + @;"
                   + "    }"
                   + "}",
-                    "x", new VString("adaebdbecdce")),
-            new ExecutionTest("for each where",
+                    "x", new VString("adaebdbecdce"));
+    }
+    
+    @Test
+    public void forEachWhere()
+            throws Sbsdl.ExecutionException, WellFormednessException{
+        executionTest(
                     "intro x = '';"
                   + "for each {3, 1, 4, 1, 5, 9, 2} where @ > 4 {"
                   + "    x = x + @;"
                   + "}",
-                    "x", new VString("59")),
-            new ExecutionTest("for each where exemplar",
+                    "x", new VString("59"));
+    }
+    
+    @Test
+    public void forEachWhereExemplar()
+            throws Sbsdl.ExecutionException, WellFormednessException{
+        executionTest(
                     "intro x = '';"
                   + "for each s : {3, 1, 4, 1, 5, 9, 2} where s > 4 {"
                   + "    x = x + s;"
                   + "}",
-                    "x", new VString("59")),
-            new ExecutionTest("evaluation statement",
+                    "x", new VString("59"));
+    }
+    
+    @Test
+    public void evaluationStatement()
+            throws Sbsdl.ExecutionException, WellFormednessException{
+        executionTest(
                     "intro x = fn (y) { #mem(y); };"
                   + "x(6);",
-                    "#mem(unavailable)", VNumber.of(6, 1))
-        });
-        
-        TestEnvironment h = new TestEnvironment();
-        TestDecider d = new TestDecider();
-        
-        Sbsdl s = new Sbsdl(h, d);
-        
-        for (ExecutionTest t : tests) {
-            System.out.println("\n\n\n");
-            System.out.println("=============================================");
-            System.out.println("Starting test: " + t.getName() + "\n\n");
-            
-            h.reset();
-            
-            d.setResults(t.getDeciderValues());
-            
-            try {
-                s.run(t.getSetup() + "#out(" + t.getExpression() + ");");
-            }
-            catch (WellFormednessException wfe) {
-                System.out.println(wfe);
-                throw wfe;
-            }
-            
-            Assert.assertEquals(t.getExpected(), h.myOut.get(0));
-        }
+                    "#mem(unavailable)", VNumber.of(6, 1));
+    }
+    
+    @Test
+    public void pickFromExpression()
+            throws Sbsdl.ExecutionException, WellFormednessException{
+        executionTest(
+                    "intro asdf = ['a'];", "pick from asdf", new VString("a"),
+                    true);
+    }
+    
+    @Test
+    public void introInitializerValueSemantics()
+            throws Sbsdl.ExecutionException, WellFormednessException{
+        executionTest(
+                    "intro x = [1, 2, 3];"
+                  + "intro y = x;"
+                  + "x[1] = 9;",
+                    "[x[1], y[1]]",
+                    new VSeq(VNumber.of(9, 1), VNumber.of(2, 1)));
+    }
+    
+    @Test
+    public void topLevelAssignmentValueSemantics()
+            throws Sbsdl.ExecutionException, WellFormednessException{
+        executionTest(
+                    "intro x = [1, 2, 3];"
+                  + "intro y;"
+                  + "y = x;"
+                  + "x[1] = 9;",
+                    "[x[1], y[1]]",
+                    new VSeq(VNumber.of(9, 1), VNumber.of(2, 1)));
+    }
+    
+    @Test
+    public void dictionaryFieldValueSemantics()
+            throws Sbsdl.ExecutionException, WellFormednessException{
+        executionTest(
+                    "intro x = [1, 2, 3];"
+                  + "intro y = {};"
+                  + "y.foo = x;"
+                  + "x[1] = 9;",
+                    "[x[1], y.foo[1]]",
+                    new VSeq(VNumber.of(9, 1), VNumber.of(2, 1)));
+    }
+    
+    @Test
+    public void sequenceElementValueSemantics()
+            throws Sbsdl.ExecutionException, WellFormednessException{
+        executionTest(
+                    "intro x = [1, 2, 3];"
+                  + "intro y = ['z'];"
+                  + "y[0] = x;"
+                  + "x[1] = 9;",
+                    "[x[1], y[0][1]]",
+                    new VSeq(VNumber.of(9, 1), VNumber.of(2, 1)));
+    }
+    
+    @Test
+    public void functionParameterValueSemantics()
+            throws Sbsdl.ExecutionException, WellFormednessException{
+        executionTest(
+                    "intro x = [1, 2, 3];"
+                  + "intro y = fn (xs) { xs[1] = 9; };"
+                  + "y(x);",
+                    "x[1]", VNumber.of(2, 1));
+    }
+    
+    @Test
+    public void pickStatementValueSemantics()
+            throws Sbsdl.ExecutionException, WellFormednessException{
+        executionTest(
+                    "intro x = [[1, 2, 3]];"
+                  + "(pick from x)[1] = 9;",
+                    "x[0][1]", VNumber.of(2, 1), true);
     }
     
     private static <T> List<T> list(final T ... ts) {
         return Arrays.asList(ts);
+    }
+    
+    private void executionTest(String setup, String expression, Value expected,
+            boolean ... deciderValues)
+            throws Sbsdl.ExecutionException, WellFormednessException {
+        TestEnvironment h = new TestEnvironment();
+        TestDecider d = new TestDecider();
+        
+        Sbsdl s = new Sbsdl(h, d);
+
+        d.setResults(deciderValues);
+
+        try {
+            s.run(setup + "#out(" + expression + ");");
+        }
+        catch (WellFormednessException wfe) {
+            System.out.println(wfe);
+            throw wfe;
+        }
+
+        Assert.assertEquals(expected, h.myOut.get(0));
+    }
+    
+    private void evaluationTest(String expression, Value expectedResult,
+            boolean ... deciderResults)
+            throws Sbsdl.HostEnvironmentException, WellFormednessException {
+        Sbsdl.HostEnvironment h = Mockito.mock(Sbsdl.HostEnvironment.class);
+        TestDecider d = new TestDecider();
+        
+        Sbsdl s = new Sbsdl(h, d);
+        
+        Mockito.reset(h);
+        Mockito.when(h.evaluate(Mockito.anyString(), Mockito.anyList()))
+            .thenReturn(VUnavailable.INSTANCE);
+
+        d.setResults(deciderResults);
+
+        try {
+            s.run("#out(" + expression + ");");
+        }
+        catch (WellFormednessException wfe) {
+            System.out.println(wfe);
+            throw wfe;
+        }
+
+        Mockito.verify(h).evaluate("out", list(expectedResult));
     }
     
     private static class TestDecider implements Sbsdl.Decider {

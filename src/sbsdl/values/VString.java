@@ -2,7 +2,7 @@ package sbsdl.values;
 
 import java.util.Objects;
 
-public class VString extends SkeletonValue {
+public class VString extends ImmutableValue<VString> {
     private final String myValue;
     
     public VString(String s) {
@@ -41,10 +41,5 @@ public class VString extends SkeletonValue {
     @Override
     public int hashCode() {
         return Objects.hash(VString.class, myValue);
-    }
-
-    @Override
-    public Value copy() {
-        return this;
     }
 }

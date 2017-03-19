@@ -15,6 +15,6 @@ public class VariableIntroductionStatement implements Statement {
     
     @Override
     public void execute(Sbsdl.HostEnvironment h, ScriptEnvironment s) {
-        s.putSymbol(myName, myInitialValue.evaluate(h, s));
+        s.putSymbol(myName, myInitialValue.evaluate(h, s).copy(false));
     }
 }

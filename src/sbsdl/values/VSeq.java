@@ -4,18 +4,21 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
+import sbsdl.Sbsdl;
 
-public class VSeq extends SkeletonValue {
+public class VSeq extends ContainerValue<VSeq> {
     public final LinkedList<Value> myValue = new LinkedList<>();
     
-    public VSeq(List<Value> vs) {
+    public VSeq(boolean forbidsProxies, List<Value> vs) {
+        super(forbidsProxies);
+        
         for (Value v : vs) {
-            myValue.add(v.copy());
+            myValue.add(v.copy(forbidsProxies));
         }
     }
     
     public VSeq(Value ... vs) {
-        this(Arrays.asList(vs));
+        this(false, Arrays.asList(vs));
     }
     
     public Iterable<Value> elements() {
@@ -39,6 +42,14 @@ public class VSeq extends SkeletonValue {
     }
     
     public Value get(int i) {
+        if (i < 0) {
+            throw new Sbsdl.ExecutionException("Negative index: " + i);
+        }
+        
+        if (i >= myValue.size()) {
+            throw new Sbsdl.ExecutionException("Index past last element: " + i);
+        }
+        
         return myValue.get(i);
     }
     
@@ -77,7 +88,7 @@ public class VSeq extends SkeletonValue {
     }
 
     @Override
-    public Value copy() {
-        return new VSeq(myValue);
+    public VSeq copy(boolean forbidProxies) {
+        return new VSeq(forbidProxies, myValue);
     }
 }
