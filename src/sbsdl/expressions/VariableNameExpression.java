@@ -5,9 +5,9 @@ import sbsdl.ScriptEnvironment;
 import sbsdl.values.Value;
 
 public class VariableNameExpression implements Expression {
-    private final String myVariableName;
+    private final Sbsdl.Symbol myVariableName;
     
-    public VariableNameExpression(String name) {
+    public VariableNameExpression(Sbsdl.Symbol name) {
         myVariableName = name;
     }
     

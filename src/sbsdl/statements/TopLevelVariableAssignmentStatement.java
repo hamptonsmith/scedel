@@ -5,11 +5,11 @@ import sbsdl.ScriptEnvironment;
 import sbsdl.expressions.Expression;
 
 public class TopLevelVariableAssignmentStatement implements Statement {
-    private final String myVarName;
+    private final Sbsdl.Symbol myVarName;
     private final Expression myExpression;
     
     public TopLevelVariableAssignmentStatement(
-            String varName, Expression value) {
+            Sbsdl.Symbol varName, Expression value) {
         myVarName = varName;
         myExpression = value;
     }

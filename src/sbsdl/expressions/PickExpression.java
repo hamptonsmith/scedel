@@ -15,16 +15,16 @@ import sbsdl.values.Value;
 
 public class PickExpression implements Expression {
     private final Sbsdl.Decider myDecider;
-    private final String myExemplar;
+    private final Sbsdl.Symbol myExemplar;
     private final Expression myPool;
     private final Expression myCount;
     private final Expression myUniqueFlag;
     private final Expression myWeighter;
     private final Expression myWhere;
     
-    public PickExpression(String exemplar, Expression pool, Expression count,
-            Expression unique, Expression weighter, Expression where,
-            Sbsdl.Decider decider) {
+    public PickExpression(Sbsdl.Symbol exemplar, Expression pool,
+            Expression count, Expression unique, Expression weighter,
+            Expression where, Sbsdl.Decider decider) {
         myDecider = decider;
         myExemplar = exemplar;
         myPool = pool;
@@ -33,7 +33,7 @@ public class PickExpression implements Expression {
         myWhere = where;
         
         if (weighter == null) {
-            myWeighter = VFunction.buildConstantFunction(1, VNumber.of(1, 1));
+            myWeighter = VFunction.buildConstantFunction(VNumber.of(1, 1));
         }
         else {
             myWeighter = weighter;
@@ -55,7 +55,7 @@ public class PickExpression implements Expression {
         Map<Value, Integer> weights = new HashMap<>();
         for (Value e : poolSeq.elements()) {
             s.pushScope(false);
-            s.putSymbol(myExemplar, e);
+            s.introduceSymbol(myExemplar, e);
             
             if (myWhere.evaluate(h, s).assertIsBoolean().getValue()) {
                 int weight = weight(weighter, e, h, s);

@@ -2,7 +2,6 @@ package sbsdl;
 
 import java.util.HashMap;
 import java.util.Map;
-import sbsdl.values.VUnavailable;
 import sbsdl.values.Value;
 
 public class ScriptEnvironment {
@@ -25,11 +24,11 @@ public class ScriptEnvironment {
         return myCurrentScope.getReturn();
     }
     
-    public void putSymbol(String name, Value v) {
-        myCurrentScope.putSymbol(name, v);
+    public void introduceSymbol(Sbsdl.Symbol name, Value v) {
+        myCurrentScope.introduceSymbol(name, v);
     }
     
-    public void assignValue(String name, Value v) {
+    public void assignValue(Sbsdl.Symbol name, Value v) {
         myCurrentScope.assignValue(name, v);
     }
     
@@ -37,7 +36,7 @@ public class ScriptEnvironment {
         myCurrentScope = myCurrentScope.getParentScope();
     }
     
-    public Value lookupVariable(String name) {
+    public Value lookupVariable(Sbsdl.Symbol name) {
         return myCurrentScope.lookupVariable(name);
     }
     
@@ -68,7 +67,7 @@ public class ScriptEnvironment {
         private final Scope myRootParent;
         private final Scope myParent;
         
-        private final Map<String, Value> myVariables = new HashMap<>();
+        private final Map<Sbsdl.Symbol, Value> myVariables = new HashMap<>();
         
         public Scope(Scope parent) {
             myParent = parent;
@@ -100,20 +99,15 @@ public class ScriptEnvironment {
             return myRootParent;
         }
         
-        public void putSymbol(String name, Value v) {
-            if (v == null) {
-                throw new IllegalArgumentException();
-            }
-            
+        public void introduceSymbol(Sbsdl.Symbol name, Value v) {
             if (myVariables.containsKey(name)) {
-                throw new Sbsdl.ExecutionException(
-                        "Symbol with that name already exists.");
+                throw new RuntimeException();
             }
             
             myVariables.put(name, v);
         }
         
-        public void assignValue(String name, Value v) {
+        public void assignValue(Sbsdl.Symbol name, Value v) {
             if (v == null) {
                 throw new IllegalArgumentException();
             }
@@ -122,11 +116,6 @@ public class ScriptEnvironment {
                 myVariables.put(name, v);
             }
             else {
-                if (myParent == null) {
-                    throw new Sbsdl.ExecutionException(
-                            "Variable not found: " + name);
-                }
-                
                 myParent.assignValue(name, v);
             }
         }
@@ -135,7 +124,7 @@ public class ScriptEnvironment {
             return myParent;
         }
         
-        public Value lookupVariable(String name) {
+        public Value lookupVariable(Sbsdl.Symbol name) {
             Value result;
             
             result = myVariables.get(name);

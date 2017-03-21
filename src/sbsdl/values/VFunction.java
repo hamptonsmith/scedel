@@ -6,28 +6,30 @@ import java.util.List;
 import sbsdl.Sbsdl;
 import sbsdl.ScriptEnvironment;
 import sbsdl.statements.MultiplexingStatement;
-import sbsdl.statements.ReturnStatement;
-import sbsdl.statements.Statement;
 
 public class VFunction extends ImmutableValue<VFunction> {
-    public static VFunction buildConstantFunction(int argCount, Value result) {
-        List<String> args = new ArrayList<>(argCount);
-        for (int i = 0; i < argCount; i++) {
-            args.add("a" + i);
-        }
-        
-        List<Statement> code = new ArrayList<>(1);
-        code.add(new ReturnStatement(result));
-        
-        return new VFunction(args, new MultiplexingStatement(code));
+    public static VFunction buildConstantFunction(final Value result) {
+        return new VFunction() {
+            @Override
+            public Value call(Sbsdl.HostEnvironment h, ScriptEnvironment s,
+                    List<Value> parameters) {
+                return result;
+            }
+        };
     }
     
-    private final List<String> myArgumentNames;
+    private final List<Sbsdl.Symbol> myArgumentNames;
     private final MultiplexingStatement myCode;
     
-    public VFunction(List<String> argumentNames, MultiplexingStatement code) {
+    public VFunction(
+            List<Sbsdl.Symbol> argumentNames, MultiplexingStatement code) {
         myArgumentNames = new ArrayList<>(argumentNames);
         myCode = code;
+    }
+    
+    private VFunction() {
+        myArgumentNames = null;
+        myCode = null;
     }
     
     public Value call(Sbsdl.HostEnvironment h, ScriptEnvironment s,
@@ -41,8 +43,8 @@ public class VFunction extends ImmutableValue<VFunction> {
         }
         
         Iterator<Value> paramIter = parameters.iterator();
-        for (String arg : myArgumentNames) {
-            s.putSymbol(arg, paramIter.next());
+        for (Sbsdl.Symbol arg : myArgumentNames) {
+            s.introduceSymbol(arg, paramIter.next());
         }
         
         myCode.execute(h, s);

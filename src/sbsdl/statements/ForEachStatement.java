@@ -7,12 +7,12 @@ import sbsdl.values.VSeq;
 import sbsdl.values.Value;
 
 public class ForEachStatement implements Statement {
-    private final String myExemplar;
+    private final Sbsdl.Symbol myExemplar;
     private final Expression myCollection;
     private final Expression myWhere;
     private final Statement myCode;
     
-    public ForEachStatement(String exemplar, Expression collection,
+    public ForEachStatement(Sbsdl.Symbol exemplar, Expression collection,
             Expression where, Statement code) {
         myExemplar = exemplar;
         myCollection = collection;
@@ -25,7 +25,7 @@ public class ForEachStatement implements Statement {
         VSeq pool = myCollection.evaluate(h, s).assertIsSeq();
         for (Value v : pool.elements()) {
             s.pushScope(false);
-            s.putSymbol(myExemplar, v);
+            s.introduceSymbol(myExemplar, v);
             
             boolean include =
                     myWhere.evaluate(h, s).assertIsBoolean().getValue();
