@@ -236,6 +236,28 @@ public class SbsdlTest {
     }
     
     @Test
+    public void pickingZeroYeildsEmptySequence()
+            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+        evaluationTest(
+                "pick 0 from [ 'foo', 'bar', 'bazz' ]", new VSeq());
+    }
+    
+    @Test
+    public void pickingOneFromNoGoodOptionsYieldsUnavailable()
+            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+        evaluationTest("pick 1 from {'foo' {0}, 'bar' {0}, 'bazz' {0}}",
+                VUnavailable.INSTANCE);
+    }
+    
+    @Test
+    public void pickingMultilpleFromNoGoodOptionsYieldsSequenceOfUnavailable()
+            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+        evaluationTest("pick 3 from {'foo' {0}, 'bar' {0}, 'bazz' {0}}",
+                new VSeq(VUnavailable.INSTANCE, VUnavailable.INSTANCE,
+                        VUnavailable.INSTANCE));
+    }
+    
+    @Test
     public void dictionaryLiteral()
             throws WellFormednessException, Sbsdl.HostEnvironmentException {
         evaluationTest("{foo: 5, bar: 2 + 4}",
@@ -760,6 +782,42 @@ public class SbsdlTest {
                     "true", VBoolean.TRUE);
     }
     
+    @Test
+    public void noSuchSymbol()
+            throws Sbsdl.ExecutionException, WellFormednessException {
+        executionTest("x;", "no such");
+    }
+    
+    @Test
+    public void inaccessible()
+            throws Sbsdl.ExecutionException, WellFormednessException {
+        executionTest("intro x; fn() {x;};", "accessible");
+    }
+    
+    @Test
+    public void duplicateIntroIntro()
+            throws Sbsdl.ExecutionException, WellFormednessException {
+        executionTest("intro x; intro x;", "already");
+    }
+    
+    @Test
+    public void duplicateParamIntro()
+            throws Sbsdl.ExecutionException, WellFormednessException {
+        executionTest("fn (x) { intro x; }", "already");
+    }
+    
+    @Test
+    public void duplicateParamParam()
+            throws Sbsdl.ExecutionException, WellFormednessException {
+        executionTest("fn (x, x) { }", "already");
+    }
+    
+    @Test
+    public void duplicateForEachIntro()
+            throws Sbsdl.ExecutionException, WellFormednessException {
+        executionTest("for each x : [] { intro x; }", "already");
+    }
+    
     private static <T> List<T> list(final T ... ts) {
         return Arrays.asList(ts);
     }
@@ -775,6 +833,8 @@ public class SbsdlTest {
             Assert.assertTrue("Error supposed to contain '"
                     + errorContains + "'.  Was: " + see.getMessage(),
                     see.getMessage().toLowerCase().contains(errorContains));
+            
+            System.out.println("Got expected error:\n" + see.getMessage());
         }
     }
     
@@ -892,7 +952,7 @@ public class SbsdlTest {
         private List<Value> myOut;
         private Value myMem = VUnavailable.INSTANCE;
         
-        private Map<String, VProxy> myProxies = new HashMap<>();
+        private final Map<String, VProxy> myProxies = new HashMap<>();
         
         public void reset() {
             myOut = null;

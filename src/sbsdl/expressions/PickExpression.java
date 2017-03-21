@@ -70,44 +70,55 @@ public class PickExpression implements Expression {
         }
         
         Value result = null;
-        if (unique && nonZeroWeightCt < requestedCt) {
-            result = VUnavailable.INSTANCE;
-        }
-        else {
-            if (requestedCt == 0) {
+        if (nonZeroWeightCt == 0) {
+            if (requestedCt == 1) {
                 result = VUnavailable.INSTANCE;
             }
-            else if (requestedCt > 1) {
+            else {
                 result = new VSeq();
+                
+                for (int i = 0; i < requestedCt; i++) {
+                    ((VSeq) result).enqueue(VUnavailable.INSTANCE);
+                }
             }
-            
-            for (int i = 0; i < requestedCt; i++) {
-                Value chosen = null;
-                double remainingChance = 1.0;
-                
-                // For testability, we always iterate over the elements in
-                // order.
-                for (Value potentialOption : poolSeq.elements()) {
-                    if (weights.containsKey(potentialOption)) {
-                        if (myDecider.randomize(remainingChance)) {
-                            chosen = potentialOption;
+        }
+        else {
+            if (unique && nonZeroWeightCt < requestedCt) {
+                result = VUnavailable.INSTANCE;
+            }
+            else {
+                if (requestedCt != 1) {
+                    result = new VSeq();
+                }
+
+                for (int i = 0; i < requestedCt; i++) {
+                    Value chosen = null;
+                    double remainingChance = 1.0;
+
+                    // For testability, we always iterate over the elements in
+                    // order.
+                    for (Value potentialOption : poolSeq.elements()) {
+                        if (weights.containsKey(potentialOption)) {
+                            if (myDecider.randomize(remainingChance)) {
+                                chosen = potentialOption;
+                            }
+
+                            remainingChance -= (weights.get(potentialOption)
+                                    / (double) totalWeight);
                         }
-
-                        remainingChance -= (weights.get(potentialOption)
-                                / (double) totalWeight);
                     }
-                }
 
-                if (unique) {
-                    int weight = weights.remove(chosen);
-                    totalWeight -= weight;
-                }
-                
-                if (requestedCt == 1) {
-                    result = chosen;
-                }
-                else {
-                    ((VSeq) result).enqueue(chosen);
+                    if (unique) {
+                        int weight = weights.remove(chosen);
+                        totalWeight -= weight;
+                    }
+
+                    if (requestedCt == 1) {
+                        result = chosen;
+                    }
+                    else {
+                        ((VSeq) result).enqueue(chosen);
+                    }
                 }
             }
         }

@@ -72,6 +72,7 @@ public class Sbsdl {
     
     private final MPlaceholder EXP = new MPlaceholder();
     private final MPlaceholder CODE_BLOCK = new MPlaceholder();
+    private final MPlaceholder REQUIRED_NO_SCOPE_BLOCK = new MPlaceholder();
     private final MPlaceholder REQUIRED_INNER_LEXICAL_SCOPE_BLOCK =
             new MPlaceholder();
     
@@ -351,8 +352,9 @@ public class Sbsdl {
                 @Override
                 public void onMatched(ParseHead h) {
                     String id = (String) h.popFromParseStack();
-                    Symbol argSym = myLexicalScope.introduceSymbol(
-                            id, false, getNotedPosition());
+                    
+                    Symbol argSym = 
+                            introduceSymbol(id, false, getNotedPosition());
                     
                     ((List) h.peekFromParseStack()).add(argSym);
                 }
@@ -418,20 +420,23 @@ public class Sbsdl {
             new MNoAssign(NUMERIC_LITERAL, "a numeric literal"),
             new MNoAssign(PARENTHETICAL_EXP, "a parenthetical expression"),
             new MNoAssign(HOST_EXP, "a host expression"),
-            new MAction(IDENTIFIER_EXP) {
+            new MAction(true, IDENTIFIER) {
                 @Override
                 public void onMatched(ParseHead h)
                         throws WellFormednessException {
-                    final Symbol idSym = (Symbol) h.popFromParseStack();
+                    final String idName = (String) h.popFromParseStack();
+                    final ParseHead.Position pos = getNotedPosition();
                     h.pushOnParseStack(new LHSAccess() {
                                 @Override
                                 public Expression toValue() {
+                                    Symbol idSym = nameToSymbol(idName, pos);
                                     return new VariableNameExpression(idSym);
                                 }
 
                                 @Override
                                 public Statement toAssignment(
                                         Expression value) {
+                                    Symbol idSym = nameToSymbol(idName, pos);
                                     return new TopLevelVariableAssignmentStatement(
                                             idSym, value);
                                 }
@@ -676,7 +681,7 @@ public class Sbsdl {
                             new MSequence(IDENTIFIER, new MLiteral(":"))) {
                         @Override
                         public void onMatched(ParseHead h) {
-                            Symbol exSym = myLexicalScope.introduceSymbol(
+                            Symbol exSym = introduceSymbol(
                                     (String) h.popFromParseStack(), false,
                                     getNotedPosition());
                             
@@ -685,8 +690,7 @@ public class Sbsdl {
                     }) {
                 @Override
                 public void onOmitted(ParseHead h) {
-                    Symbol exSym = myLexicalScope.introduceSymbol(
-                            "@", false, h.getPosition());
+                    Symbol exSym = introduceSymbol("@", false, h.getPosition());
                     
                     h.pushOnParseStack(exSym);
                 }
@@ -883,6 +887,13 @@ public class Sbsdl {
                     }
                 },
                 new MLiteral("}")));
+        REQUIRED_NO_SCOPE_BLOCK.fillIn(new MSequence(
+                new MRequire(new MLiteral("{"),
+                        "Expected opening of code block with '{'."),
+                CODE,
+                new MForbid(MEndOfInput.INSTANCE, "Reached end of input before "
+                        + "close of code block."),
+                new MLiteral("}")));
     }
     
     private final Matcher ASSIGN_OR_CALL_STMT = new MSequence(
@@ -891,7 +902,7 @@ public class Sbsdl {
                     new MAlternatives(new MLiteral(";"), new MLiteral("=")),
                     "Expected ';' or '='."),
             new MAlternatives(
-                    new MAction(new MLiteral(";")) {
+                    new MAction(true, new MLiteral(";")) {
                         @Override
                         public void onMatched(ParseHead h)
                                 throws WellFormednessException {
@@ -902,7 +913,8 @@ public class Sbsdl {
                             if (!(eval instanceof FunctionCallExpression)
                                     && !(eval instanceof HostExpression)) {
                                 throw new WellFormednessException(
-                                        "Expected statement.", h);
+                                        "Expected statement.",
+                                        getNotedPosition());
                             }
                             
                             h.pushOnParseStack(new EvaluateStatement(eval));
@@ -925,8 +937,20 @@ public class Sbsdl {
     
     private final Matcher FOR_EACH_STMT =
             new MAction(new MSequence(new MLiteral("for"), new MLiteral("each"),
-                    REQUIRED_SINGLE_PICK_TAIL_EXP, 
-                    REQUIRED_INNER_LEXICAL_SCOPE_BLOCK)) {
+                    new MDo() {
+                        @Override
+                        public void run(ParseHead h) {
+                            myLexicalScope =
+                                    new InnerLexicalScope(myLexicalScope);
+                        }
+                    },
+                    REQUIRED_SINGLE_PICK_TAIL_EXP, REQUIRED_NO_SCOPE_BLOCK,
+                    new MDo() {
+                        @Override
+                        public void run(ParseHead h) {
+                            myLexicalScope = myLexicalScope.getParent();
+                        }
+                    })) {
                 @Override
                 public void onMatched(ParseHead h)
                         throws WellFormednessException {
@@ -1018,7 +1042,7 @@ public class Sbsdl {
                     new MRequire(IDENTIFIER, "Expected new variable name.")) {
                 @Override
                 public void onMatched(ParseHead h) {
-                    Symbol idSym = myLexicalScope.introduceSymbol(
+                    Symbol idSym = introduceSymbol(
                             (String) h.popFromParseStack(), false,
                             getNotedPosition());
                     
@@ -1140,8 +1164,41 @@ public class Sbsdl {
         }
     }
     
-    private String renderPosition(ParseHead.Position p) {
-        String result = "Line " + p.getLineNumber() + ":";
+    private Symbol nameToSymbol(String name, ParseHead.Position pos) {
+        Symbol idSym;
+        try {
+            idSym = myLexicalScope.getSymbol(name);
+        }
+        catch (NoSuchSymbolException nsse) {
+            throw new ExecutionException("No such symbol '" + name + "'.\n\n"
+                    + renderPosition(pos));
+        }
+        catch (SymbolInaccessibleException sie) {
+            throw new ExecutionException(
+                    "This expression:\n\n" + renderPosition(pos) + "\n\n"
+                    + sie.getMessage());
+        }
+        
+        return idSym;
+    }
+    
+    private Symbol introduceSymbol(
+            String name, boolean baked, ParseHead.Position pos) {
+        Symbol result;
+        try {
+            result = myLexicalScope.introduceSymbol(name, baked, pos);
+        }
+        catch (DuplicateSymbolException dse) {
+            throw new ExecutionException("Tried to introduce symbol '"
+                    + name + "' here:\n\n" + renderPosition(pos) + "\n\n"
+                    + "But that symbol already exists.  " + dse.getMessage());
+        }
+        
+        return result;
+    }
+    
+    private static String renderPosition(ParseHead.Position p) {
+        String result = "Line " + p.getLineNumber() + ":\n";
         result += p.getLineContents() + "\n";
         result += p.getAlignmentPrefix() + "^";
         
@@ -1413,34 +1470,31 @@ public class Sbsdl {
     
     public static final class Symbol {
         private final boolean myBakedFlag;
-        private final int myLineNumber;
-        private final int myColumn;
-        private final String myLineContents;
-        private final String myIndent;
+        private final ParseHead.Position myPosition;
         
-        public Symbol(boolean baked, int lineNumber, int column,
-                String lineContents, String indent) {
+        public Symbol(boolean baked, ParseHead.Position p) {
             myBakedFlag = baked;
-            myLineNumber = lineNumber;
-            myColumn = column;
-            myLineContents = lineContents;
-            myIndent = indent;
+            myPosition = p;
         }
         
         public int getLineNumber() {
-            return myLineNumber;
+            return myPosition.getLineNumber();
         }
         
         public int getColumn() {
-            return myColumn;
+            return myPosition.getColumn();
         }
         
         public String getLineContents() {
-            return myLineContents;
+            return myPosition.getLineContents();
         }
         
         public String getIndent() {
-            return myIndent;
+            return myPosition.getAlignmentPrefix();
+        }
+        
+        public ParseHead.Position getPosition() {
+            return myPosition;
         }
         
         public boolean isBaked() {
@@ -1463,7 +1517,7 @@ public class Sbsdl {
         }
         
         public Symbol introduceSymbol(String name, boolean baked,
-                ParseHead.Position p) {
+                ParseHead.Position p) throws DuplicateSymbolException {
             throw new IllegalStateException();
         }
         
@@ -1489,18 +1543,14 @@ public class Sbsdl {
         
         @Override
         public Symbol introduceSymbol(String name, boolean baked,
-                ParseHead.Position p) {
+                ParseHead.Position p) throws DuplicateSymbolException {
             Symbol def = mySymbols.get(name);
             if (def != null) {
-                throw new ExecutionException("Variable with this name already"
-                        + "exists.  Previous occurrence:\n\n"
-                        + "Line " + def.getLineNumber() + "\n"
-                        + def.getLineContents() + "\n"
-                        + def.getIndent() + "^");
+                throw new DuplicateSymbolException("Previous occurrence:\n\n"
+                        + renderPosition(def.getPosition()));
             }
             
-            def = new Symbol(baked, p.getLineNumber(), p.getColumn(),
-                    p.getLineContents(), p.getAlignmentPrefix());
+            def = new Symbol(baked, p);
             
             mySymbols.put(name, def);
             
@@ -1579,6 +1629,13 @@ public class Sbsdl {
     private static final class SymbolInaccessibleException
             extends Exception {
         public SymbolInaccessibleException(String msg) {
+            super(msg);
+        }
+    }
+    
+    private static final class DuplicateSymbolException
+            extends Exception {
+        public DuplicateSymbolException(String msg) {
             super(msg);
         }
     }
