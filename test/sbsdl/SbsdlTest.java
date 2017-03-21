@@ -772,6 +772,14 @@ public class SbsdlTest {
     }
     
     @Test
+    public void otherwiseValidProxieForbiddenByBake()
+            throws Sbsdl.ExecutionException, WellFormednessException {
+        executionTest(
+                    "intro x = {foo: #proxy('x')};"
+                  + "bake y = x;", "bake");
+    }
+    
+    @Test
     public void previouslyProxyUnsafeHierarchyOkWhenCopiedOut()
             throws Sbsdl.ExecutionException, WellFormednessException {
         executionTest(
@@ -789,9 +797,15 @@ public class SbsdlTest {
     }
     
     @Test
+    public void accessible()
+            throws Sbsdl.ExecutionException, WellFormednessException {
+        executionTest("bake x;", "fn() { return x; }()", VUnavailable.INSTANCE);
+    }
+    
+    @Test
     public void inaccessible()
             throws Sbsdl.ExecutionException, WellFormednessException {
-        executionTest("intro x; fn() {x;};", "accessible");
+        executionTest("intro x; fn() { return x; };", "accessible");
     }
     
     @Test

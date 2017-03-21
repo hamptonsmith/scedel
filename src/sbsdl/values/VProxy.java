@@ -5,12 +5,23 @@ import java.util.Map;
 import sbsdl.Sbsdl;
 
 public class VProxy extends VDict {
+    public static String cannotContainProxyMessage(boolean forbidden) {
+        String result;
+        if (forbidden) {
+            result = "Proxy objects cannot contain other proxy objects.";
+        }
+        else {
+            result = null;
+        }
+        return result;
+    }
+    
     public VProxy() {
         this(Collections.EMPTY_MAP);
     }
     
     public VProxy(Map<Value, Value> value) {
-        super(true, value);
+        super(cannotContainProxyMessage(true), value);
     }
 
     @Override
@@ -24,10 +35,9 @@ public class VProxy extends VDict {
     }
     
     @Override
-    public final VDict copy(boolean forbidProxies) {
-        if (forbidProxies) {
-            throw new Sbsdl.ExecutionException(
-                    "Proxy objects cannot contain other proxy objects.");
+    public final VDict copy(String proxiesForbiddedError) {
+        if (proxiesForbiddedError != null) {
+            throw new Sbsdl.ExecutionException(proxiesForbiddedError);
         }
         
         return this;

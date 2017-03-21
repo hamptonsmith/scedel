@@ -9,15 +9,15 @@ public class VDict extends ContainerValue<VDict> {
     private final Map<Value, Value> myValue = new HashMap<>();
     
     public VDict() {
-        this(false, Collections.EMPTY_MAP);
+        this(null, Collections.EMPTY_MAP);
     }
     
-    public VDict(boolean forbidProxies, Map<Value, Value> value) {
-        super(forbidProxies);
+    public VDict(String proxiesForbiddedError, Map<Value, Value> value) {
+        super(proxiesForbiddedError != null);
         
         for (Map.Entry<Value, Value> entry : value.entrySet()) {
-            myValue.put(entry.getKey().copy(forbidProxies),
-                    entry.getValue().copy(forbidProxies));
+            myValue.put(entry.getKey().copy(proxiesForbiddedError),
+                    entry.getValue().copy(proxiesForbiddedError));
         }
     }
     
@@ -75,7 +75,7 @@ public class VDict extends ContainerValue<VDict> {
     }
 
     @Override
-    public VDict copy(boolean forbidProxies) {
-        return new VDict(forbidProxies, myValue);
+    public VDict copy(String proxiesForbiddedError) {
+        return new VDict(proxiesForbiddedError, myValue);
     }
 }

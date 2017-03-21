@@ -10,5 +10,5 @@ public interface Value<C extends Value> extends Expression {
     public VFunction assertIsFunction();
     public VString assertIsString();
     
-    public C copy(boolean forbidProxies);
+    public C copy(String proxiesForbiddedError);
 }

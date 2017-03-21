@@ -4,6 +4,7 @@ import sbsdl.Sbsdl;
 import sbsdl.ScriptEnvironment;
 import sbsdl.expressions.Expression;
 import sbsdl.values.VDict;
+import sbsdl.values.VProxy;
 import sbsdl.values.Value;
 
 public class FieldAssignmentStatement implements Statement {
@@ -25,6 +26,7 @@ public class FieldAssignmentStatement implements Statement {
         
         Value newVal = myValue.evaluate(h, s);
         
-        baseDict.put(field, newVal.copy(baseDict.forbidsProxies()));
+        baseDict.put(field, newVal.copy(
+                VProxy.cannotContainProxyMessage(baseDict.forbidsProxies())));
     }
 }

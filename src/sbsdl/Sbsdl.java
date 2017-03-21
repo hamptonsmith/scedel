@@ -59,7 +59,7 @@ public class Sbsdl {
     
     private final String[] KEYWORDS =
             {"from", "if", "for", "each", "pick", "unique", "true", "false",
-             "unavailable", "none", "intro", "not", "and", "or"};
+             "unavailable", "none", "intro", "bake", "not", "and", "or"};
     
     private final Matcher KEYWORD;
     {
@@ -243,7 +243,7 @@ public class Sbsdl {
             };
     
     private final Matcher EXP_FOR_PARAM_LIST =
-            new MAction(new MRequire(EXP, "Expected expression.")) {
+            new MAction(EXP) {
                 @Override
                 public void onMatched(ParseHead h) {
                     Expression expValue = (Expression) h.popFromParseStack();
@@ -1043,7 +1043,8 @@ public class Sbsdl {
                 @Override
                 public void onMatched(ParseHead h) {
                     Symbol idSym = introduceSymbol(
-                            (String) h.popFromParseStack(), false,
+                            (String) h.popFromParseStack(),
+                            (boolean) h.popFromParseStack(),
                             getNotedPosition());
                     
                     h.pushOnParseStack(idSym);
@@ -1052,7 +1053,10 @@ public class Sbsdl {
     
     private final Matcher INTRO_STMT =
             new MSequence(
-                    new MLiteral("intro"), INTRO_IDENTIFIER,
+                    new MAlternatives(
+                            new MPush(new MLiteral("intro"), false),
+                            new MPush(new MLiteral("bake"), true)),
+                    INTRO_IDENTIFIER,
                     new MRequireAhead(
                             new MAlternatives(
                                     new MLiteral("="),
@@ -1079,18 +1083,6 @@ public class Sbsdl {
                                             sym, initialValue));
                         }
                     });
-    
-    private final Matcher BAKE_STMT = new MSequence(new MLiteral("bake"),
-            new MRequire(EXP, "Expected expression."),
-            new MRequire(new MLiteral("as"), "Expected 'as'."),
-            new MRequire(IDENTIFIER, "Expected identifier."),
-            new MRequire(new MLiteral(";"), "Expected ';'."),
-            new MDo() {
-                @Override
-                public void run(ParseHead h) {
-                    
-                }
-            });
     
     {
         STATEMENT.fillIn(new MSequence(

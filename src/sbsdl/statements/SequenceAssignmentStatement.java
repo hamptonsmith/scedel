@@ -3,6 +3,7 @@ package sbsdl.statements;
 import sbsdl.Sbsdl;
 import sbsdl.ScriptEnvironment;
 import sbsdl.expressions.Expression;
+import sbsdl.values.VProxy;
 import sbsdl.values.VSeq;
 import sbsdl.values.Value;
 
@@ -26,6 +27,7 @@ public class SequenceAssignmentStatement implements Statement {
         
         Value newVal = myValue.evaluate(h, s);
         
-        baseSeq.set(index, newVal.copy(baseSeq.forbidsProxies()));
+        baseSeq.set(index, newVal.copy(
+                VProxy.cannotContainProxyMessage(baseSeq.forbidsProxies())));
     }
 }

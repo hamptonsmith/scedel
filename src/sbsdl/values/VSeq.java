@@ -9,16 +9,16 @@ import sbsdl.Sbsdl;
 public class VSeq extends ContainerValue<VSeq> {
     public final LinkedList<Value> myValue = new LinkedList<>();
     
-    public VSeq(boolean forbidsProxies, List<Value> vs) {
-        super(forbidsProxies);
+    public VSeq(String proxiesForbiddedError, List<Value> vs) {
+        super(proxiesForbiddedError != null);
         
         for (Value v : vs) {
-            myValue.add(v.copy(forbidsProxies));
+            myValue.add(v.copy(proxiesForbiddedError));
         }
     }
     
     public VSeq(Value ... vs) {
-        this(false, Arrays.asList(vs));
+        this(null, Arrays.asList(vs));
     }
     
     public Iterable<Value> elements() {
@@ -88,7 +88,7 @@ public class VSeq extends ContainerValue<VSeq> {
     }
 
     @Override
-    public VSeq copy(boolean forbidProxies) {
-        return new VSeq(forbidProxies, myValue);
+    public VSeq copy(String proxiesForbiddedError) {
+        return new VSeq(proxiesForbiddedError, myValue);
     }
 }

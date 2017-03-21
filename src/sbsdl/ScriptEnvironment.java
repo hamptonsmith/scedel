@@ -135,12 +135,6 @@ public class ScriptEnvironment {
                 }
                 
                 result = myParent.lookupVariable(name);
-                // This can't be null because we'd have thrown an exception.
-                
-                if (isRoot()) {
-                    throw new Sbsdl.ExecutionException("Cannot access symbol \'"
-                            + name + "\' outside of function literal.");
-                }
             }
             
             return result;
