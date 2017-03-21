@@ -1093,12 +1093,12 @@ public class Sbsdl {
             });
     
     {
-        STATEMENT.fillIn(new MAlternatives(
+        STATEMENT.fillIn(new MSequence(
                 new MForbid(new MLiteral("pick"), "Pick expression cannot "
                         + "begin a statement.  Try surrounding it in "
                         + "parentheses."),
-                INTRO_STMT, RETURN_STMT,
-                FOR_EACH_STMT, IF_STMT, ASSIGN_OR_CALL_STMT));
+                new MAlternatives(INTRO_STMT, RETURN_STMT, FOR_EACH_STMT,
+                        IF_STMT, ASSIGN_OR_CALL_STMT)));
     }
     
     private final MPlaceholder COMMENT = new MPlaceholder();
