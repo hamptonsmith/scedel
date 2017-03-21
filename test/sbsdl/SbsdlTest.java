@@ -818,6 +818,12 @@ public class SbsdlTest {
         executionTest("for each x : [] { intro x; }", "already");
     }
     
+    @Test
+    public void pickStatementDisallowed() 
+            throws Sbsdl.ExecutionException, WellFormednessException {
+        executionTest("pick from {}();", "parentheses");
+    }
+    
     private static <T> List<T> list(final T ... ts) {
         return Arrays.asList(ts);
     }
@@ -830,6 +836,13 @@ public class SbsdlTest {
             Assert.fail("Expected error containing: " + errorContains);
         }
         catch (Sbsdl.ExecutionException see) {
+            Assert.assertTrue("Error supposed to contain '"
+                    + errorContains + "'.  Was: " + see.getMessage(),
+                    see.getMessage().toLowerCase().contains(errorContains));
+            
+            System.out.println("Got expected error:\n" + see.getMessage());
+        }
+        catch (WellFormednessException see) {
             Assert.assertTrue("Error supposed to contain '"
                     + errorContains + "'.  Was: " + see.getMessage(),
                     see.getMessage().toLowerCase().contains(errorContains));
