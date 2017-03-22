@@ -25,7 +25,7 @@ public class ForEachStatement implements Statement {
         VSeq pool = myCollection.evaluate(h, s).assertIsSeq();
         for (Value v : pool.elements()) {
             s.pushScope(false);
-            s.introduceSymbol(myExemplar, v);
+            s.introduceSymbol(myExemplar, v.copy(null));
             
             boolean include =
                     myWhere.evaluate(h, s).assertIsBoolean().getValue();

@@ -673,11 +673,22 @@ public class SbsdlTest {
     }
     
     @Test
-    public void pickStatementValueSemantics()
+    public void pickExpressionValueSemantics()
             throws Sbsdl.ExecutionException, WellFormednessException {
         executionTest(
                     "intro x = [[1, 2, 3]];"
                   + "(pick from x)[1] = 9;",
+                    "x[0][1]", VNumber.of(2, 1), true);
+    }
+    
+    @Test
+    public void forEachValueSemantics()
+            throws Sbsdl.ExecutionException, WellFormednessException {
+        executionTest(
+                    "intro x = [[1, 2, 3]];"
+                  + "for each e : x {"
+                  + "   e[1] = 9;"
+                  + "}",
                     "x[0][1]", VNumber.of(2, 1), true);
     }
     
