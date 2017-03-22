@@ -10,6 +10,10 @@ public class TopLevelVariableAssignmentStatement implements Statement {
     
     public TopLevelVariableAssignmentStatement(
             Sbsdl.Symbol varName, Expression value) {
+        if (varName.isBaked()) {
+            throw new RuntimeException();
+        }
+        
         myVarName = varName;
         myExpression = value;
     }

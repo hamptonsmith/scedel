@@ -31,5 +31,9 @@ public class UnaryExpression implements Expression {
         Value operandValue = myOperand.evaluate(h, s);
         return myOperator.apply(operandValue, h, s);
     }
-    
+
+    @Override
+    public boolean yeildsBakedLValues() {
+        return false;
+    }
 }

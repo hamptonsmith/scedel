@@ -11,7 +11,7 @@ import sbsdl.values.Value;
 
 public class BinaryExpression implements Expression {
     public static enum Operator {
-        PLUS {
+        PLUS(false) {
             @Override
             public Value apply(Value operand1, Value operand2) {
                 Value result;
@@ -32,55 +32,55 @@ public class BinaryExpression implements Expression {
                 return result;
             }
         },
-        MINUS {
+        MINUS(false) {
             @Override
             public Value apply(Value operand1, Value operand2) {
                 return operand1.assertIsNumber()
                         .subtract(operand2.assertIsNumber());
             }
         },
-        TIMES {
+        TIMES(false) {
             @Override
             public Value apply(Value operand1, Value operand2) {
                 return operand1.assertIsNumber()
                         .multiply(operand2.assertIsNumber());
             }
         },
-        DIVIDED_BY {
+        DIVIDED_BY(false) {
             @Override
             public Value apply(Value operand1, Value operand2) {
                 return operand1.assertIsNumber()
                         .divide(operand2.assertIsNumber());
             }
         },
-        RAISED_TO {
+        RAISED_TO(false) {
             @Override
             public Value apply(Value operand1, Value operand2) {
                 return operand1.assertIsNumber()
                         .raiseTo(operand2.assertIsNumber());
             }
         },
-        AND {
+        AND(false) {
             @Override
             public Value apply(Value operand1, Value operand2) {
                 return operand1.assertIsBoolean()
                         .and(operand2.assertIsBoolean());
             }
         },
-        OR {
+        OR(false) {
             @Override
             public Value apply(Value operand1, Value operand2) {
                 return operand1.assertIsBoolean()
                         .or(operand2.assertIsBoolean());
             }
         },
-        LOOK_UP_KEY {
+        LOOK_UP_KEY(true) {
             @Override
             public Value apply(Value operand1, Value operand2) {
                 return operand1.assertIsDict().get(operand2);
             }
         },
-        INDEX_SEQ {
+        INDEX_SEQ(true) {
             @Override
             public Value apply(Value operand1, Value operand2) {
                 VSeq sequenceValue = operand1.assertIsSeq();
@@ -104,40 +104,40 @@ public class BinaryExpression implements Expression {
                 return sequenceValue.get(indexValue.getNumerator().intValue());
             }
         },
-        EQUAL {
+        EQUAL(false) {
             @Override
             public Value apply(Value operand1, Value operand2) {
                 return VBoolean.of(operand1.equals(operand2));
             }
         },
-        NOT_EQUAL {
+        NOT_EQUAL(false) {
             @Override
             public Value apply(Value operand1, Value operand2) {
                 return VBoolean.of(!operand1.equals(operand2));
             }
         },
-        LESS_THAN {
+        LESS_THAN(false) {
             @Override
             public Value apply(Value operand1, Value operand2) {
                 return VBoolean.of(operand1.assertIsNumber()
                         .compareTo(operand2.assertIsNumber()) < 0);
             }
         },
-        LESS_THAN_EQ {
+        LESS_THAN_EQ(false) {
             @Override
             public Value apply(Value operand1, Value operand2) {
                 return VBoolean.of(operand1.assertIsNumber()
                         .compareTo(operand2.assertIsNumber()) <= 0);
             }
         },
-        GREATER_THAN_EQ {
+        GREATER_THAN_EQ(false) {
             @Override
             public Value apply(Value operand1, Value operand2) {
                 return VBoolean.of(operand1.assertIsNumber()
                         .compareTo(operand2.assertIsNumber()) >= 0);
             }
         },
-        GREATER_THAN {
+        GREATER_THAN(false) {
             @Override
             public Value apply(Value operand1, Value operand2) {
                 return VBoolean.of(operand1.assertIsNumber()
@@ -145,6 +145,16 @@ public class BinaryExpression implements Expression {
             }
         };
     
+        private final boolean myTransfersBakedBehaviorFlag;
+        
+        Operator(boolean transfersBaked) {
+            myTransfersBakedBehaviorFlag = transfersBaked;
+        }
+        
+        public final boolean transfersBaked() {
+            return myTransfersBakedBehaviorFlag;
+        }
+        
         public abstract Value apply(Value operand1, Value operand2);
     }
     
@@ -166,5 +176,19 @@ public class BinaryExpression implements Expression {
         Value op2Val = myOperand2.evaluate(h, s);
         
         return myOperator.apply(op1Val, op2Val);
+    }
+
+    @Override
+    public boolean yeildsBakedLValues() {
+        boolean result;
+        
+        if (myOperator.transfersBaked()) {
+            result = myOperand1.yeildsBakedLValues();
+        }
+        else {
+            result = false;
+        }
+        
+        return result;
     }
 }

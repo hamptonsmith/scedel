@@ -15,4 +15,9 @@ public class VariableNameExpression implements Expression {
     public Value evaluate(Sbsdl.HostEnvironment h, ScriptEnvironment s) {
         return s.lookupVariable(myVariableName);
     }
+
+    @Override
+    public boolean yeildsBakedLValues() {
+        return myVariableName.isBaked();
+    }
 }

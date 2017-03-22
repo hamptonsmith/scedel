@@ -26,4 +26,9 @@ public class DictionaryExpression implements Expression {
         
         return result;
     }
+
+    @Override
+    public boolean yeildsBakedLValues() {
+        return false;
+    }
 }

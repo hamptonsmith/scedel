@@ -125,6 +125,11 @@ public class PickExpression implements Expression {
         
         return result.copy(null);
     }
+
+    @Override
+    public boolean yeildsBakedLValues() {
+        return false;
+    }
     
     private int weight(Value weighter, Value query, Sbsdl.HostEnvironment h,
             ScriptEnvironment s) {

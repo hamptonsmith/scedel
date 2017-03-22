@@ -22,4 +22,9 @@ public class SequenceExpression implements Expression {
         }
         return seq;
     }
+
+    @Override
+    public boolean yeildsBakedLValues() {
+        return false;
+    }
 }

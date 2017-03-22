@@ -39,4 +39,9 @@ public abstract class SkeletonValue<C extends Value> implements Value<C> {
     public final Value evaluate(Sbsdl.HostEnvironment h, ScriptEnvironment s) {
         return this;
     }
+
+    @Override
+    public boolean yeildsBakedLValues() {
+        return false;
+    }
 }

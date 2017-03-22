@@ -28,4 +28,9 @@ public class FunctionCallExpression implements Expression {
         
         return fValue.call(h, s, paramVals);
     }
+
+    @Override
+    public boolean yeildsBakedLValues() {
+        return false;
+    }
 }

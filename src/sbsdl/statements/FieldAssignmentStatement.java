@@ -14,6 +14,10 @@ public class FieldAssignmentStatement implements Statement {
     
     public FieldAssignmentStatement(
             Expression base, Expression field, Expression value) {
+        if (base.yeildsBakedLValues()) {
+            throw new RuntimeException();
+        }
+        
         myBase = base;
         myField = field;
         myValue = value;

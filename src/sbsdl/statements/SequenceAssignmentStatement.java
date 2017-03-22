@@ -14,6 +14,10 @@ public class SequenceAssignmentStatement implements Statement {
     
     public SequenceAssignmentStatement(
             Expression base, Expression index, Expression value) {
+        if (base.yeildsBakedLValues()) {
+            throw new RuntimeException();
+        }
+        
         myBase = base;
         myIndex = index;
         myValue = value;

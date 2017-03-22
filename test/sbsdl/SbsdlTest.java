@@ -366,6 +366,15 @@ public class SbsdlTest {
     }
     
     @Test
+    public void multiLevelAssignment()
+            throws Sbsdl.ExecutionException, WellFormednessException {
+        executionTest(
+                  "intro x = {foo: [1, {bar: {bazz: [9, 8, 7]}}, 3]};"
+                + "x.foo[1].bar.bazz[2] = 6;",
+                "x.foo[1].bar.bazz[2]", VNumber.of(6, 1));
+    }
+    
+    @Test
     public void selfAssign()
             throws Sbsdl.ExecutionException, WellFormednessException {
         executionTest("intro x = 'a'; x = x + 'b';", "x", new VString("ab"));
@@ -847,6 +856,32 @@ public class SbsdlTest {
     public void pickStatementDisallowed() 
             throws Sbsdl.ExecutionException, WellFormednessException {
         executionTest("pick from {}();", "parentheses");
+    }
+    
+    @Test
+    public void topLevelAssignmentToBakedVarForbidden()
+            throws Sbsdl.ExecutionException, WellFormednessException {
+        executionTest("bake x = 5; x = 6;", "baked");
+    }
+    
+    @Test
+    public void fieldAssignmentToBakedVarForbidden()
+            throws Sbsdl.ExecutionException, WellFormednessException {
+        executionTest("bake x = {}; x.foo = 6;", "baked");
+    }
+    
+    @Test
+    public void seqAssignmentToBakedVarForbidden()
+            throws Sbsdl.ExecutionException, WellFormednessException {
+        executionTest("bake x = ['x']; x[0]= 6;", "baked");
+    }
+    
+    @Test
+    public void multiLevelAssignmentToBakedVarForbidden()
+            throws Sbsdl.ExecutionException, WellFormednessException {
+        executionTest(
+                  "bake x = {foo: [1, {bar: {bazz: [9, 8, 7]}}, 3]};"
+                + "x.foo[1].bar.bazz[2] = 6;", "baked");
     }
     
     private static <T> List<T> list(final T ... ts) {

@@ -422,7 +422,7 @@ public class Sbsdl {
             new MNoAssign(HOST_EXP, "a host expression"),
             new MAction(true, IDENTIFIER) {
                 @Override
-                public void onMatched(ParseHead h)
+                public void onMatched(final ParseHead h)
                         throws WellFormednessException {
                     final String idName = (String) h.popFromParseStack();
                     final ParseHead.Position pos = getNotedPosition();
@@ -435,8 +435,16 @@ public class Sbsdl {
 
                                 @Override
                                 public Statement toAssignment(
-                                        Expression value) {
+                                        Expression value)
+                                        throws WellFormednessException {
                                     Symbol idSym = nameToSymbol(idName, pos);
+                                    
+                                    if (idSym.isBaked()) {
+                                        throw new WellFormednessException(
+                                                "Can't modify a baked variable.",
+                                                h);
+                                    }
+                                    
                                     return new TopLevelVariableAssignmentStatement(
                                             idSym, value);
                                 }
@@ -450,7 +458,7 @@ public class Sbsdl {
                             new MAlternatives(NAKED_STRING_IDENTIFIER,
                                     PARENTHETICAL_EXP))) {
                         @Override
-                        public void onMatched(ParseHead h) {
+                        public void onMatched(final ParseHead h) {
                             final Expression key =
                                     (Expression) h.popFromParseStack();
                             final Expression dict =
@@ -469,7 +477,14 @@ public class Sbsdl {
 
                                         @Override
                                         public Statement toAssignment(
-                                                Expression value) {
+                                                Expression value)
+                                                throws WellFormednessException {
+                                            if (dict.yeildsBakedLValues()) {
+                                                throw new WellFormednessException(
+                                                        "Can't modify a baked variable.",
+                                                        h);
+                                            }
+                                            
                                             return new FieldAssignmentStatement(
                                                     dict, key, value);
                                         }
@@ -479,7 +494,7 @@ public class Sbsdl {
                     new MAction(new MSequence(
                             new MLiteral("["), EXP, new MLiteral("]"))) {
                         @Override
-                        public void onMatched(ParseHead h) {
+                        public void onMatched(final ParseHead h) {
                             final Expression index =
                                     (Expression) h.popFromParseStack();
                             final Expression seq =
@@ -498,7 +513,14 @@ public class Sbsdl {
 
                                         @Override
                                         public Statement toAssignment(
-                                                Expression value) {
+                                                Expression value)
+                                                throws WellFormednessException {
+                                            if (seq.yeildsBakedLValues()) {
+                                                throw new WellFormednessException(
+                                                        "Can't modify a baked variable.",
+                                                        h);
+                                            }
+                                            
                                             return new SequenceAssignmentStatement(
                                                     seq, index, value);
                                         }

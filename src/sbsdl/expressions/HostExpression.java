@@ -22,7 +22,7 @@ public class HostExpression implements Expression {
         if (myParameters != null) {
             evaluatedParams = new ArrayList<>(myParameters.size());
             for (Expression p : myParameters) {
-                evaluatedParams.add(p.evaluate(h, s));
+                evaluatedParams.add(p.evaluate(h, s).copy(null));
             }
         }
         
@@ -44,5 +44,10 @@ public class HostExpression implements Expression {
         }
         
         return result;
+    }
+
+    @Override
+    public boolean yeildsBakedLValues() {
+       return false;
     }
 }
