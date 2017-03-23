@@ -44,4 +44,10 @@ public abstract class SkeletonValue<C extends Value> implements Value<C> {
     public boolean yeildsBakedLValues() {
         return false;
     }
+
+    @Override
+    public void prettyRender(
+            int indentUnit, int indentLevels, StringBuilder b) {
+        b.append(this);
+    }
 }

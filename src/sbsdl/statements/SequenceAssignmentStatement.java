@@ -34,4 +34,14 @@ public class SequenceAssignmentStatement implements Statement {
         baseSeq.set(index, newVal.copy(
                 VProxy.cannotContainProxyMessage(baseSeq.forbidsProxies())));
     }
+
+    @Override
+    public void prettyRender(
+            int indentUnit, int indentLevels, StringBuilder b) {
+        b.append("STMT ASSIGN TO SEQUENCE INDEX\n");
+        Util.labeledChild(indentUnit, indentLevels, "base:", myBase, b);
+        Util.labeledChild(indentUnit, indentLevels, "index:", myIndex, b);
+        Util.labeledChild(indentUnit, indentLevels, "expression to assign:",
+                myValue, b);
+    }
 }

@@ -59,7 +59,8 @@ public class Sbsdl {
     
     private final String[] KEYWORDS =
             {"from", "if", "for", "each", "pick", "unique", "true", "false",
-             "unavailable", "none", "intro", "bake", "not", "and", "or"};
+             "unavailable", "none", "intro", "bake", "not", "and", "or",
+             "otherwise"};
     
     private final Matcher KEYWORD;
     {
@@ -719,7 +720,7 @@ public class Sbsdl {
                 }
             },
             new MAlternatives(
-                    new MAction(EXP) {
+                    new MAction(BOOLEAN_LEVEL_EXPRESSION) {
                         @Override
                         public void onMatched(ParseHead h) {
                             h.pushOnParseStack(new IntermediatePickExpression(
@@ -839,7 +840,21 @@ public class Sbsdl {
     
     private final Matcher REQUIRED_PICK_EXP = new MAction(new MSequence(
                     new MLiteral("pick"), PICK_COUNT_SPECIFIER,
-                    new MLiteral("from"), REQUIRED_SINGLE_PICK_TAIL_EXP)) {
+                    new MLiteral("from"),
+                    new MDo() {
+                        @Override
+                        public void run(ParseHead h) {
+                            myLexicalScope =
+                                    new InnerLexicalScope(myLexicalScope);
+                        }
+                    },
+                    REQUIRED_SINGLE_PICK_TAIL_EXP,
+                    new MDo() {
+                        @Override
+                        public void run(ParseHead h) {
+                            myLexicalScope = myLexicalScope.getParent();
+                        }
+                    })) {
                 @Override
                 public void onMatched(ParseHead h) {
                     Expression where = (Expression) h.popFromParseStack();
@@ -860,8 +875,15 @@ public class Sbsdl {
     private final Matcher PICK_EXP =
             new MAlternatives(REQUIRED_PICK_EXP, BOOLEAN_LEVEL_EXPRESSION);
     
+    private final Matcher OTHERWISE_EXP =
+            new MSequence(PICK_EXP, new MRepeated(
+                    new MBinaryExpression(
+                            new MPush(new MLiteral("otherwise"),
+                                    BinaryExpression.Operator.OTHERWISE),
+                            PICK_EXP)));
+    
     {
-        EXP.fillIn(PICK_EXP);
+        EXP.fillIn(OTHERWISE_EXP);
     }
     
     private final MPlaceholder STATEMENT = new MPlaceholder();
@@ -1151,7 +1173,27 @@ public class Sbsdl {
         myDecider = d;
     }
     
+    public void printParseTree(String input) throws WellFormednessException {
+        ParseHead h = parse(input);
+
+        StringBuilder b = new StringBuilder();
+        ((Statement) h.popFromParseStack()).prettyRender(4, 0, b);
+        System.out.println(b);
+    }
+    
     public void run(String input) throws WellFormednessException {
+        ParseHead h = parse(input);
+        
+        ScriptEnvironment s = new ScriptEnvironment();
+        ((MultiplexingStatement) h.popFromParseStack())
+                .execute(myHostEnvironment, s);
+        
+        if (!h.getParseStackCopy().isEmpty()) {
+            throw new RuntimeException();
+        }
+    }
+    
+    private ParseHead parse(String input) throws WellFormednessException { 
         ParseHead h;
         
         if (DEBUG) {
@@ -1174,13 +1216,7 @@ public class Sbsdl {
                     + h.remainingText().split("\n")[0], h);
         }
         
-        ScriptEnvironment s = new ScriptEnvironment();
-        ((MultiplexingStatement) h.popFromParseStack())
-                .execute(myHostEnvironment, s);
-        
-        if (!h.getParseStackCopy().isEmpty()) {
-            throw new RuntimeException();
-        }
+        return h;
     }
     
     private Symbol nameToSymbol(String name, ParseHead.Position pos) {
@@ -1488,10 +1524,12 @@ public class Sbsdl {
     }
     
     public static final class Symbol {
+        private final String myName;
         private final boolean myBakedFlag;
         private final ParseHead.Position myPosition;
         
-        public Symbol(boolean baked, ParseHead.Position p) {
+        public Symbol(String name, boolean baked, ParseHead.Position p) {
+            myName = name;
             myBakedFlag = baked;
             myPosition = p;
         }
@@ -1518,6 +1556,13 @@ public class Sbsdl {
         
         public boolean isBaked() {
             return myBakedFlag;
+        }
+        
+        @Override
+        public String toString() {
+            return myName + " (" + myPosition.getLineNumber() + ":"
+                    + myPosition.getColumn() + ") "
+                    + (myBakedFlag ? "bake" : "intro");
         }
     }
     
@@ -1569,7 +1614,7 @@ public class Sbsdl {
                         + renderPosition(def.getPosition()));
             }
             
-            def = new Symbol(baked, p);
+            def = new Symbol(name, baked, p);
             
             mySymbols.put(name, def);
             

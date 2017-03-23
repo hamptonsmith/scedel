@@ -22,4 +22,16 @@ public class TopLevelVariableAssignmentStatement implements Statement {
     public void execute(Sbsdl.HostEnvironment h, ScriptEnvironment s) {
         s.assignValue(myVarName, myExpression.evaluate(h, s).copy(null));
     }
+
+    @Override
+    public void prettyRender(
+            int indentUnit, int indentLevels, StringBuilder b) {
+        b.append("STMT ASSIGN TO TOP LEVEL VARIABLE\n");
+        Util.indent(indentUnit, indentLevels + 1, b);
+        b.append("var: ");
+        b.append(myVarName);
+        b.append("\n");
+        Util.labeledChild(indentUnit, indentLevels, "expression to assign:",
+                myExpression, b);
+    }
 }

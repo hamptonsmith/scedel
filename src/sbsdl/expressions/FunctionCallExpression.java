@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import sbsdl.Sbsdl;
 import sbsdl.ScriptEnvironment;
+import sbsdl.statements.Statement;
 import sbsdl.values.VFunction;
 import sbsdl.values.Value;
 
@@ -32,5 +33,21 @@ public class FunctionCallExpression implements Expression {
     @Override
     public boolean yeildsBakedLValues() {
         return false;
+    }
+
+    @Override
+    public void prettyRender(
+            int indentUnit, int indentLevels, StringBuilder b) {
+        b.append("EXP FUNCTION CALL\n");
+        
+        Statement.Util.labeledChild(
+                indentUnit, indentLevels, "function:", myFunction, b);
+        
+        Statement.Util.indent(indentUnit, indentLevels + 1, b);
+        b.append("parameters:\n");
+        for (Expression e : myParameters) {
+            Statement.Util.indent(indentUnit, indentLevels + 2, b);
+            e.prettyRender(indentUnit, indentLevels + 2, b);
+        }
     }
 }

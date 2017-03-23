@@ -28,4 +28,14 @@ public class IfStatement implements Statement {
             myOnFalse.execute(h, s);
         }
     }
+
+    @Override
+    public void prettyRender(int indentUnit, int indentLevels, StringBuilder b) {
+        b.append("STMT IF\n");
+        Util.labeledChild(
+                indentUnit, indentLevels, "condition:", myCondition, b);
+        Util.labeledChild(indentUnit, indentLevels, "if code:", myOnTrue, b);
+        Util.labeledChild(
+                indentUnit, indentLevels, "else code:", myOnFalse, b);
+    }
 }

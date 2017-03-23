@@ -20,4 +20,13 @@ public class MultiplexingStatement implements Statement {
             statementIter.next().execute(h, s);
         }
     }
+
+    @Override
+    public void prettyRender(
+            int indentUnit, int indentLevels, StringBuilder b) {
+        b.append("STMT MUX\n");
+        for (Statement s : mySubStatements) {
+            s.prettyRender(indentUnit, indentLevels + 1, b);
+        }
+    }
 }

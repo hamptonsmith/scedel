@@ -2,8 +2,7 @@ package sbsdl.statements;
 
 import sbsdl.Sbsdl;
 import sbsdl.ScriptEnvironment;
-import sbsdl.expressions.Expression;
-import sbsdl.values.VProxy;
+import sbsdl.expressions.Expression;;
 import sbsdl.values.Value;
 
 public class VariableIntroductionStatement implements Statement {
@@ -32,5 +31,28 @@ public class VariableIntroductionStatement implements Statement {
             result = null;
         }
         return result;
+    }
+
+    @Override
+    public void prettyRender(
+            int indentUnit, int indentLevels, StringBuilder b) {
+        b.append("STMT DIMENSIONALIZE VARIABLE (");
+        
+        if (myName.isBaked()) {
+            b.append("baked");
+        }
+        else {
+            b.append("not baked");
+        }
+        
+        b.append(")\n");
+        
+        Util.indent(indentUnit, indentLevels + 1, b);
+        b.append("var: ");
+        b.append(myName);
+        b.append("\n");
+        
+        Util.labeledChild(indentUnit, indentLevels, "initial value expression:",
+                myInitialValue, b);
     }
 }

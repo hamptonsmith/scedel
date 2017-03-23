@@ -40,6 +40,10 @@ public class ScriptEnvironment {
     
     public void popScope() {
         myCurrentScope = myCurrentScope.getParentScope();
+        
+        if (myCurrentScope == null) {
+            throw new RuntimeException();
+        }
     }
     
     public Value lookupVariable(Sbsdl.Symbol name) {

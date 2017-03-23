@@ -70,6 +70,12 @@ public class SbsdlTest {
     }
     
     @Test
+    public void andShortCircuit()
+            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+        evaluationTest("false and 5", VBoolean.FALSE);
+    }
+    
+    @Test
     public void orTT()
             throws WellFormednessException, Sbsdl.HostEnvironmentException {
         evaluationTest("true or true", VBoolean.TRUE);
@@ -94,6 +100,12 @@ public class SbsdlTest {
     }
     
     @Test
+    public void orShortCircuit()
+            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+        evaluationTest("true or 5", VBoolean.TRUE);
+    }
+    
+    @Test
     public void notT()
             throws WellFormednessException, Sbsdl.HostEnvironmentException {
         evaluationTest("not true", VBoolean.FALSE);
@@ -103,6 +115,18 @@ public class SbsdlTest {
     public void notF()
             throws WellFormednessException, Sbsdl.HostEnvironmentException {
         evaluationTest("not false", VBoolean.TRUE);
+    }
+    
+    @Test
+    public void otherwiseNotUnavailable()
+            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+        evaluationTest("none otherwise 6", VNone.INSTANCE);
+    }
+    
+    @Test
+    public void otherwiseUnavailable()
+            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+        evaluationTest("unavailable otherwise 6", VNumber.of(6, 1));
     }
     
     @Test
@@ -255,6 +279,13 @@ public class SbsdlTest {
         evaluationTest("pick 3 from {'foo' {0}, 'bar' {0}, 'bazz' {0}}",
                 new VSeq(VUnavailable.INSTANCE, VUnavailable.INSTANCE,
                         VUnavailable.INSTANCE));
+    }
+    
+    @Test
+    public void pickWithOtherwise()
+            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+        evaluationTest("pick from [] otherwise pick from {true}",
+                VBoolean.TRUE, true);
     }
     
     @Test
@@ -608,6 +639,16 @@ public class SbsdlTest {
     }
     
     @Test
+    public void forEachNoValues()
+            throws Sbsdl.ExecutionException, WellFormednessException {
+        executionTest(
+                    "for each s : [] {"
+                  + "    #mem(6);"
+                  + "}",
+                    "#mem(none)", VUnavailable.INSTANCE);
+    }
+    
+    @Test
     public void evaluationStatement()
             throws Sbsdl.ExecutionException, WellFormednessException {
         executionTest(
@@ -792,7 +833,7 @@ public class SbsdlTest {
     }
     
     @Test
-    public void otherwiseValidProxieForbiddenByBake()
+    public void previouslyValidProxieForbiddenByBake()
             throws Sbsdl.ExecutionException, WellFormednessException {
         executionTest(
                     "intro x = {foo: #proxy('x')};"
@@ -850,6 +891,19 @@ public class SbsdlTest {
     public void duplicateForEachIntro()
             throws Sbsdl.ExecutionException, WellFormednessException {
         executionTest("for each x : [] { intro x; }", "already");
+    }
+    
+    @Test
+    public void pickExemplarEvaporates()
+            throws Sbsdl.ExecutionException, WellFormednessException {
+        executionTest("(pick from x : [fn(){}])(); intro x;", "true",
+                VBoolean.TRUE, true);
+    }
+    
+    @Test
+    public void forEachExemplarEvaporates()
+            throws Sbsdl.ExecutionException, WellFormednessException {
+        executionTest("for each x : []{} intro x;", "true", VBoolean.TRUE);
     }
     
     @Test

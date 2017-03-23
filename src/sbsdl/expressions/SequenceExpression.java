@@ -4,6 +4,7 @@ import java.util.LinkedList;
 import java.util.List;
 import sbsdl.Sbsdl;
 import sbsdl.ScriptEnvironment;
+import sbsdl.statements.Statement;
 import sbsdl.values.VSeq;
 import sbsdl.values.Value;
 
@@ -26,5 +27,15 @@ public class SequenceExpression implements Expression {
     @Override
     public boolean yeildsBakedLValues() {
         return false;
+    }
+
+    @Override
+    public void prettyRender(
+            int indentUnit, int indentLevels, StringBuilder b) {
+        b.append("EXP SEQUENCE\n");
+        for (Expression e : myExpressionElements) {
+            Statement.Util.indent(indentUnit, indentLevels + 1, b);
+            e.prettyRender(indentUnit, indentLevels + 1, b);
+        }
     }
 }

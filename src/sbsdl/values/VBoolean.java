@@ -34,4 +34,9 @@ public class VBoolean extends ImmutableValue<VBoolean> {
     public VBoolean assertIsBoolean() {
         return this;
     }
+
+    @Override
+    public String toString() {
+        return "VB" + ("" + myValue).toUpperCase();
+    }
 }

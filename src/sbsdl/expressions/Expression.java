@@ -7,4 +7,6 @@ import sbsdl.values.Value;
 public interface Expression {
     public Value evaluate(Sbsdl.HostEnvironment h, ScriptEnvironment s);
     public boolean yeildsBakedLValues();
+    
+    public void prettyRender(int indentUnit, int indentLevels, StringBuilder b);
 }

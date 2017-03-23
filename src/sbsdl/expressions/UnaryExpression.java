@@ -2,6 +2,7 @@ package sbsdl.expressions;
 
 import sbsdl.Sbsdl;
 import sbsdl.ScriptEnvironment;
+import sbsdl.statements.Statement;
 import sbsdl.values.Value;
 
 public class UnaryExpression implements Expression {
@@ -35,5 +36,18 @@ public class UnaryExpression implements Expression {
     @Override
     public boolean yeildsBakedLValues() {
         return false;
+    }
+
+    @Override
+    public void prettyRender(
+            int indentUnit, int indentLevels, StringBuilder b) {
+        b.append("EXP UNARY\n");
+        Statement.Util.indent(indentUnit, indentLevels + 1, b);
+        b.append("operator: ");
+        b.append(myOperator);
+        b.append("\n");
+        
+        Statement.Util.labeledChild(
+                indentUnit, indentLevels, "operand:", myOperand, b);
     }
 }

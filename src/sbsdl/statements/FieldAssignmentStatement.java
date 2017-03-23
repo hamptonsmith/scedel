@@ -33,4 +33,13 @@ public class FieldAssignmentStatement implements Statement {
         baseDict.put(field, newVal.copy(
                 VProxy.cannotContainProxyMessage(baseDict.forbidsProxies())));
     }
+
+    @Override
+    public void prettyRender(int indentUnit, int indentLevels, StringBuilder b) {
+        b.append("STMT ASSIGN TO FIELD\n");
+        Util.labeledChild(indentUnit, indentLevels, "base:", myBase, b);
+        Util.labeledChild(indentUnit, indentLevels, "field:", myField, b);
+        Util.labeledChild(indentUnit, indentLevels, "expression to assign:",
+                myValue, b);
+    }
 }

@@ -32,8 +32,23 @@ public class ForEachStatement implements Statement {
             if (include) {
                 myCode.execute(h, s);
             }
+            
+            s.popScope();
         }
+    }
+
+    @Override
+    public void prettyRender(int indentUnit, int indentLevels, StringBuilder b) {
+        b.append("STMT FOR EACH\n");
+        Util.indent(indentUnit, indentLevels + 1, b);
+        b.append("exemplar: ");
+        b.append(myExemplar);
+        b.append("\n");
         
-        s.popScope();
+        Util.labeledChild(indentUnit, indentLevels, "collection expression:",
+                myCollection, b);
+        Util.labeledChild(
+                indentUnit, indentLevels, "where expression:", myWhere, b);
+        Util.labeledChild(indentUnit, indentLevels, "code:", myCode, b);
     }
 }

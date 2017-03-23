@@ -5,6 +5,7 @@ import java.util.List;
 import sbsdl.Sbsdl;
 import sbsdl.ScriptEnvironment;
 import sbsdl.statements.MultiplexingStatement;
+import sbsdl.statements.Statement;
 import sbsdl.values.VFunction;
 import sbsdl.values.Value;
 
@@ -26,5 +27,18 @@ public class ClosureBuildingExpression implements Expression {
     @Override
     public boolean yeildsBakedLValues() {
         return false;
+    }
+
+    @Override
+    public void prettyRender(
+            int indentUnit, int indentLevels, StringBuilder b) {
+        b.append("EXP BUILD FUNCTION CLOSURE\n");
+        Statement.Util.indent(indentUnit, indentLevels + 1, b);
+        b.append("arg names: ");
+        b.append(myArgumentNames);
+        b.append("\n");
+        
+        Statement.Util.labeledChild(
+                indentUnit, indentLevels, "code:", myCode, b);
     }
 }

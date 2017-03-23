@@ -20,4 +20,12 @@ public class VariableNameExpression implements Expression {
     public boolean yeildsBakedLValues() {
         return myVariableName.isBaked();
     }
+
+    @Override
+    public void prettyRender(
+            int indentUnit, int indentLevels, StringBuilder b) {
+        b.append("EXP VAR LOOKUP: ");
+        b.append(myVariableName);
+        b.append("\n");
+    }
 }

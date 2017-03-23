@@ -3,25 +3,28 @@ package sbsdl.expressions;
 import java.math.BigInteger;
 import sbsdl.Sbsdl;
 import sbsdl.ScriptEnvironment;
+import sbsdl.statements.Statement;
 import sbsdl.values.VBoolean;
 import sbsdl.values.VNumber;
 import sbsdl.values.VSeq;
 import sbsdl.values.VString;
+import sbsdl.values.VUnavailable;
 import sbsdl.values.Value;
 
 public class BinaryExpression implements Expression {
     public static enum Operator {
         PLUS(false) {
             @Override
-            public Value apply(Value operand1, Value operand2) {
+            public Value apply(Lazy operand1, Lazy operand2) {
                 Value result;
-                if (operand1 instanceof VNumber) {
-                    result = operand1.assertIsNumber().add(
-                            operand2.assertIsNumber());
+                if (operand1.evaluate() instanceof VNumber) {
+                    result = operand1.evaluate().assertIsNumber().add(
+                            operand2.evaluate().assertIsNumber());
                 }
-                else if (operand1 instanceof VString) {
+                else if (operand1.evaluate() instanceof VString) {
                     result = new VString(
-                            operand1.assertIsString().getValue() + operand2);
+                            operand1.evaluate().assertIsString().getValue()
+                                    + operand2.evaluate());
                 }
                 else {
                     throw new Sbsdl.ExecutionException("Plus operator must "
@@ -34,57 +37,62 @@ public class BinaryExpression implements Expression {
         },
         MINUS(false) {
             @Override
-            public Value apply(Value operand1, Value operand2) {
-                return operand1.assertIsNumber()
-                        .subtract(operand2.assertIsNumber());
+            public Value apply(Lazy operand1, Lazy operand2) {
+                return operand1.evaluate().assertIsNumber()
+                        .subtract(operand2.evaluate().assertIsNumber());
             }
         },
         TIMES(false) {
             @Override
-            public Value apply(Value operand1, Value operand2) {
-                return operand1.assertIsNumber()
-                        .multiply(operand2.assertIsNumber());
+            public Value apply(Lazy operand1, Lazy operand2) {
+                return operand1.evaluate().assertIsNumber()
+                        .multiply(operand2.evaluate().assertIsNumber());
             }
         },
         DIVIDED_BY(false) {
             @Override
-            public Value apply(Value operand1, Value operand2) {
-                return operand1.assertIsNumber()
-                        .divide(operand2.assertIsNumber());
+            public Value apply(Lazy operand1, Lazy operand2) {
+                return operand1.evaluate().assertIsNumber()
+                        .divide(operand2.evaluate().assertIsNumber());
             }
         },
         RAISED_TO(false) {
             @Override
-            public Value apply(Value operand1, Value operand2) {
-                return operand1.assertIsNumber()
-                        .raiseTo(operand2.assertIsNumber());
+            public Value apply(Lazy operand1, Lazy operand2) {
+                return operand1.evaluate().assertIsNumber()
+                        .raiseTo(operand2.evaluate().assertIsNumber());
             }
         },
         AND(false) {
             @Override
-            public Value apply(Value operand1, Value operand2) {
-                return operand1.assertIsBoolean()
-                        .and(operand2.assertIsBoolean());
+            public Value apply(Lazy operand1, Lazy operand2) {
+                return VBoolean.of(
+                        operand1.evaluate().assertIsBoolean().getValue()
+                                && operand2.evaluate().assertIsBoolean()
+                                        .getValue());
             }
         },
         OR(false) {
             @Override
-            public Value apply(Value operand1, Value operand2) {
-                return operand1.assertIsBoolean()
-                        .or(operand2.assertIsBoolean());
+            public Value apply(Lazy operand1, Lazy operand2) {
+                return VBoolean.of(
+                        operand1.evaluate().assertIsBoolean().getValue()
+                                || operand2.evaluate().assertIsBoolean()
+                                        .getValue());
             }
         },
         LOOK_UP_KEY(true) {
             @Override
-            public Value apply(Value operand1, Value operand2) {
-                return operand1.assertIsDict().get(operand2);
+            public Value apply(Lazy operand1, Lazy operand2) {
+                return operand1.evaluate().assertIsDict().get(
+                        operand2.evaluate());
             }
         },
         INDEX_SEQ(true) {
             @Override
-            public Value apply(Value operand1, Value operand2) {
-                VSeq sequenceValue = operand1.assertIsSeq();
-                VNumber indexValue = operand2.assertIsNumber();
+            public Value apply(Lazy operand1, Lazy operand2) {
+                VSeq sequenceValue = operand1.evaluate().assertIsSeq();
+                VNumber indexValue = operand2.evaluate().assertIsNumber();
 
                 if (!indexValue.getDenominator().equals(BigInteger.ONE)) {
                     throw new Sbsdl.ExecutionException(
@@ -106,42 +114,59 @@ public class BinaryExpression implements Expression {
         },
         EQUAL(false) {
             @Override
-            public Value apply(Value operand1, Value operand2) {
-                return VBoolean.of(operand1.equals(operand2));
+            public Value apply(Lazy operand1, Lazy operand2) {
+                return VBoolean.of(operand1.evaluate().equals(
+                        operand2.evaluate()));
             }
         },
         NOT_EQUAL(false) {
             @Override
-            public Value apply(Value operand1, Value operand2) {
-                return VBoolean.of(!operand1.equals(operand2));
+            public Value apply(Lazy operand1, Lazy operand2) {
+                return VBoolean.of(!operand1.evaluate().equals(
+                        operand2.evaluate()));
             }
         },
         LESS_THAN(false) {
             @Override
-            public Value apply(Value operand1, Value operand2) {
-                return VBoolean.of(operand1.assertIsNumber()
-                        .compareTo(operand2.assertIsNumber()) < 0);
+            public Value apply(Lazy operand1, Lazy operand2) {
+                return VBoolean.of(operand1.evaluate().assertIsNumber()
+                        .compareTo(operand2.evaluate().assertIsNumber()) < 0);
             }
         },
         LESS_THAN_EQ(false) {
             @Override
-            public Value apply(Value operand1, Value operand2) {
-                return VBoolean.of(operand1.assertIsNumber()
-                        .compareTo(operand2.assertIsNumber()) <= 0);
+            public Value apply(Lazy operand1, Lazy operand2) {
+                return VBoolean.of(operand1.evaluate().assertIsNumber()
+                        .compareTo(operand2.evaluate().assertIsNumber()) <= 0);
             }
         },
         GREATER_THAN_EQ(false) {
             @Override
-            public Value apply(Value operand1, Value operand2) {
-                return VBoolean.of(operand1.assertIsNumber()
-                        .compareTo(operand2.assertIsNumber()) >= 0);
+            public Value apply(Lazy operand1, Lazy operand2) {
+                return VBoolean.of(operand1.evaluate().assertIsNumber()
+                        .compareTo(operand2.evaluate().assertIsNumber()) >= 0);
             }
         },
         GREATER_THAN(false) {
             @Override
-            public Value apply(Value operand1, Value operand2) {
-                return VBoolean.of(operand1.assertIsNumber()
-                        .compareTo(operand2.assertIsNumber()) > 0);
+            public Value apply(Lazy operand1, Lazy operand2) {
+                return VBoolean.of(operand1.evaluate().assertIsNumber()
+                        .compareTo(operand2.evaluate().assertIsNumber()) > 0);
+            }
+        },
+        OTHERWISE(false) {
+            @Override
+            public Value apply(Lazy operand1, Lazy operand2) {
+                Value result;
+                
+                if (operand1.evaluate() == VUnavailable.INSTANCE) {
+                    result = operand2.evaluate();
+                }
+                else {
+                    result = operand1.evaluate();
+                }
+                
+                return result;
             }
         };
     
@@ -155,7 +180,7 @@ public class BinaryExpression implements Expression {
             return myTransfersBakedBehaviorFlag;
         }
         
-        public abstract Value apply(Value operand1, Value operand2);
+        abstract Value apply(Lazy operand1, Lazy operand2);
     }
     
     private final Expression myOperand1;
@@ -171,9 +196,20 @@ public class BinaryExpression implements Expression {
     }
     
     @Override
-    public Value evaluate(Sbsdl.HostEnvironment h, ScriptEnvironment s) {
-        Value op1Val = myOperand1.evaluate(h, s);
-        Value op2Val = myOperand2.evaluate(h, s);
+    public Value evaluate(
+            final Sbsdl.HostEnvironment h, final ScriptEnvironment s) {
+        Lazy op1Val = new Lazy() {
+                    @Override
+                    public Value noCacheEvaluate() {
+                        return myOperand1.evaluate(h, s);
+                    }
+                };
+        Lazy op2Val = new Lazy() {
+                    @Override
+                    public Value noCacheEvaluate() {
+                        return myOperand2.evaluate(h, s);
+                    }
+                };
         
         return myOperator.apply(op1Val, op2Val);
     }
@@ -190,5 +226,34 @@ public class BinaryExpression implements Expression {
         }
         
         return result;
+    }
+
+    @Override
+    public void prettyRender(int indentUnit, int indentLevels, StringBuilder b) {
+        b.append("EXP BINARY\n");
+        
+        Statement.Util.indent(indentUnit, indentLevels + 1, b);
+        b.append("operator: ");
+        b.append(myOperator);
+        b.append("\n");
+        
+        Statement.Util.labeledChild(
+                indentUnit, indentLevels, "operand1:", myOperand1, b);
+        Statement.Util.labeledChild(
+                indentUnit, indentLevels, "operand2:", myOperand2, b);
+    }
+    
+    private static abstract class Lazy {
+        private Value myCachedValue;
+        
+        public final Value evaluate() {
+            if (myCachedValue == null) {
+                myCachedValue = noCacheEvaluate();
+            }
+            
+            return myCachedValue;
+        }
+        
+        public abstract Value noCacheEvaluate();
     }
 }

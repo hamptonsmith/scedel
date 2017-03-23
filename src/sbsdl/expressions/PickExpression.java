@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import sbsdl.Sbsdl;
 import sbsdl.ScriptEnvironment;
+import sbsdl.statements.Statement;
 import sbsdl.values.VDict;
 import sbsdl.values.VFunction;
 import sbsdl.values.VNumber;
@@ -151,5 +152,27 @@ public class PickExpression implements Expression {
         }
         
         return weight.assertIsNumber().assertNonNegativeReasonableInteger();
+    }
+
+    @Override
+    public void prettyRender(
+            int indentUnit, int indentLevels, StringBuilder b) {
+        b.append("EXP PICK\n");
+        
+        Statement.Util.indent(indentUnit, indentLevels + 1, b);
+        b.append("exemplar: ");
+        b.append(myExemplar);
+        b.append("\n");
+        
+        Statement.Util.labeledChild(
+                indentUnit, indentLevels, "count:", myCount, b);
+        Statement.Util.labeledChild(
+                indentUnit, indentLevels, "unique:", myUniqueFlag, b);
+        Statement.Util.labeledChild(
+                indentUnit, indentLevels, "collection:", myPool, b);
+        Statement.Util.labeledChild(
+                indentUnit, indentLevels, "where:", myWhere, b);
+        Statement.Util.labeledChild(
+                indentUnit, indentLevels, "weighter:", myWeighter, b);
     }
 }

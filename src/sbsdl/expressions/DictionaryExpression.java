@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import sbsdl.Sbsdl;
 import sbsdl.ScriptEnvironment;
+import sbsdl.statements.Statement;
 import sbsdl.values.VDict;
 import sbsdl.values.Value;
 
@@ -30,5 +31,20 @@ public class DictionaryExpression implements Expression {
     @Override
     public boolean yeildsBakedLValues() {
         return false;
+    }
+
+    @Override
+    public void prettyRender(
+            int indentUnit, int indentLevels, StringBuilder b) {
+        b.append("EXP DICTIONARY\n");
+        for (Map.Entry<Expression, Expression> entry
+                : myExpressions.entrySet()) {
+            Statement.Util.indent(indentUnit, indentLevels + 1, b);
+            b.append("entry:\n");
+            Statement.Util.labeledChild(
+                    indentUnit, indentLevels + 1, "key:\n", entry.getKey(), b);
+            Statement.Util.labeledChild(indentUnit, indentLevels + 1,
+                    "value:\n", entry.getKey(), b);
+        }
     }
 }
