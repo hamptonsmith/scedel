@@ -55,7 +55,7 @@ import sbsdl.values.VUnavailable;
 import sbsdl.values.Value;
 
 public class Sbsdl {    
-    public static final boolean DEBUG = true;
+    public static final boolean DEBUG = false;
     
     private final String[] KEYWORDS =
             {"from", "if", "for", "each", "pick", "unique", "true", "false",
