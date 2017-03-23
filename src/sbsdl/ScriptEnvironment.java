@@ -7,6 +7,12 @@ import sbsdl.values.Value;
 public class ScriptEnvironment {
     private Scope myCurrentScope = new RootScope(null);
     
+    public Map<Sbsdl.Symbol, Value> getBakedValues() {
+        Map<Sbsdl.Symbol, Value> result = new HashMap<>();
+        myCurrentScope.buildBakedValues(result);
+        return result;
+    }
+    
     public void pushScope(boolean root) {
         if (root) {
             myCurrentScope= new RootScope(myCurrentScope);
@@ -80,6 +86,20 @@ public class ScriptEnvironment {
             }
             else {
                 myRootParent = parent.getRootParent();
+            }
+        }
+        
+        public void buildBakedValues(Map<Sbsdl.Symbol, Value> accum) {
+            if (myParent != null) {
+                myParent.buildBakedValues(accum);
+            }
+            
+            for (Map.Entry<Sbsdl.Symbol, Value> entry
+                    : myVariables.entrySet()) {
+                if (entry.getKey().isBaked()) {
+                    // No need for a value copy.  It's been baked.
+                    accum.put(entry.getKey(), entry.getValue());
+                }
             }
         }
         

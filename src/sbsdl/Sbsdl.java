@@ -28,6 +28,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import sbsdl.expressions.BinaryExpression;
+import sbsdl.expressions.ClosureBuildingExpression;
 import sbsdl.expressions.DictionaryExpression;
 import sbsdl.expressions.Expression;
 import sbsdl.expressions.FunctionCallExpression;
@@ -47,7 +48,6 @@ import sbsdl.statements.Statement;
 import sbsdl.statements.TopLevelVariableAssignmentStatement;
 import sbsdl.statements.VariableIntroductionStatement;
 import sbsdl.values.VBoolean;
-import sbsdl.values.VFunction;
 import sbsdl.values.VNone;
 import sbsdl.values.VNumber;
 import sbsdl.values.VString;
@@ -395,7 +395,8 @@ public class Sbsdl {
                     MultiplexingStatement code =
                             (MultiplexingStatement) h.popFromParseStack();
                     h.pushOnParseStack(
-                            new VFunction((List<Symbol>) h.popFromParseStack(),
+                            new ClosureBuildingExpression(
+                                    (List<Symbol>) h.popFromParseStack(),
                                     code));
                 }
             };
@@ -1092,7 +1093,7 @@ public class Sbsdl {
                             h.pushOnParseStack(VUnavailable.INSTANCE);
                         }
                     },
-                    new MLiteral(";"),
+                    new MRequire(new MLiteral(";"), "Expected ';'."),
                     new MDo() {
                         @Override
                         public void run(ParseHead h) {

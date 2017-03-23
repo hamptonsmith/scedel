@@ -884,6 +884,17 @@ public class SbsdlTest {
                 + "x.foo[1].bar.bazz[2] = 6;", "baked");
     }
     
+    @Test
+    public void upvalues()
+            throws Sbsdl.ExecutionException, WellFormednessException {
+        executionTest(
+                "intro foo = fn() {"
+              + "  bake x = 6;"
+              + "  return fn() { return x; };"
+              + "};",
+                "foo()()", VNumber.of(6, 1));
+    }
+    
     private static <T> List<T> list(final T ... ts) {
         return Arrays.asList(ts);
     }
