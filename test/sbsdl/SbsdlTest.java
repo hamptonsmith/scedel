@@ -17,6 +17,7 @@ import sbsdl.values.VNumber;
 import sbsdl.values.VProxy;
 import sbsdl.values.VSeq;
 import sbsdl.values.VString;
+import sbsdl.values.VToken;
 import sbsdl.values.VUnavailable;
 import sbsdl.values.Value;
 
@@ -949,6 +950,18 @@ public class SbsdlTest {
                 "foo()()", VNumber.of(6, 1));
     }
     
+    @Test
+    public void tokenEquality()
+            throws Sbsdl.HostEnvironmentException, WellFormednessException {
+        evaluationTest("#token('abc') = #token('abc')", VBoolean.TRUE);
+    }
+    
+    @Test
+    public void tokenCanBeBaked()
+            throws Sbsdl.HostEnvironmentException, WellFormednessException {
+        executionTest("bake x = {foo: #token('abc')};", "true", VBoolean.TRUE);
+    }
+    
     private static <T> List<T> list(final T ... ts) {
         return Arrays.asList(ts);
     }
@@ -1119,6 +1132,10 @@ public class SbsdlTest {
                 }
                 
                 myProxies.put(proxyName, (VProxy) result);
+            }
+            else if (name.equals("token")) {
+                result = new VToken(
+                        parameters.get(0).assertIsString().getValue());
             }
             else {
                 throw new RuntimeException();
