@@ -388,15 +388,41 @@ public class Scedel {
     
     private final Matcher BOOLEAN_LITERAL =
             new MAlternatives(
-                    new MPush(new MLiteral("true"), VBoolean.TRUE),
-                    new MPush(new MLiteral("false"), VBoolean.FALSE));
+                    new MAction(true, new MLiteral("true")) {
+                        @Override
+                        public void onMatched(ParseHead h) {
+                            h.pushOnParseStack(new LiteralExpression(
+                                    loc(getNotedPosition()),
+                                    VBoolean.TRUE));
+                        }
+                    },
+                    new MAction(true, new MLiteral("false")) {
+                        @Override
+                        public void onMatched(ParseHead h) {
+                            h.pushOnParseStack(new LiteralExpression(
+                                    loc(getNotedPosition()),
+                                    VBoolean.FALSE));
+                        }
+                    });
     
     private final Matcher BOUNDED_EXP = new MAlternatives(
             new MNoAssign(
-                    new MPush(new MLiteral("unavailable"),
-                            VUnavailable.INSTANCE),
+                    new MAction(true, new MLiteral("unavailable")) {
+                        @Override
+                        public void onMatched(ParseHead h) {
+                            h.pushOnParseStack(new LiteralExpression(
+                                    loc(getNotedPosition()),
+                                    VUnavailable.INSTANCE));
+                        }
+                    },
                     "an unavailable literal"),
-            new MNoAssign(new MPush(new MLiteral("none"), VNone.INSTANCE),
+            new MNoAssign(new MAction(true, new MLiteral("none")) {
+                        @Override
+                        public void onMatched(ParseHead h) {
+                            h.pushOnParseStack(new LiteralExpression(
+                                    loc(getNotedPosition()), VNone.INSTANCE));
+                        }
+                    },
                     "a none literal"),
             new MNoAssign(BOOLEAN_LITERAL, "a boolean literal"),
             new MNoAssign(DICTIONARY_LITERAL, "a dictionary literal"),
