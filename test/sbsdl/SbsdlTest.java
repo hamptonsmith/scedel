@@ -975,6 +975,175 @@ public class SbsdlTest {
         executionTest("bake x = {foo: #token('abc')};", "true", VBoolean.TRUE);
     }
     
+    @Test
+    public void divisionByZero()
+            throws ExecutionException, StaticCodeException {
+        executionTest("intro x = 5 / 0;",
+                ExecutionException.ErrorType.DIVISION_BY_ZERO);
+    }
+    
+    @Test
+    public void incorrectParameterCount()
+            throws ExecutionException, StaticCodeException {
+        executionTest("intro f = fn(x, y) { return x; }; f(1, 2, 3);",
+                ExecutionException.ErrorType.INCORRECT_NUMBER_OF_PARAMETERS);
+    }
+    
+    @Test
+    public void negativeIndex()
+            throws ExecutionException, StaticCodeException {
+        executionTest("intro s = []; s = s[-1];",
+                ExecutionException.ErrorType.NEGATIVE);
+    }
+    
+    @Test
+    public void negativePickCount()
+            throws ExecutionException, StaticCodeException {
+        executionTest("(pick -1 from [])();",
+                ExecutionException.ErrorType.NEGATIVE);
+    }
+    
+    @Test
+    public void negativeWeight()
+            throws ExecutionException, StaticCodeException {
+        executionTest("(pick 1 from {'abc' {-1}})();",
+                ExecutionException.ErrorType.NEGATIVE);
+    }
+    
+    @Test
+    public void nonIntegralIndex()
+            throws ExecutionException, StaticCodeException {
+        executionTest("intro s = []; s = s[1/2];",
+                ExecutionException.ErrorType.NON_INTEGRAL);
+    }
+    
+    @Test
+    public void nonIntegralPickCount()
+            throws ExecutionException, StaticCodeException {
+        executionTest("(pick 1/2 from [])();",
+                ExecutionException.ErrorType.NON_INTEGRAL);
+    }
+    
+    @Test
+    public void nonIntegralWeight()
+            throws ExecutionException, StaticCodeException {
+        executionTest("(pick 1 from {'abc' {1/2}})();",
+                ExecutionException.ErrorType.NON_INTEGRAL);
+    }
+    
+    @Test
+    public void nonIntegralExponent()
+            throws ExecutionException, StaticCodeException {
+        executionTest("intro x = 2 ^ (1/2);",
+                ExecutionException.ErrorType.NON_INTEGRAL);
+    }
+    
+    @Test
+    public void andNotABoolean1()
+            throws ExecutionException, StaticCodeException {
+        executionTest("intro x = 2 and false;",
+                ExecutionException.ErrorType.NOT_A_BOOLEAN);
+    }
+    
+    @Test
+    public void andNotABoolean2()
+            throws ExecutionException, StaticCodeException {
+        executionTest("intro x = true and 2;",
+                ExecutionException.ErrorType.NOT_A_BOOLEAN);
+    }
+    
+    @Test
+    public void orNotABoolean1()
+            throws ExecutionException, StaticCodeException {
+        executionTest("intro x = 2 or false;",
+                ExecutionException.ErrorType.NOT_A_BOOLEAN);
+    }
+    
+    @Test
+    public void orNotABoolean2()
+            throws ExecutionException, StaticCodeException {
+        executionTest("intro x = false or 2;",
+                ExecutionException.ErrorType.NOT_A_BOOLEAN);
+    }
+    
+    @Test
+    public void notNotABoolean()
+            throws ExecutionException, StaticCodeException {
+        executionTest("intro x = not 2;",
+                ExecutionException.ErrorType.NOT_A_BOOLEAN);
+    }
+    
+    @Test
+    public void uniqueNotABoolean()
+            throws ExecutionException, StaticCodeException {
+        executionTest("(pick 1 unique(3) from [])();",
+                ExecutionException.ErrorType.NOT_A_BOOLEAN);
+    }
+    
+    @Test
+    public void ifNotABoolean()
+            throws ExecutionException, StaticCodeException {
+        executionTest("if 2 {}",
+                ExecutionException.ErrorType.NOT_A_BOOLEAN);
+    }
+    
+    @Test
+    public void elseIfNotABoolean()
+            throws ExecutionException, StaticCodeException {
+        executionTest("if false {} else if 2 {}",
+                ExecutionException.ErrorType.NOT_A_BOOLEAN);
+    }
+    
+    @Test
+    public void forEachWhereNotABoolean()
+            throws ExecutionException, StaticCodeException {
+        executionTest("for each ['abc'] where 2 {}",
+                ExecutionException.ErrorType.NOT_A_BOOLEAN);
+    }
+    
+    @Test
+    public void pickWhereNotABoolean()
+            throws ExecutionException, StaticCodeException {
+        executionTest("(pick from ['abc'] where 2)();",
+                ExecutionException.ErrorType.NOT_A_BOOLEAN);
+    }
+    
+    @Test
+    public void notADictionary()
+            throws ExecutionException, StaticCodeException {
+        executionTest("intro x = [].foo;",
+                ExecutionException.ErrorType.NOT_A_DICTIONARY);
+    }
+    
+    @Test
+    public void notAFunction()
+            throws ExecutionException, StaticCodeException {
+        executionTest("intro x = []();",
+                ExecutionException.ErrorType.NOT_A_FUNCTION);
+    }
+    
+    @Test
+    public void notANumber()
+            throws ExecutionException, StaticCodeException {
+        executionTest("intro x = 2 + 'abc';",
+                ExecutionException.ErrorType.NOT_A_NUMBER);
+    }
+    
+    @Test
+    public void notASequence()
+            throws ExecutionException, StaticCodeException {
+        executionTest("intro x = 'abc'[2];",
+                ExecutionException.ErrorType.NOT_A_SEQUENCE);
+    }
+    
+    @Test
+    public void wrongPlusFirstParam()
+            throws ExecutionException, StaticCodeException {
+        executionTest("intro x = [] + 3;",
+                ExecutionException.ErrorType
+                        .PLUS_FIRST_PARAMETER_MUST_BE_NUMBER_OR_STRING);
+    }
+    
     private static <T> List<T> list(final T ... ts) {
         return Arrays.asList(ts);
     }

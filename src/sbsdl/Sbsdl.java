@@ -34,6 +34,7 @@ import sbsdl.expressions.DictionaryExpression;
 import sbsdl.expressions.Expression;
 import sbsdl.expressions.FunctionCallExpression;
 import sbsdl.expressions.HostExpression;
+import sbsdl.expressions.LiteralExpression;
 import sbsdl.expressions.PickExpression;
 import sbsdl.expressions.SequenceExpression;
 import sbsdl.expressions.UnaryExpression;
@@ -99,7 +100,7 @@ public class Sbsdl {
                     0, 300));
     
     private final Matcher STRING_LITERAL =
-            new MAction(
+            new MAction(true,
                     new MWithSkipper(
                             new MSequence(new MLiteral("'"), STRING_INNARDS,
                                     new MLiteral("'")),
@@ -111,14 +112,17 @@ public class Sbsdl {
                     innards = innards.replace("\\t", "\t");
                     innards = innards.replace("\\'", "'");
                     
-                    h.pushOnParseStack(new VString(innards));
+                    h.pushOnParseStack(
+                            new LiteralExpression(loc(getNotedPosition()),
+                                    new VString(innards)));
                 }
             };
     
     private final Matcher FRACTIONAL_LITERAL =
-            new MAction(
+            new MAction(true,
                     new MSequence(
                             new MCapture(
+                                    new MOptional(new MLiteral("-")),
                                     new MRepeated(CSet.ISO_LATIN_DIGIT, 0, 10)),
                             new MLiteral("."),
                             new MCapture(new MRepeated(
@@ -139,19 +143,22 @@ public class Sbsdl {
                     n = n.add(Long.parseLong(fractionalPartText));
                     n = n.divide(pow);
                     
-                    h.pushOnParseStack(n);
+                    h.pushOnParseStack(
+                            new LiteralExpression(loc(getNotedPosition()), n));
                 }
             };
     
     private final Matcher INTEGRAL_LITERAL =
-            new MAction(
-                    new MCapture(new MRepeated(CSet.ISO_LATIN_DIGIT, 1, 10))) {
+            new MAction(true,
+                    new MCapture(new MOptional(new MLiteral("-")),
+                            new MRepeated(CSet.ISO_LATIN_DIGIT, 1, 10))) {
                 @Override
                 public void onMatched(ParseHead h) {
                     String integerText = h.popCapture();
                     VNumber n = VNumber.of(Long.parseLong(integerText), 1);
                     
-                    h.pushOnParseStack(n);
+                    h.pushOnParseStack(
+                            new LiteralExpression(loc(getNotedPosition()), n));
                 }
             };
     

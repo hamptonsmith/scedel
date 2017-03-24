@@ -5,7 +5,7 @@
             <url>src/sbsdl/Sbsdl.java</url>
             <bookmark id="1">
                 <name/>
-                <line>685</line>
+                <line>675</line>
                 <key/>
             </bookmark>
         </file>
@@ -22,7 +22,6 @@
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/ParseLocation.java</file>
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/expressions/BinaryExpression.java</file>
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/values/VToken.java</file>
-            <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/ParsingException.java</file>
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/statements/VariableIntroductionStatement.java</file>
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/expressions/FunctionCallExpression.java</file>
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/values/VSeq.java</file>
@@ -30,12 +29,15 @@
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/expressions/UnaryExpression.java</file>
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/values/Value.java</file>
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/expressions/VariableNameExpression.java</file>
+            <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/statements/SkeletonStatement.java</file>
+            <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/UnanchoredExecutionException.java</file>
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/expressions/ClosureBuildingExpression.java</file>
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/values/VString.java</file>
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/values/VUnavailable.java</file>
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/values/SkeletonValue.java</file>
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/ScriptEnvironment.java</file>
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/statements/EvaluateStatement.java</file>
+            <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/StaticCodeException.java</file>
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/values/VProxy.java</file>
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/statements/FieldAssignmentStatement.java</file>
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/statements/SequenceAssignmentStatement.java</file>
@@ -43,6 +45,7 @@
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/statements/Statement.java</file>
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/statements/IfStatement.java</file>
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/values/ImmutableValue.java</file>
+            <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/ExecutionException.java</file>
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/expressions/DictionaryExpression.java</file>
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/values/VNone.java</file>
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/values/VDict.java</file>
@@ -51,6 +54,8 @@
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/values/ContainerValue.java</file>
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/values/VNumber.java</file>
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/expressions/SequenceExpression.java</file>
+            <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/InternalStaticCodeException.java</file>
+            <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/expressions/SkeletonExpression.java</file>
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/Sbsdl.java</file>
         </group>
     </open-files>
