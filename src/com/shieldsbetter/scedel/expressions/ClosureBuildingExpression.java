@@ -43,4 +43,9 @@ public class ClosureBuildingExpression extends SkeletonExpression {
         Statement.Util.labeledChild(
                 indentUnit, indentLevels, "code:", myCode, b);
     }
+
+    @Override
+    public void accept(Visitor v) {
+        v.visitClosureBindingExpression(this);
+    }
 }

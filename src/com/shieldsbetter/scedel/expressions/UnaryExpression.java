@@ -65,4 +65,9 @@ public class UnaryExpression extends SkeletonExpression {
         Statement.Util.labeledChild(
                 indentUnit, indentLevels, "operand:", myOperand, b);
     }
+
+    @Override
+    public void accept(Visitor v) {
+        v.visitUnaryExpression(this);
+    }
 }

@@ -72,4 +72,9 @@ public class HostExpression extends SkeletonExpression {
             e.prettyRender(indentUnit, indentLevels + 2, b);
         }
     }
+
+    @Override
+    public void accept(Visitor v) {
+        v.visitHostExpression(this);
+    }
 }

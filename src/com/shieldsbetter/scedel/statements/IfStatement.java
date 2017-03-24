@@ -41,4 +41,9 @@ public class IfStatement extends SkeletonStatement {
         Util.labeledChild(
                 indentUnit, indentLevels, "else code:", myOnFalse, b);
     }
+
+    @Override
+    public void accept(Visitor v) {
+        v.visitIfStatement(this);
+    }
 }

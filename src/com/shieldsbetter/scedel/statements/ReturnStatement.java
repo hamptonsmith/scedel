@@ -24,4 +24,9 @@ public class ReturnStatement extends SkeletonStatement {
         b.append("STMT RETURN\n");
         myExpression.prettyRender(indentUnit, indentLevels + 1, b);
     }
+
+    @Override
+    public void accept(Visitor v) {
+        v.visitReturnStatement(this);
+    }
 }

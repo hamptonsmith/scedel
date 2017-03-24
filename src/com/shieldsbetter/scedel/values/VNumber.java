@@ -183,4 +183,9 @@ public class VNumber extends ImmutableValue<VNumber> {
     public int hashCode() {
         return Objects.hash(myNumerator, myDenominator);
     }
+
+    @Override
+    public void accept(Visitor v) {
+        v.visitVNumber(this);
+    }
 }

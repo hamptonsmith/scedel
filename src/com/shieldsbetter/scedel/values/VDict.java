@@ -84,4 +84,9 @@ public class VDict extends ContainerValue<VDict> {
     public VDict copy(ExecutionException onProxy) {
         return new VDict(onProxy, myValue);
     }
+
+    @Override
+    public void accept(Visitor v) {
+        v.visitVDict(this);
+    }
 }

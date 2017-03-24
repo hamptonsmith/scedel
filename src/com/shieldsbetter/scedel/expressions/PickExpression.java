@@ -190,4 +190,9 @@ public class PickExpression extends SkeletonExpression {
         Statement.Util.labeledChild(
                 indentUnit, indentLevels, "weighter:", myWeighter, b);
     }
+
+    @Override
+    public void accept(Visitor v) {
+        v.visitPickExpression(this);
+    }
 }

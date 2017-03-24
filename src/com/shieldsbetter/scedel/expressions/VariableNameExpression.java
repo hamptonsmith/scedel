@@ -30,4 +30,9 @@ public class VariableNameExpression extends SkeletonExpression {
         b.append(myVariableName);
         b.append("\n");
     }
+
+    @Override
+    public void accept(Visitor v) {
+        v.visitVariableNameExpression(this);
+    }
 }

@@ -92,4 +92,9 @@ public class VSeq extends ContainerValue<VSeq> {
     public VSeq copy(ExecutionException onProxy) {
         return new VSeq(onProxy, myValue);
     }
+
+    @Override
+    public void accept(Visitor v) {
+        v.visitVSeq(this);
+    }
 }

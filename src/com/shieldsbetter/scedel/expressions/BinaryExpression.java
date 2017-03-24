@@ -280,6 +280,11 @@ public class BinaryExpression extends SkeletonExpression {
         Statement.Util.labeledChild(
                 indentUnit, indentLevels, "operand2:", myOperand2, b);
     }
+
+    @Override
+    public void accept(Visitor v) {
+        v.visitBinaryExpression(this);
+    }
     
     public static abstract class Lazy {
         private Value myCachedValue;

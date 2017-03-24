@@ -58,4 +58,9 @@ public class SequenceAssignmentStatement extends SkeletonStatement {
         Util.labeledChild(indentUnit, indentLevels, "expression to assign:",
                 myValue, b);
     }
+
+    @Override
+    public void accept(Visitor v) {
+        v.visitSequenceAssignmentStatement(this);
+    }
 }

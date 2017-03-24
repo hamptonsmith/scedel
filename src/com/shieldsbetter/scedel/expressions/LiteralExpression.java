@@ -38,5 +38,9 @@ public class LiteralExpression extends SkeletonExpression {
         Statement.Util.indent(indentUnit, indentLevels + 1, b);
         myValue.prettyRender(indentUnit, indentLevels + 1, b);
     }
-    
+
+    @Override
+    public void accept(Visitor v) {
+        v.visitLiteralExpression(this);
+    }
 }

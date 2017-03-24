@@ -67,4 +67,9 @@ public class VariableIntroductionStatement extends SkeletonStatement {
         Util.labeledChild(indentUnit, indentLevels, "initial value expression:",
                 myInitialValue, b);
     }
+
+    @Override
+    public void accept(Visitor v) {
+        v.visitVariableIntroductionStatement(this);
+    }
 }

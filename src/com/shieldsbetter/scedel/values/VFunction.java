@@ -83,4 +83,9 @@ public class VFunction extends ImmutableValue<VFunction> {
     public VFunction assertIsFunction(ParseLocation at) {
         return this;
     }
+
+    @Override
+    public void accept(Visitor v) {
+        v.visitVFunction(this);
+    }
 }

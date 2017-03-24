@@ -26,4 +26,9 @@ public class VProxy extends VDict {
         
         return this;
     }
+
+    @Override
+    public void accept(Visitor v) {
+        v.visitVProxy(this);
+    }
 }

@@ -36,4 +36,9 @@ public class TopLevelVariableAssignmentStatement extends SkeletonStatement {
         Util.labeledChild(indentUnit, indentLevels, "expression to assign:",
                 myExpression, b);
     }
+
+    @Override
+    public void accept(Visitor v) {
+        v.visitTopLevelVariableAssignmentStatement(this);
+    }
 }

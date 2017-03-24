@@ -25,4 +25,9 @@ public class EvaluateStatement extends SkeletonStatement {
         Util.indent(indentUnit, indentLevels + 1, b);
         myExpression.prettyRender(indentUnit, indentLevels + 1, b);
     }
+
+    @Override
+    public void accept(Visitor v) {
+        v.visitEvaluateStatement(this);
+    }
 }

@@ -43,4 +43,9 @@ public class VString extends ImmutableValue<VString> {
     public int hashCode() {
         return Objects.hash(VString.class, myValue);
     }
+
+    @Override
+    public void accept(Visitor v) {
+        v.visitVString(this);
+    }
 }

@@ -32,4 +32,9 @@ public class MultiplexingStatement extends SkeletonStatement {
             s.prettyRender(indentUnit, indentLevels + 1, b);
         }
     }
+
+    @Override
+    public void accept(Visitor v) {
+        v.visitMultiplexingStatement(this);
+    }
 }

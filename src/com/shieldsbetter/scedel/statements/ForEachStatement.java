@@ -54,4 +54,9 @@ public class ForEachStatement extends SkeletonStatement {
                 indentUnit, indentLevels, "where expression:", myWhere, b);
         Util.labeledChild(indentUnit, indentLevels, "code:", myCode, b);
     }
+
+    @Override
+    public void accept(Visitor v) {
+        v.visitForEachStatement(this);
+    }
 }

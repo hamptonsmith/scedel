@@ -41,4 +41,9 @@ public class VBoolean extends ImmutableValue<VBoolean> {
     public String toString() {
         return "VB" + ("" + myValue).toUpperCase();
     }
+
+    @Override
+    public void accept(Visitor v) {
+        v.visitVBoolean(this);
+    }
 }

@@ -1615,6 +1615,10 @@ public class Scedel {
             myPosition = p;
         }
         
+        public String getName() {
+            return myName;
+        }
+        
         public int getLineNumber() {
             return myPosition.getLineNumber();
         }

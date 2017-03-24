@@ -38,4 +38,9 @@ public final class VToken extends SkeletonValue<VToken> {
     public int hashCode() {
         return Objects.hash(myBackingKey, getClass());
     }
+
+    @Override
+    public void accept(Visitor v) {
+        v.visitVToken(this);
+    }
 }

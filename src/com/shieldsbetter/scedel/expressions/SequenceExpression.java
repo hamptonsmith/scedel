@@ -40,4 +40,9 @@ public class SequenceExpression extends SkeletonExpression {
             e.prettyRender(indentUnit, indentLevels + 1, b);
         }
     }
+
+    @Override
+    public void accept(Visitor v) {
+        v.visitSequenceExpression(this);
+    }
 }
