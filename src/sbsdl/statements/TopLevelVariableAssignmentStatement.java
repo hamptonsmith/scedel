@@ -1,15 +1,17 @@
 package sbsdl.statements;
 
+import sbsdl.ParseLocation;
 import sbsdl.Sbsdl;
 import sbsdl.ScriptEnvironment;
 import sbsdl.expressions.Expression;
 
-public class TopLevelVariableAssignmentStatement implements Statement {
+public class TopLevelVariableAssignmentStatement extends SkeletonStatement {
     private final Sbsdl.Symbol myVarName;
     private final Expression myExpression;
     
-    public TopLevelVariableAssignmentStatement(
+    public TopLevelVariableAssignmentStatement(ParseLocation l,
             Sbsdl.Symbol varName, Expression value) {
+        super(l);
         if (varName.isBaked()) {
             throw new RuntimeException();
         }

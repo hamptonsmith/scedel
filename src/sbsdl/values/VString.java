@@ -1,6 +1,7 @@
 package sbsdl.values;
 
 import java.util.Objects;
+import sbsdl.ParseLocation;
 
 public class VString extends ImmutableValue<VString> {
     private final String myValue;
@@ -14,7 +15,7 @@ public class VString extends ImmutableValue<VString> {
     }
 
     @Override
-    public VString assertIsString() {
+    public VString assertIsString(ParseLocation at) {
         return this;
     }
     

@@ -1,6 +1,7 @@
 package sbsdl.values;
 
 import java.util.Objects;
+import sbsdl.ExecutionException;
 
 public final class VToken extends SkeletonValue<VToken> {
     private final String myBackingKey;
@@ -14,7 +15,7 @@ public final class VToken extends SkeletonValue<VToken> {
     }
     
     @Override
-    public VToken copy(String proxiesForbiddedError) {
+    public VToken copy(ExecutionException onProxy) {
         return this;
     }
 

@@ -1,13 +1,15 @@
 package sbsdl.statements;
 
+import sbsdl.ParseLocation;
 import sbsdl.Sbsdl;
 import sbsdl.ScriptEnvironment;
 import sbsdl.expressions.Expression;
 
-public class EvaluateStatement implements Statement {
+public class EvaluateStatement extends SkeletonStatement {
     private final Expression myExpression;
     
-    public EvaluateStatement(Expression e) {
+    public EvaluateStatement(ParseLocation l, Expression e) {
+        super(l);
         myExpression = e;
     }
 

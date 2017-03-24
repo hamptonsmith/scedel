@@ -1,6 +1,8 @@
 package sbsdl.expressions;
 
 import java.math.BigInteger;
+import sbsdl.InternalExecutionException;
+import sbsdl.ParseLocation;
 import sbsdl.Sbsdl;
 import sbsdl.ScriptEnvironment;
 import sbsdl.statements.Statement;
@@ -11,25 +13,28 @@ import sbsdl.values.VString;
 import sbsdl.values.VUnavailable;
 import sbsdl.values.Value;
 
-public class BinaryExpression implements Expression {
+public class BinaryExpression extends SkeletonExpression {
     public static enum Operator {
         PLUS(false) {
             @Override
             public Value apply(Lazy operand1, Lazy operand2) {
                 Value result;
                 if (operand1.evaluate() instanceof VNumber) {
-                    result = operand1.evaluate().assertIsNumber().add(
-                            operand2.evaluate().assertIsNumber());
+                    result = operand1.evaluate().assertIsNumber(
+                                    operand1.getParseLocation())
+                            .add(operand2.evaluate().assertIsNumber(
+                                    operand2.getParseLocation()));
                 }
                 else if (operand1.evaluate() instanceof VString) {
-                    result = new VString(
-                            operand1.evaluate().assertIsString().getValue()
-                                    + operand2.evaluate());
+                    result = new VString(operand1.evaluate().assertIsString(
+                                    operand1.getParseLocation())
+                            .getValue() + operand2.evaluate());
                 }
                 else {
-                    throw new Sbsdl.ExecutionException("Plus operator must "
-                            + "operate on a number or a string.  Found: "
-                            + operand1);
+                    throw InternalExecutionException
+                            .plusFirstParamMustBeNumOrString(
+                                    operand1.getParseLocation(),
+                                    operand1.evaluate());
                 }
                 
                 return result;
@@ -38,75 +43,89 @@ public class BinaryExpression implements Expression {
         MINUS(false) {
             @Override
             public Value apply(Lazy operand1, Lazy operand2) {
-                return operand1.evaluate().assertIsNumber()
-                        .subtract(operand2.evaluate().assertIsNumber());
+                return operand1.evaluate().assertIsNumber(
+                            operand1.getParseLocation())
+                        .subtract(operand2.evaluate().assertIsNumber(
+                            operand2.getParseLocation()));
             }
         },
         TIMES(false) {
             @Override
             public Value apply(Lazy operand1, Lazy operand2) {
-                return operand1.evaluate().assertIsNumber()
-                        .multiply(operand2.evaluate().assertIsNumber());
+                return operand1.evaluate().assertIsNumber(
+                            operand1.getParseLocation())
+                        .multiply(operand2.evaluate().assertIsNumber(
+                            operand2.getParseLocation()));
             }
         },
         DIVIDED_BY(false) {
             @Override
             public Value apply(Lazy operand1, Lazy operand2) {
-                return operand1.evaluate().assertIsNumber()
-                        .divide(operand2.evaluate().assertIsNumber());
+                return operand1.evaluate().assertIsNumber(
+                            operand1.getParseLocation())
+                        .divide(operand2.evaluate().assertIsNumber(
+                                    operand2.getParseLocation()),
+                                operand2.getParseLocation());
             }
         },
         RAISED_TO(false) {
             @Override
             public Value apply(Lazy operand1, Lazy operand2) {
-                return operand1.evaluate().assertIsNumber()
-                        .raiseTo(operand2.evaluate().assertIsNumber());
+                return operand1.evaluate().assertIsNumber(
+                                operand1.getParseLocation())
+                        .raiseTo(operand2.evaluate().assertIsNumber(
+                                operand2.getParseLocation()),
+                                operand2.getParseLocation());
             }
         },
         AND(false) {
             @Override
             public Value apply(Lazy operand1, Lazy operand2) {
                 return VBoolean.of(
-                        operand1.evaluate().assertIsBoolean().getValue()
-                                && operand2.evaluate().assertIsBoolean()
-                                        .getValue());
+                        operand1.evaluate().assertIsBoolean(
+                                    operand1.getParseLocation()).getValue()
+                                && operand2.evaluate().assertIsBoolean(
+                                    operand2.getParseLocation()).getValue());
             }
         },
         OR(false) {
             @Override
             public Value apply(Lazy operand1, Lazy operand2) {
                 return VBoolean.of(
-                        operand1.evaluate().assertIsBoolean().getValue()
-                                || operand2.evaluate().assertIsBoolean()
-                                        .getValue());
+                        operand1.evaluate().assertIsBoolean(
+                                    operand1.getParseLocation()).getValue()
+                                || operand2.evaluate().assertIsBoolean(
+                                    operand2.getParseLocation()).getValue());
             }
         },
         LOOK_UP_KEY(true) {
             @Override
             public Value apply(Lazy operand1, Lazy operand2) {
-                return operand1.evaluate().assertIsDict().get(
-                        operand2.evaluate());
+                return operand1.evaluate().assertIsDict(
+                        operand1.getParseLocation()).get(operand2.evaluate());
             }
         },
         INDEX_SEQ(true) {
             @Override
             public Value apply(Lazy operand1, Lazy operand2) {
-                VSeq sequenceValue = operand1.evaluate().assertIsSeq();
-                VNumber indexValue = operand2.evaluate().assertIsNumber();
+                VSeq sequenceValue = operand1.evaluate().assertIsSeq(
+                        operand1.getParseLocation());
+                VNumber indexValue = operand2.evaluate().assertIsNumber(
+                        operand2.getParseLocation());
 
                 if (!indexValue.getDenominator().equals(BigInteger.ONE)) {
-                    throw new Sbsdl.ExecutionException(
-                            "Index is not integral: " + indexValue);
+                    throw InternalExecutionException.nonIntegral("index",
+                            operand2.getParseLocation(), indexValue);
                 }
                 else if (indexValue.getNumerator().compareTo(
                         BigInteger.valueOf(Integer.MAX_VALUE)) > 0) {
-                    throw new Sbsdl.ExecutionException(
-                            "Index overflow: " + indexValue);
+                    throw InternalExecutionException.tooLarge("index",
+                            operand2.getParseLocation(), indexValue);
                 }
                 else if (indexValue.getNumerator()
                         .compareTo(BigInteger.ZERO) < 0) {
-                    throw new Sbsdl.ExecutionException(
-                            "Negative index: " + indexValue);
+                    throw InternalExecutionException.negative("index",
+                            operand2.getParseLocation(), indexValue);
                 }
 
                 return sequenceValue.get(indexValue.getNumerator().intValue());
@@ -129,29 +148,37 @@ public class BinaryExpression implements Expression {
         LESS_THAN(false) {
             @Override
             public Value apply(Lazy operand1, Lazy operand2) {
-                return VBoolean.of(operand1.evaluate().assertIsNumber()
-                        .compareTo(operand2.evaluate().assertIsNumber()) < 0);
+                return VBoolean.of(operand1.evaluate().assertIsNumber(
+                            operand1.getParseLocation())
+                        .compareTo(operand2.evaluate().assertIsNumber(
+                            operand2.getParseLocation())) < 0);
             }
         },
         LESS_THAN_EQ(false) {
             @Override
             public Value apply(Lazy operand1, Lazy operand2) {
-                return VBoolean.of(operand1.evaluate().assertIsNumber()
-                        .compareTo(operand2.evaluate().assertIsNumber()) <= 0);
+                return VBoolean.of(operand1.evaluate().assertIsNumber(
+                            operand1.getParseLocation())
+                        .compareTo(operand2.evaluate().assertIsNumber(
+                            operand2.getParseLocation())) <= 0);
             }
         },
         GREATER_THAN_EQ(false) {
             @Override
             public Value apply(Lazy operand1, Lazy operand2) {
-                return VBoolean.of(operand1.evaluate().assertIsNumber()
-                        .compareTo(operand2.evaluate().assertIsNumber()) >= 0);
+                return VBoolean.of(operand1.evaluate().assertIsNumber(
+                            operand1.getParseLocation())
+                        .compareTo(operand2.evaluate().assertIsNumber(
+                            operand2.getParseLocation())) >= 0);
             }
         },
         GREATER_THAN(false) {
             @Override
             public Value apply(Lazy operand1, Lazy operand2) {
-                return VBoolean.of(operand1.evaluate().assertIsNumber()
-                        .compareTo(operand2.evaluate().assertIsNumber()) > 0);
+                return VBoolean.of(operand1.evaluate().assertIsNumber(
+                            operand1.getParseLocation())
+                        .compareTo(operand2.evaluate().assertIsNumber(
+                            operand2.getParseLocation())) > 0);
             }
         },
         OTHERWISE(false) {
@@ -188,8 +215,9 @@ public class BinaryExpression implements Expression {
     
     private final Operator myOperator;
     
-    public BinaryExpression(
-            Expression operand1, Operator operator, Expression operand2) {
+    public BinaryExpression(ParseLocation l, Expression operand1,
+            Operator operator, Expression operand2) {
+        super(l);
         myOperand1 = operand1;
         myOperand2 = operand2;
         myOperator = operator;
@@ -203,11 +231,21 @@ public class BinaryExpression implements Expression {
                     public Value noCacheEvaluate() {
                         return myOperand1.evaluate(h, s);
                     }
+
+                    @Override
+                    public ParseLocation getParseLocation() {
+                        return myOperand1.getParseLocation();
+                    }
                 };
         Lazy op2Val = new Lazy() {
                     @Override
                     public Value noCacheEvaluate() {
                         return myOperand2.evaluate(h, s);
+                    }
+                    
+                    @Override
+                    public ParseLocation getParseLocation() {
+                        return myOperand2.getParseLocation();
                     }
                 };
         
@@ -243,7 +281,7 @@ public class BinaryExpression implements Expression {
                 indentUnit, indentLevels, "operand2:", myOperand2, b);
     }
     
-    private static abstract class Lazy {
+    public static abstract class Lazy {
         private Value myCachedValue;
         
         public final Value evaluate() {
@@ -255,5 +293,6 @@ public class BinaryExpression implements Expression {
         }
         
         public abstract Value noCacheEvaluate();
+        public abstract ParseLocation getParseLocation();
     }
 }

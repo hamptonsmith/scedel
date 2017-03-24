@@ -2,14 +2,15 @@ package sbsdl.values;
 
 import java.math.BigInteger;
 import java.util.Objects;
-import sbsdl.Sbsdl;
+import sbsdl.InternalExecutionException;
+import sbsdl.ParseLocation;
 
 public class VNumber extends ImmutableValue<VNumber> {
     public static VNumber of(long numerator, long denominator) {
         return new VNumber(numerator, denominator);
     }
     
-    public static VNumber of(BigInteger numerator, BigInteger denominator) {
+    private static VNumber of(BigInteger numerator, BigInteger denominator) {
         return new VNumber(numerator, denominator);
     }
     
@@ -22,10 +23,15 @@ public class VNumber extends ImmutableValue<VNumber> {
     
     private VNumber(BigInteger numerator, BigInteger denominator) {
         if (denominator.equals(BigInteger.ZERO)) {
-            throw new Sbsdl.ExecutionException("Division by zero.");
+            throw new RuntimeException();
         }
         
         BigInteger gcd = numerator.gcd(denominator);
+        
+        if (denominator.compareTo(BigInteger.ZERO) < 0) {
+            denominator = denominator.multiply(BigInteger.valueOf(-1));
+        }
+        
         numerator = numerator.divide(gcd);
         denominator = denominator.divide(gcd);
         
@@ -33,17 +39,23 @@ public class VNumber extends ImmutableValue<VNumber> {
         myDenominator = denominator;
     }
     
-    public int assertNonNegativeReasonableInteger() {
+    public boolean equals(int i) {
+        return myDenominator.equals(BigInteger.ONE)
+                && myNumerator.compareTo(BigInteger.valueOf(i)) == 0;
+    }
+    
+    public int assertNonNegativeReasonableInteger(
+            ParseLocation loc, String what) {
         if (!myDenominator.equals(BigInteger.ONE)) {
-            throw new Sbsdl.ExecutionException("Not an integer.");
+            throw InternalExecutionException.nonIntegral(what, loc, this);
         }
         
         if (myNumerator.compareTo(BigInteger.ZERO) < 0) {
-            throw new Sbsdl.ExecutionException("Cannot be negative.");
+            throw InternalExecutionException.negative(what, loc, this);
         }
         
         if (myNumerator.compareTo(BigInteger.valueOf(1_000_000_000)) > 0) {
-            throw new Sbsdl.ExecutionException("Bigger than 1,000,000,000.");
+            throw InternalExecutionException.tooLarge(what, loc, this);
         }
         
         return myNumerator.intValue();
@@ -87,17 +99,21 @@ public class VNumber extends ImmutableValue<VNumber> {
                 myDenominator.multiply(o.getDenominator()));
     }
     
-    public VNumber divide(VNumber o) {
+    public VNumber divide(VNumber o, ParseLocation oLoc) {
+        if (o.equals(0)) {
+            throw InternalExecutionException.divisionByZero(oLoc);
+        }
+        
         return multiply(VNumber.of(o.getDenominator(), o.getNumerator()));
     }
     
-    public VNumber raiseTo(VNumber o) {
+    public VNumber raiseTo(VNumber o, ParseLocation oLoc) {
         if (!o.getDenominator().equals(BigInteger.ONE)) {
-            throw new Sbsdl.ExecutionException("Non-integral exponent: " + o);
+            throw InternalExecutionException.nonIntegral("exponent", oLoc, o);
         }
         else if (o.getNumerator().compareTo(
                 BigInteger.valueOf(Integer.MAX_VALUE)) > 0) {
-            throw new Sbsdl.ExecutionException("Exponent overflow: " + o);
+            throw InternalExecutionException.tooLarge("exponent", oLoc, o);
         }
         
         VNumber result;
@@ -106,7 +122,7 @@ public class VNumber extends ImmutableValue<VNumber> {
             result = VNumber.of(myNumerator.pow(intExp), myDenominator);
         }
         else {
-            result = inverse().raiseTo(o.multiply(-1));
+            result = inverse().raiseTo(o.multiply(-1), oLoc);
         }
         
         return result;
@@ -132,7 +148,7 @@ public class VNumber extends ImmutableValue<VNumber> {
     }
 
     @Override
-    public VNumber assertIsNumber() {
+    public VNumber assertIsNumber(ParseLocation at) {
         return this;
     }
     

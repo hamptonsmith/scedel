@@ -4,20 +4,26 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import sbsdl.ExecutionException;
+import sbsdl.ParseLocation;
 
 public class VDict extends ContainerValue<VDict> {
     private final Map<Value, Value> myValue = new HashMap<>();
     
     public VDict() {
-        this(null, Collections.EMPTY_MAP);
+        this(false);
     }
     
-    public VDict(String proxiesForbiddedError, Map<Value, Value> value) {
-        super(proxiesForbiddedError != null);
+    public VDict(boolean forbidsProxies) {
+        super(forbidsProxies);
+    }
+    
+    public VDict(ExecutionException onProxy, Map<Value, Value> value) {
+        super(onProxy != null);
         
         for (Map.Entry<Value, Value> entry : value.entrySet()) {
-            myValue.put(entry.getKey().copy(proxiesForbiddedError),
-                    entry.getValue().copy(proxiesForbiddedError));
+            myValue.put(entry.getKey().copy(onProxy),
+                    entry.getValue().copy(onProxy));
         }
     }
     
@@ -70,12 +76,12 @@ public class VDict extends ContainerValue<VDict> {
     }
     
     @Override
-    public VDict assertIsDict() {
+    public VDict assertIsDict(ParseLocation at) {
         return this;
     }
 
     @Override
-    public VDict copy(String proxiesForbiddedError) {
-        return new VDict(proxiesForbiddedError, myValue);
+    public VDict copy(ExecutionException onProxy) {
+        return new VDict(onProxy, myValue);
     }
 }

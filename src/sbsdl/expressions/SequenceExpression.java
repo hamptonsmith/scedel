@@ -2,16 +2,18 @@ package sbsdl.expressions;
 
 import java.util.LinkedList;
 import java.util.List;
+import sbsdl.ParseLocation;
 import sbsdl.Sbsdl;
 import sbsdl.ScriptEnvironment;
 import sbsdl.statements.Statement;
 import sbsdl.values.VSeq;
 import sbsdl.values.Value;
 
-public class SequenceExpression implements Expression {
+public class SequenceExpression extends SkeletonExpression {
     private final List<Expression> myExpressionElements;
     
-    public SequenceExpression(List<Expression> elements) {
+    public SequenceExpression(ParseLocation l, List<Expression> elements) {
+        super(l);
         myExpressionElements = new LinkedList<>(elements);
     }
     

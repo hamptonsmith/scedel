@@ -1,19 +1,22 @@
 package sbsdl.statements;
 
+import sbsdl.ExecutionException;
+import sbsdl.InternalExecutionException;
+import sbsdl.ParseLocation;
 import sbsdl.Sbsdl;
 import sbsdl.ScriptEnvironment;
 import sbsdl.expressions.Expression;
-import sbsdl.values.VProxy;
 import sbsdl.values.VSeq;
 import sbsdl.values.Value;
 
-public class SequenceAssignmentStatement implements Statement {
+public class SequenceAssignmentStatement extends SkeletonStatement {
     private final Expression myBase;
     private final Expression myIndex;
     private final Expression myValue;
     
-    public SequenceAssignmentStatement(
-            Expression base, Expression index, Expression value) {
+    public SequenceAssignmentStatement(ParseLocation l, Expression base,
+            Expression index, Expression value) {
+        super(l);
         if (base.yeildsBakedLValues()) {
             throw new RuntimeException();
         }
@@ -25,14 +28,25 @@ public class SequenceAssignmentStatement implements Statement {
     
     @Override
     public void execute(Sbsdl.HostEnvironment h, ScriptEnvironment s) {
-        VSeq baseSeq = myBase.evaluate(h, s).assertIsSeq();
-        int index = myIndex.evaluate(h, s).assertIsNumber()
-                .assertNonNegativeReasonableInteger();
+        VSeq baseSeq = myBase.evaluate(h, s).assertIsSeq(
+                myBase.getParseLocation());
+        int index = myIndex.evaluate(h, s).assertIsNumber(
+                myIndex.getParseLocation())
+                .assertNonNegativeReasonableInteger(myIndex.getParseLocation(),
+                        "index");
         
         Value newVal = myValue.evaluate(h, s);
         
-        baseSeq.set(index, newVal.copy(
-                VProxy.cannotContainProxyMessage(baseSeq.forbidsProxies())));
+        ExecutionException proxyGuard;
+        if (baseSeq.forbidsProxies()) {
+            proxyGuard = InternalExecutionException.illegalProxyContainment(
+                    getParseLocation()).getExecutionException();
+        }
+        else {
+            proxyGuard = null;
+        }
+        
+        baseSeq.set(index, newVal.copy(proxyGuard));
     }
 
     @Override

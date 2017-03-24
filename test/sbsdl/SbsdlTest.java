@@ -1,6 +1,5 @@
 package sbsdl;
 
-import com.shieldsbetter.flexcompilator.WellFormednessException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -23,165 +22,165 @@ import sbsdl.values.Value;
 
 public class SbsdlTest {
     @Test
-    public void unavailableLiteral()
-            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+    public void unavailableLiteral() throws ExecutionException,
+            StaticCodeException, Sbsdl.HostEnvironmentException {
         evaluationTest("unavailable", VUnavailable.INSTANCE);
     }
     
     @Test
-    public void noneLiteral()
-            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+    public void noneLiteral() throws ExecutionException, StaticCodeException,
+            Sbsdl.HostEnvironmentException {
         evaluationTest("none", VNone.INSTANCE);
     }
     
     @Test
-    public void trueLiteral()
-            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+    public void trueLiteral() throws ExecutionException, StaticCodeException,
+            Sbsdl.HostEnvironmentException {
         evaluationTest("true", VBoolean.TRUE);
     }
     
     @Test
-    public void falseLiteral()
-            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+    public void falseLiteral() throws ExecutionException, StaticCodeException,
+            Sbsdl.HostEnvironmentException {
         evaluationTest("false", VBoolean.FALSE);
     }
     
     @Test
-    public void andTT()
-            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+    public void andTT() throws ExecutionException, StaticCodeException,
+            Sbsdl.HostEnvironmentException {
         evaluationTest("true and true", VBoolean.TRUE);
     }
     
     @Test
-    public void andTF()
-            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+    public void andTF() throws ExecutionException, StaticCodeException,
+            Sbsdl.HostEnvironmentException {
         evaluationTest("true and false", VBoolean.FALSE);
     }
     
     @Test
-    public void andFT()
-            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+    public void andFT() throws ExecutionException, StaticCodeException,
+            Sbsdl.HostEnvironmentException {
         evaluationTest("false and true", VBoolean.FALSE);
     }
     
     @Test
-    public void andFF()
-            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+    public void andFF() throws ExecutionException, StaticCodeException,
+            Sbsdl.HostEnvironmentException {
         evaluationTest("false and false", VBoolean.FALSE);
     }
     
     @Test
-    public void andShortCircuit()
-            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+    public void andShortCircuit() throws ExecutionException,
+            StaticCodeException, Sbsdl.HostEnvironmentException {
         evaluationTest("false and 5", VBoolean.FALSE);
     }
     
     @Test
-    public void orTT()
-            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+    public void orTT() throws ExecutionException, StaticCodeException,
+            Sbsdl.HostEnvironmentException {
         evaluationTest("true or true", VBoolean.TRUE);
     }
     
     @Test
-    public void orTF()
-            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+    public void orTF() throws ExecutionException, StaticCodeException,
+            Sbsdl.HostEnvironmentException {
         evaluationTest("true or false", VBoolean.TRUE);
     }
     
     @Test
-    public void orFT()
-            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+    public void orFT() throws ExecutionException, StaticCodeException,
+            Sbsdl.HostEnvironmentException {
         evaluationTest("false or true", VBoolean.TRUE);
     }
     
     @Test
-    public void orFF()
-            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+    public void orFF() throws ExecutionException, StaticCodeException,
+            Sbsdl.HostEnvironmentException {
         evaluationTest("false or false", VBoolean.FALSE);
     }
     
     @Test
-    public void orShortCircuit()
-            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+    public void orShortCircuit() throws ExecutionException, StaticCodeException,
+            Sbsdl.HostEnvironmentException {
         evaluationTest("true or 5", VBoolean.TRUE);
     }
     
     @Test
-    public void notT()
-            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+    public void notT() throws ExecutionException, StaticCodeException,
+            Sbsdl.HostEnvironmentException {
         evaluationTest("not true", VBoolean.FALSE);
     }
     
     @Test
-    public void notF()
-            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+    public void notF() throws ExecutionException, StaticCodeException,
+            Sbsdl.HostEnvironmentException {
         evaluationTest("not false", VBoolean.TRUE);
     }
     
     @Test
-    public void otherwiseNotUnavailable()
-            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+    public void otherwiseNotUnavailable() throws ExecutionException,
+            StaticCodeException, Sbsdl.HostEnvironmentException {
         evaluationTest("none otherwise 6", VNone.INSTANCE);
     }
     
     @Test
-    public void otherwiseUnavailable()
-            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+    public void otherwiseUnavailable() throws ExecutionException,
+            StaticCodeException, Sbsdl.HostEnvironmentException {
         evaluationTest("unavailable otherwise 6", VNumber.of(6, 1));
     }
     
     @Test
-    public void fractionalNumber()
-            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+    public void fractionalNumber() throws ExecutionException,
+            StaticCodeException, Sbsdl.HostEnvironmentException {
         evaluationTest("123.457", VNumber.of(123457, 1000));
     }
     
     @Test
-    public void wholeNumber()
-            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+    public void wholeNumber() throws ExecutionException, StaticCodeException,
+            Sbsdl.HostEnvironmentException {
         evaluationTest("123", VNumber.of(123, 1));
     }
     
     @Test
-    public void stringLiteral()
-            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+    public void stringLiteral() throws ExecutionException, StaticCodeException,
+            Sbsdl.HostEnvironmentException {
         evaluationTest("'hello \\'quoted'", new VString("hello 'quoted"));
     }
     
     @Test
-    public void emptyStringLiteral()
-            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+    public void emptyStringLiteral() throws ExecutionException,
+            StaticCodeException, Sbsdl.HostEnvironmentException {
         evaluationTest("''", new VString(""));
     }
     
     @Test
-    public void sequenceLiteral()
-            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+    public void sequenceLiteral() throws ExecutionException,
+            StaticCodeException, Sbsdl.HostEnvironmentException {
         evaluationTest("[3.1, 'foo', []]",
                 new VSeq(VNumber.of(31, 10), new VString("foo"), new VSeq()));
     }
     
     @Test
-    public void emptySequence()
-            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+    public void emptySequence() throws ExecutionException, StaticCodeException,
+            Sbsdl.HostEnvironmentException {
         evaluationTest("[]", new VSeq());
     }
     
     @Test
-    public void singletonSequence()
-            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+    public void singletonSequence() throws ExecutionException,
+            StaticCodeException, Sbsdl.HostEnvironmentException {
         evaluationTest("[1]", new VSeq(VNumber.of(1, 1)));
     }
     
     @Test
-    public void functionLiteral()
-            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+    public void functionLiteral() throws ExecutionException,
+            StaticCodeException, Sbsdl.HostEnvironmentException {
         evaluationTest("fn(x) { return x; }(123)", VNumber.of(123, 1));
     }
     
     @Test
-    public void uniquePickExplicitWeight()
-            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+    public void uniquePickExplicitWeight() throws ExecutionException,
+            StaticCodeException, Sbsdl.HostEnvironmentException {
         evaluationTest(
                 "pick 2 unique from { 'foo' {1}, 'bar' {5}, 'bazz' {5} }", 
                 new VSeq(new VString("foo"), new VString("bazz")),
@@ -189,8 +188,8 @@ public class SbsdlTest {
     }
     
     @Test
-    public void uniquePickImplicitWeight()
-            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+    public void uniquePickImplicitWeight() throws ExecutionException,
+            StaticCodeException, Sbsdl.HostEnvironmentException {
         evaluationTest(
                 "pick 2 unique from { 'foo', 'bar', 'bazz' }", 
                 new VSeq(new VString("foo"), new VString("bazz")),
@@ -198,8 +197,8 @@ public class SbsdlTest {
     }
     
     @Test
-    public void expressionParameterizedUniqueTrue()
-            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+    public void expressionParameterizedUniqueTrue() throws ExecutionException,
+            StaticCodeException, Sbsdl.HostEnvironmentException {
         evaluationTest(
                 "pick 2 unique(true) from { 'foo', 'bar', 'bazz' }", 
                 new VSeq(new VString("foo"), new VString("bazz")),
@@ -207,8 +206,8 @@ public class SbsdlTest {
     }
     
     @Test
-    public void expressionParameterizedUniqueFalse()
-            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+    public void expressionParameterizedUniqueFalse() throws ExecutionException,
+            StaticCodeException, Sbsdl.HostEnvironmentException {
         evaluationTest(
                 "pick 2 unique(false) from { 'foo', 'bar', 'bazz' }", 
                 new VSeq(new VString("foo"), new VString("foo")),
@@ -216,8 +215,8 @@ public class SbsdlTest {
     }
     
     @Test
-    public void pickExplicitWeight()
-            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+    public void pickExplicitWeight() throws ExecutionException,
+            StaticCodeException, Sbsdl.HostEnvironmentException {
         evaluationTest(
                 "pick 2 from { 'foo' {1}, 'bar' {5}, 'bazz' {5} }", 
                 new VSeq(new VString("foo"), new VString("foo")),
@@ -225,8 +224,8 @@ public class SbsdlTest {
     }
     
     @Test
-    public void pickImplicitWeight()
-            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+    public void pickImplicitWeight() throws ExecutionException,
+            StaticCodeException, Sbsdl.HostEnvironmentException {
         evaluationTest(
                 "pick 2 from { 'foo', 'bar', 'bazz' }", 
                 new VSeq(new VString("foo"), new VString("foo")),
@@ -235,7 +234,8 @@ public class SbsdlTest {
     
     @Test
     public void pickSingleYeildsElementInsteadOfSequence()
-            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+            throws ExecutionException, StaticCodeException,
+                Sbsdl.HostEnvironmentException {
         evaluationTest(
                 "pick 1 from { 'foo', 'bar', 'bazz' }", 
                 new VString("foo"),
@@ -243,8 +243,8 @@ public class SbsdlTest {
     }
     
     @Test
-    public void pickImplicitCount()
-            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+    public void pickImplicitCount() throws ExecutionException,
+            StaticCodeException, Sbsdl.HostEnvironmentException {
         evaluationTest(
                 "pick from { 'foo', 'bar', 'bazz' }", 
                 new VString("foo"),
@@ -252,8 +252,8 @@ public class SbsdlTest {
     }
     
     @Test
-    public void pickFromSequence()
-            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+    public void pickFromSequence() throws ExecutionException,
+            StaticCodeException, Sbsdl.HostEnvironmentException {
         evaluationTest(
                 "pick 2 unique from [ 'foo', 'bar', 'bazz' ]",
                 new VSeq(new VString("foo"), new VString("bazz")),
@@ -261,94 +261,96 @@ public class SbsdlTest {
     }
     
     @Test
-    public void pickingZeroYeildsEmptySequence()
-            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+    public void pickingZeroYeildsEmptySequence() throws ExecutionException,
+            StaticCodeException, Sbsdl.HostEnvironmentException {
         evaluationTest(
                 "pick 0 from [ 'foo', 'bar', 'bazz' ]", new VSeq());
     }
     
     @Test
     public void pickingOneFromNoGoodOptionsYieldsUnavailable()
-            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+            throws ExecutionException, StaticCodeException,
+                Sbsdl.HostEnvironmentException {
         evaluationTest("pick 1 from {'foo' {0}, 'bar' {0}, 'bazz' {0}}",
                 VUnavailable.INSTANCE);
     }
     
     @Test
     public void pickingMultilpleFromNoGoodOptionsYieldsSequenceOfUnavailable()
-            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+            throws ExecutionException, StaticCodeException,
+                Sbsdl.HostEnvironmentException {
         evaluationTest("pick 3 from {'foo' {0}, 'bar' {0}, 'bazz' {0}}",
                 new VSeq(VUnavailable.INSTANCE, VUnavailable.INSTANCE,
                         VUnavailable.INSTANCE));
     }
     
     @Test
-    public void pickWithOtherwise()
-            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+    public void pickWithOtherwise() throws ExecutionException,
+            StaticCodeException, Sbsdl.HostEnvironmentException {
         evaluationTest("pick from [] otherwise pick from {true}",
                 VBoolean.TRUE, true);
     }
     
     @Test
-    public void dictionaryLiteral()
-            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+    public void dictionaryLiteral() throws ExecutionException,
+            StaticCodeException, Sbsdl.HostEnvironmentException {
         evaluationTest("{foo: 5, bar: 2 + 4}",
                     new VDict().put(new VString("foo"), VNumber.of(5, 1))
                             .put(new VString("bar"), VNumber.of(6, 1)));
     }
     
     @Test
-    public void emptyDictionary()
-            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+    public void emptyDictionary() throws ExecutionException,
+            StaticCodeException, Sbsdl.HostEnvironmentException {
         evaluationTest("{}", new VDict());
     }
     
     @Test
-    public void singletonDictionary()
-            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+    public void singletonDictionary() throws ExecutionException,
+            StaticCodeException, Sbsdl.HostEnvironmentException {
         evaluationTest("{foo: 5}",
                     new VDict().put(new VString("foo"), VNumber.of(5, 1)));
     }
     
     @Test
-    public void sequenceIndexing()
-            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+    public void sequenceIndexing() throws ExecutionException,
+            StaticCodeException, Sbsdl.HostEnvironmentException {
         evaluationTest("[3, 4, 5][1]", VNumber.of(4, 1));
     }
     
     @Test
-    public void dictionaryAccess()
-            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+    public void dictionaryAccess() throws ExecutionException,
+            StaticCodeException, Sbsdl.HostEnvironmentException {
         evaluationTest("{foo: 5, bar: 6, bazz: 9}.bar", VNumber.of(6, 1));
     }
     
     @Test
-    public void dictionaryAccessExpression()
-            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+    public void dictionaryAccessExpression() throws ExecutionException,
+            StaticCodeException, Sbsdl.HostEnvironmentException {
         evaluationTest("{foo: 5, bar: 6, bazz: 9}.('bar')", VNumber.of(6, 1));
     }
     
     @Test
-    public void orderOfOperations()
-            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+    public void orderOfOperations() throws ExecutionException,
+            StaticCodeException, Sbsdl.HostEnvironmentException {
         evaluationTest("1 + 3 * 5 * 2 ^ 4 * (6 + 7)", VNumber.of(3121, 1));
     }
     
     @Test
-    public void stringConcatenation()
-            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+    public void stringConcatenation() throws ExecutionException,
+            StaticCodeException, Sbsdl.HostEnvironmentException {
         evaluationTest("'foo' + 'bar'", new VString("foobar"));
     }
     
     @Test
-    public void stringConcatenationWithNumbers()
-            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+    public void stringConcatenationWithNumbers() throws ExecutionException,
+            StaticCodeException, Sbsdl.HostEnvironmentException {
         evaluationTest("'foo' + 4.1", new VString("foo(41 / 10)"));
     }
     
     @Test
-    public void nestedStructures()
-            throws WellFormednessException, Sbsdl.HostEnvironmentException {
+    public void nestedStructures() throws ExecutionException,
+            StaticCodeException, Sbsdl.HostEnvironmentException {
         evaluationTest("{"
                         + "foo: ["
                             + "[1, 2, {}],"
@@ -381,25 +383,25 @@ public class SbsdlTest {
     
     @Test
     public void introStatement()
-            throws Sbsdl.ExecutionException, WellFormednessException {
+            throws ExecutionException, StaticCodeException {
         executionTest("intro x;", "x", VUnavailable.INSTANCE);
     }
     
     @Test
     public void introStatementWithInitialValue()
-            throws Sbsdl.ExecutionException, WellFormednessException {
+            throws ExecutionException, StaticCodeException {
         executionTest("intro x = 5;", "x", VNumber.of(5, 1));
     }
     
     @Test
     public void topLevelAssign()
-            throws Sbsdl.ExecutionException, WellFormednessException {
+            throws ExecutionException, StaticCodeException {
         executionTest("intro x; x = 5;", "x", VNumber.of(5, 1));
     }
     
     @Test
     public void multiLevelAssignment()
-            throws Sbsdl.ExecutionException, WellFormednessException {
+            throws ExecutionException, StaticCodeException {
         executionTest(
                   "intro x = {foo: [1, {bar: {bazz: [9, 8, 7]}}, 3]};"
                 + "x.foo[1].bar.bazz[2] = 6;",
@@ -408,27 +410,27 @@ public class SbsdlTest {
     
     @Test
     public void selfAssign()
-            throws Sbsdl.ExecutionException, WellFormednessException {
+            throws ExecutionException, StaticCodeException {
         executionTest("intro x = 'a'; x = x + 'b';", "x", new VString("ab"));
     }
     
     @Test
     public void simpleIfT()
-            throws Sbsdl.ExecutionException, WellFormednessException {
+            throws ExecutionException, StaticCodeException {
         executionTest("intro p = true; intro x; if p { x = 5; }", "x",
                 VNumber.of(5, 1));
     }
     
     @Test
     public void simpleIfF()
-            throws Sbsdl.ExecutionException, WellFormednessException {
+            throws ExecutionException, StaticCodeException {
         executionTest("intro p = false; intro x; if p { x = 5; }", "x",
                 VUnavailable.INSTANCE);
     }
     
     @Test
     public void ifElseTrue()
-            throws Sbsdl.ExecutionException, WellFormednessException {
+            throws ExecutionException, StaticCodeException {
         executionTest(
                 "intro p = true; intro x; if p { x = 1; } else { x = 2; }", "x",
                 VNumber.of(1, 1));
@@ -436,7 +438,7 @@ public class SbsdlTest {
     
     @Test
     public void ifElseFalse()
-            throws Sbsdl.ExecutionException, WellFormednessException {
+            throws ExecutionException, StaticCodeException {
         executionTest(
                 "intro p = false; intro x; if p { x = 1; } else { x = 2; }",
                 "x", VNumber.of(2, 1));
@@ -444,7 +446,7 @@ public class SbsdlTest {
     
     @Test
     public void ifElseIfTrue()
-            throws Sbsdl.ExecutionException, WellFormednessException {
+            throws ExecutionException, StaticCodeException {
         executionTest(
                     "intro y = 1;"
                   + "intro x;"
@@ -459,7 +461,7 @@ public class SbsdlTest {
     
     @Test
     public void ifElseIfTrue2()
-            throws Sbsdl.ExecutionException, WellFormednessException {
+            throws ExecutionException, StaticCodeException {
         executionTest(
                     "intro y = 2;"
                   + "intro x;"
@@ -474,7 +476,7 @@ public class SbsdlTest {
     
     @Test
     public void ifElseIfFalse()
-            throws Sbsdl.ExecutionException, WellFormednessException {
+            throws ExecutionException, StaticCodeException {
         executionTest(
                     "intro y = 3;"
                   + "intro x;"
@@ -489,7 +491,7 @@ public class SbsdlTest {
     
     @Test
     public void fullIfTrue1()
-            throws Sbsdl.ExecutionException, WellFormednessException {
+            throws ExecutionException, StaticCodeException {
         executionTest(
                     "intro y = 1;"
                   + "intro x;"
@@ -510,7 +512,7 @@ public class SbsdlTest {
     
     @Test
     public void fullIfTrue2()
-            throws Sbsdl.ExecutionException, WellFormednessException {
+            throws ExecutionException, StaticCodeException {
         executionTest(
                     "intro y = 2;"
                   + "intro x;"
@@ -531,7 +533,7 @@ public class SbsdlTest {
     
     @Test
     public void fullIfTrue3()
-            throws Sbsdl.ExecutionException, WellFormednessException {
+            throws ExecutionException, StaticCodeException {
         executionTest(
                     "intro y = 3;"
                   + "intro x;"
@@ -552,7 +554,7 @@ public class SbsdlTest {
     
     @Test
     public void fullIfFalse()
-            throws Sbsdl.ExecutionException, WellFormednessException {
+            throws ExecutionException, StaticCodeException {
         executionTest(
                     "intro y = 4;"
                   + "intro x;"
@@ -573,7 +575,7 @@ public class SbsdlTest {
     
     @Test
     public void forEachExplicitPool()
-            throws Sbsdl.ExecutionException, WellFormednessException {
+            throws ExecutionException, StaticCodeException {
         executionTest(
                     "intro x = '';"
                   + "for each {'abc', 'def', 'ghi'} {"
@@ -584,7 +586,7 @@ public class SbsdlTest {
     
     @Test
     public void forEachExplicitPoolWithExemplar()
-            throws Sbsdl.ExecutionException, WellFormednessException {
+            throws ExecutionException, StaticCodeException {
         executionTest(
                     "intro x = '';"
                   + "for each s : {'abc', 'def', 'ghi'} {"
@@ -595,7 +597,7 @@ public class SbsdlTest {
     
     @Test
     public void forEachSequence()
-            throws Sbsdl.ExecutionException, WellFormednessException {
+            throws ExecutionException, StaticCodeException {
         executionTest(
                     "intro x = '';"
                   + "for each ['abc', 'def', 'ghi'] {"
@@ -606,7 +608,7 @@ public class SbsdlTest {
     
     @Test
     public void nestedForEach()
-            throws Sbsdl.ExecutionException, WellFormednessException {
+            throws ExecutionException, StaticCodeException {
         executionTest(
                     "intro x = '';"
                   + "for each s : ['a', 'b', 'c'] {"
@@ -619,7 +621,7 @@ public class SbsdlTest {
     
     @Test
     public void forEachWhere()
-            throws Sbsdl.ExecutionException, WellFormednessException {
+            throws ExecutionException, StaticCodeException {
         executionTest(
                     "intro x = '';"
                   + "for each {3, 1, 4, 1, 5, 9, 2} where @ > 4 {"
@@ -630,7 +632,7 @@ public class SbsdlTest {
     
     @Test
     public void forEachWhereExemplar()
-            throws Sbsdl.ExecutionException, WellFormednessException {
+            throws ExecutionException, StaticCodeException {
         executionTest(
                     "intro x = '';"
                   + "for each s : {3, 1, 4, 1, 5, 9, 2} where s > 4 {"
@@ -641,7 +643,7 @@ public class SbsdlTest {
     
     @Test
     public void forEachNoValues()
-            throws Sbsdl.ExecutionException, WellFormednessException {
+            throws ExecutionException, StaticCodeException {
         executionTest(
                     "for each s : [] {"
                   + "    #mem(6);"
@@ -651,7 +653,7 @@ public class SbsdlTest {
     
     @Test
     public void evaluationStatement()
-            throws Sbsdl.ExecutionException, WellFormednessException {
+            throws ExecutionException, StaticCodeException {
         executionTest(
                     "intro x = fn (y) { #mem(y); };"
                   + "x(6);",
@@ -660,7 +662,7 @@ public class SbsdlTest {
     
     @Test
     public void pickFromExpression()
-            throws Sbsdl.ExecutionException, WellFormednessException {
+            throws ExecutionException, StaticCodeException {
         executionTest(
                     "intro asdf = ['a'];", "pick from asdf", new VString("a"),
                     true);
@@ -668,7 +670,7 @@ public class SbsdlTest {
     
     @Test
     public void introInitializerValueSemantics()
-            throws Sbsdl.ExecutionException, WellFormednessException {
+            throws ExecutionException, StaticCodeException {
         executionTest(
                     "intro x = [1, 2, 3];"
                   + "intro y = x;"
@@ -679,7 +681,7 @@ public class SbsdlTest {
     
     @Test
     public void topLevelAssignmentValueSemantics()
-            throws Sbsdl.ExecutionException, WellFormednessException {
+            throws ExecutionException, StaticCodeException {
         executionTest(
                     "intro x = [1, 2, 3];"
                   + "intro y;"
@@ -691,7 +693,7 @@ public class SbsdlTest {
     
     @Test
     public void dictionaryFieldValueSemantics()
-            throws Sbsdl.ExecutionException, WellFormednessException {
+            throws ExecutionException, StaticCodeException {
         executionTest(
                     "intro x = [1, 2, 3];"
                   + "intro y = {};"
@@ -703,7 +705,7 @@ public class SbsdlTest {
     
     @Test
     public void sequenceElementValueSemantics()
-            throws Sbsdl.ExecutionException, WellFormednessException {
+            throws ExecutionException, StaticCodeException {
         executionTest(
                     "intro x = [1, 2, 3];"
                   + "intro y = ['z'];"
@@ -715,7 +717,7 @@ public class SbsdlTest {
     
     @Test
     public void functionParameterValueSemantics()
-            throws Sbsdl.ExecutionException, WellFormednessException {
+            throws ExecutionException, StaticCodeException {
         executionTest(
                     "intro x = [1, 2, 3];"
                   + "intro y = fn (xs) { xs[1] = 9; };"
@@ -725,7 +727,7 @@ public class SbsdlTest {
     
     @Test
     public void pickExpressionValueSemantics()
-            throws Sbsdl.ExecutionException, WellFormednessException {
+            throws ExecutionException, StaticCodeException {
         executionTest(
                     "intro x = [[1, 2, 3]];"
                   + "(pick from x)[1] = 9;",
@@ -734,7 +736,7 @@ public class SbsdlTest {
     
     @Test
     public void forEachValueSemantics()
-            throws Sbsdl.ExecutionException, WellFormednessException {
+            throws ExecutionException, StaticCodeException {
         executionTest(
                     "intro x = [[1, 2, 3]];"
                   + "for each e : x {"
@@ -745,7 +747,7 @@ public class SbsdlTest {
     
     @Test
     public void proxyIntroInitializerReferenceSemantics()
-            throws Sbsdl.ExecutionException, WellFormednessException {
+            throws ExecutionException, StaticCodeException {
         executionTest(
                     "intro x = #proxy('x');"
                   + "x.foo = 'abc';"
@@ -757,7 +759,7 @@ public class SbsdlTest {
     
     @Test
     public void proxyTopLevelAssignmentReferenceSemantics()
-            throws Sbsdl.ExecutionException, WellFormednessException {
+            throws ExecutionException, StaticCodeException {
         executionTest(
                     "intro x = #proxy('x');"
                   + "x.foo = 'abc';"
@@ -770,7 +772,7 @@ public class SbsdlTest {
     
     @Test
     public void proxyDictionaryFieldReferenceSemantics()
-            throws Sbsdl.ExecutionException, WellFormednessException {
+            throws ExecutionException, StaticCodeException {
         executionTest(
                     "intro x = #proxy('x');"
                   + "x.foo = 'abc';"
@@ -783,7 +785,7 @@ public class SbsdlTest {
     
     @Test
     public void proxySequenceElementReferenceSemantics()
-            throws Sbsdl.ExecutionException, WellFormednessException {
+            throws ExecutionException, StaticCodeException {
         executionTest(
                     "intro x = #proxy('x');"
                   + "x.foo = 'abc';"
@@ -796,7 +798,7 @@ public class SbsdlTest {
     
     @Test
     public void proxyFunctionParameterReferenceSemantics()
-            throws Sbsdl.ExecutionException, WellFormednessException {
+            throws ExecutionException, StaticCodeException {
         executionTest(
                     "intro x = #proxy('x');"
                   + "x.foo = 'abc';"
@@ -807,7 +809,7 @@ public class SbsdlTest {
     
     @Test
     public void proxyPickStatementReferenceSemantics()
-            throws Sbsdl.ExecutionException, WellFormednessException {
+            throws ExecutionException, StaticCodeException {
         executionTest(
                     "intro x = #proxy('x');"
                   + "x.foo = 'abc';"
@@ -817,33 +819,34 @@ public class SbsdlTest {
     
     @Test
     public void proxyCannotContainProxyField()
-            throws Sbsdl.ExecutionException, WellFormednessException {
+            throws ExecutionException, StaticCodeException {
         executionTest(
                     "intro x = #proxy('x');"
                   + "x.foo = #proxy('y');",
-                "cannot contain");
+                ExecutionException.ErrorType.ILLEGAL_PROXY_CONTAINMENT);
     }
     
     @Test
     public void proxyCannotContainProxyElement()
-            throws Sbsdl.ExecutionException, WellFormednessException {
+            throws ExecutionException, StaticCodeException {
         executionTest(
                     "intro x = #proxy('x');"
                   + "x.foo = [#proxy('y')];",
-                "cannot contain");
+                ExecutionException.ErrorType.ILLEGAL_PROXY_CONTAINMENT);
     }
     
     @Test
     public void previouslyValidProxieForbiddenByBake()
-            throws Sbsdl.ExecutionException, WellFormednessException {
+            throws ExecutionException, StaticCodeException {
         executionTest(
                     "intro x = {foo: #proxy('x')};"
-                  + "bake y = x;", "bake");
+                  + "bake y = x;", 
+                ExecutionException.ErrorType.CANNOT_BAKE_PROXY);
     }
     
     @Test
     public void previouslyProxyUnsafeHierarchyOkWhenCopiedOut()
-            throws Sbsdl.ExecutionException, WellFormednessException {
+            throws ExecutionException, StaticCodeException {
         executionTest(
                     "intro x = #proxy('x');"
                   + "x.foo = {bar: ['z']};"
@@ -854,94 +857,104 @@ public class SbsdlTest {
     
     @Test
     public void noSuchSymbol()
-            throws Sbsdl.ExecutionException, WellFormednessException {
-        executionTest("x;", "no such");
+            throws ExecutionException, StaticCodeException {
+        executionTest("x;", StaticCodeException.ErrorType.NO_SUCH_SYMBOL);
     }
     
     @Test
     public void accessible()
-            throws Sbsdl.ExecutionException, WellFormednessException {
+            throws ExecutionException, StaticCodeException {
         executionTest("bake x;", "fn() { return x; }()", VUnavailable.INSTANCE);
     }
     
     @Test
     public void inaccessible()
-            throws Sbsdl.ExecutionException, WellFormednessException {
-        executionTest("intro x; fn() { return x; };", "accessible");
+            throws ExecutionException, StaticCodeException {
+        executionTest("intro x; fn() { return x; };",
+                StaticCodeException.ErrorType.INACCESSIBLE_SYMBOL);
     }
     
     @Test
     public void duplicateIntroIntro()
-            throws Sbsdl.ExecutionException, WellFormednessException {
-        executionTest("intro x; intro x;", "already");
+            throws ExecutionException, StaticCodeException {
+        executionTest("intro x; intro x;",
+                StaticCodeException.ErrorType.DUPLICATE_SYMBOL);
     }
     
     @Test
     public void duplicateParamIntro()
-            throws Sbsdl.ExecutionException, WellFormednessException {
-        executionTest("fn (x) { intro x; }", "already");
+            throws ExecutionException, StaticCodeException {
+        executionTest("fn (x) { intro x; }",
+                StaticCodeException.ErrorType.DUPLICATE_SYMBOL);
     }
     
     @Test
     public void duplicateParamParam()
-            throws Sbsdl.ExecutionException, WellFormednessException {
-        executionTest("fn (x, x) { }", "already");
+            throws ExecutionException, StaticCodeException {
+        executionTest("fn (x, x) { }",
+                StaticCodeException.ErrorType.DUPLICATE_SYMBOL);
     }
     
     @Test
     public void duplicateForEachIntro()
-            throws Sbsdl.ExecutionException, WellFormednessException {
-        executionTest("for each x : [] { intro x; }", "already");
+            throws ExecutionException, StaticCodeException {
+        executionTest("for each x : [] { intro x; }",
+                StaticCodeException.ErrorType.DUPLICATE_SYMBOL);
     }
     
     @Test
     public void pickExemplarEvaporates()
-            throws Sbsdl.ExecutionException, WellFormednessException {
+            throws ExecutionException, StaticCodeException {
         executionTest("(pick from x : [fn(){}])(); intro x;", "true",
                 VBoolean.TRUE, true);
     }
     
     @Test
     public void forEachExemplarEvaporates()
-            throws Sbsdl.ExecutionException, WellFormednessException {
+            throws ExecutionException, StaticCodeException {
         executionTest("for each x : []{} intro x;", "true", VBoolean.TRUE);
     }
     
     @Test
     public void pickStatementDisallowed() 
-            throws Sbsdl.ExecutionException, WellFormednessException {
-        executionTest("pick from {}();", "parentheses");
+            throws ExecutionException, StaticCodeException {
+        executionTest("pick from {}();",
+                StaticCodeException.ErrorType.GENERIC_SYNTAX_ERROR);
     }
     
     @Test
     public void topLevelAssignmentToBakedVarForbidden()
-            throws Sbsdl.ExecutionException, WellFormednessException {
-        executionTest("bake x = 5; x = 6;", "baked");
+            throws ExecutionException, StaticCodeException {
+        executionTest("bake x = 5; x = 6;",
+                StaticCodeException.ErrorType.BAKED_MODIFICATION_FORBIDDEN);
     }
     
     @Test
     public void fieldAssignmentToBakedVarForbidden()
-            throws Sbsdl.ExecutionException, WellFormednessException {
-        executionTest("bake x = {}; x.foo = 6;", "baked");
+            throws ExecutionException, StaticCodeException {
+        executionTest("bake x = {}; x.foo = 6;",
+                StaticCodeException.ErrorType.BAKED_MODIFICATION_FORBIDDEN);
     }
     
     @Test
     public void seqAssignmentToBakedVarForbidden()
-            throws Sbsdl.ExecutionException, WellFormednessException {
-        executionTest("bake x = ['x']; x[0]= 6;", "baked");
+            throws ExecutionException, StaticCodeException {
+        executionTest("bake x = ['x']; x[0]= 6;",
+                StaticCodeException.ErrorType.BAKED_MODIFICATION_FORBIDDEN);
     }
     
     @Test
     public void multiLevelAssignmentToBakedVarForbidden()
-            throws Sbsdl.ExecutionException, WellFormednessException {
+            throws ExecutionException, StaticCodeException {
         executionTest(
                   "bake x = {foo: [1, {bar: {bazz: [9, 8, 7]}}, 3]};"
-                + "x.foo[1].bar.bazz[2] = 6;", "baked");
+                + "x.foo[1].bar.bazz[2] = 6;",
+                StaticCodeException.ErrorType.BAKED_MODIFICATION_FORBIDDEN);
     }
     
     @Test
     public void upvalues()
-            throws Sbsdl.ExecutionException, WellFormednessException {
+            throws ExecutionException, StaticCodeException {
         executionTest(
                 "intro foo = fn() {"
               + "  bake x = 6;"
@@ -951,14 +964,14 @@ public class SbsdlTest {
     }
     
     @Test
-    public void tokenEquality()
-            throws Sbsdl.HostEnvironmentException, WellFormednessException {
+    public void tokenEquality() throws ExecutionException, StaticCodeException,
+            Sbsdl.HostEnvironmentException {
         evaluationTest("#token('abc') = #token('abc')", VBoolean.TRUE);
     }
     
     @Test
     public void tokenCanBeBaked()
-            throws Sbsdl.HostEnvironmentException, WellFormednessException {
+            throws ExecutionException, StaticCodeException {
         executionTest("bake x = {foo: #token('abc')};", "true", VBoolean.TRUE);
     }
     
@@ -966,32 +979,41 @@ public class SbsdlTest {
         return Arrays.asList(ts);
     }
     
-    private void executionTest(
-            String setup, String errorContains, boolean ... deciderValues)
-            throws WellFormednessException {
+    private void executionTest(String setup, ExecutionException.ErrorType type,
+            boolean ... deciderValues) {
         try {
             executionTest(setup, "true", VBoolean.TRUE, deciderValues);
-            Assert.fail("Expected error containing: " + errorContains);
+            Assert.fail("Expected error: " + type);
         }
-        catch (Sbsdl.ExecutionException see) {
-            Assert.assertTrue("Error supposed to contain '"
-                    + errorContains + "'.  Was: " + see.getMessage(),
-                    see.getMessage().toLowerCase().contains(errorContains));
-            
-            System.out.println("Got expected error:\n" + see.getMessage());
+        catch (ExecutionException see) {
+            Assert.assertEquals(
+                    "Expected error: " + type, type, see.getErrorType());
         }
-        catch (WellFormednessException see) {
-            Assert.assertTrue("Error supposed to contain '"
-                    + errorContains + "'.  Was: " + see.getMessage(),
-                    see.getMessage().toLowerCase().contains(errorContains));
-            
-            System.out.println("Got expected error:\n" + see.getMessage());
+        catch (StaticCodeException see) {
+            Assert.fail("Expected execution exception " + type
+                    + ". Got static code exception: " + see.getErrorType());
+        }
+    }
+    
+    private void executionTest(String setup, StaticCodeException.ErrorType type,
+            boolean ... deciderValues) {
+        try {
+            executionTest(setup, "true", VBoolean.TRUE, deciderValues);
+            Assert.fail("Expected error: " + type);
+        }
+        catch (ExecutionException see) {
+            Assert.fail("Expected static code exception " + type
+                    + ". Got execution exception: " + see.getErrorType());
+        }
+        catch (StaticCodeException see) {
+            Assert.assertEquals(
+                    "Expected error: " + type, type, see.getErrorType());
         }
     }
     
     private void executionTest(String setup, String expression, Value expected,
             boolean ... deciderValues)
-            throws Sbsdl.ExecutionException, WellFormednessException {
+            throws ExecutionException, StaticCodeException {
         TestEnvironment h = new TestEnvironment();
         TestDecider d = new TestDecider();
         
@@ -1002,9 +1024,13 @@ public class SbsdlTest {
         try {
             s.run(setup + "#out(" + expression + ");");
         }
-        catch (WellFormednessException wfe) {
-            System.out.println(wfe);
-            throw wfe;
+        catch (ExecutionException ee) {
+            ee.print(System.out);
+            throw ee;
+        }
+        catch (StaticCodeException sce) {
+            sce.print(System.out);
+            throw sce;
         }
 
         Assert.assertEquals(expected, h.myOut.get(0));
@@ -1012,7 +1038,8 @@ public class SbsdlTest {
     
     private void evaluationTest(String expression, Value expectedResult,
             boolean ... deciderResults)
-            throws Sbsdl.HostEnvironmentException, WellFormednessException {
+            throws ExecutionException, StaticCodeException,
+                Sbsdl.HostEnvironmentException {
         Sbsdl.HostEnvironment h = Mockito.mock(Sbsdl.HostEnvironment.class);
         TestDecider d = new TestDecider();
         
@@ -1027,9 +1054,13 @@ public class SbsdlTest {
         try {
             s.run("#out(" + expression + ");");
         }
-        catch (WellFormednessException wfe) {
-            System.out.println(wfe);
-            throw wfe;
+        catch (ExecutionException ee) {
+            ee.print(System.out);
+            throw ee;
+        }
+        catch (StaticCodeException sce) {
+            sce.print(System.out);
+            throw sce;
         }
 
         Mockito.verify(h).evaluate("out", list(expectedResult));
@@ -1135,7 +1166,8 @@ public class SbsdlTest {
             }
             else if (name.equals("token")) {
                 result = new VToken(
-                        parameters.get(0).assertIsString().getValue());
+                        parameters.get(0).assertIsString(
+                                ParseLocation.INTERNAL).getValue());
             }
             else {
                 throw new RuntimeException();

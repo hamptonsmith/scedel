@@ -5,7 +5,7 @@
             <url>src/sbsdl/Sbsdl.java</url>
             <bookmark id="1">
                 <name/>
-                <line>682</line>
+                <line>685</line>
                 <key/>
             </bookmark>
         </file>
@@ -17,8 +17,12 @@
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/test/sbsdl/SbsdlTest.java</file>
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/expressions/HostExpression.java</file>
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/statements/ReturnStatement.java</file>
+            <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/InternalExecutionException.java</file>
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/statements/TopLevelVariableAssignmentStatement.java</file>
+            <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/ParseLocation.java</file>
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/expressions/BinaryExpression.java</file>
+            <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/values/VToken.java</file>
+            <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/ParsingException.java</file>
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/statements/VariableIntroductionStatement.java</file>
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/expressions/FunctionCallExpression.java</file>
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/values/VSeq.java</file>
@@ -26,6 +30,7 @@
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/expressions/UnaryExpression.java</file>
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/values/Value.java</file>
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/expressions/VariableNameExpression.java</file>
+            <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/expressions/ClosureBuildingExpression.java</file>
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/values/VString.java</file>
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/values/VUnavailable.java</file>
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/sbsdl/values/SkeletonValue.java</file>

@@ -1,13 +1,15 @@
 package sbsdl.expressions;
 
+import sbsdl.ParseLocation;
 import sbsdl.Sbsdl;
 import sbsdl.ScriptEnvironment;
 import sbsdl.values.Value;
 
-public class VariableNameExpression implements Expression {
+public class VariableNameExpression extends SkeletonExpression {
     private final Sbsdl.Symbol myVariableName;
     
-    public VariableNameExpression(Sbsdl.Symbol name) {
+    public VariableNameExpression(ParseLocation l, Sbsdl.Symbol name) {
+        super(l);
         myVariableName = name;
     }
     

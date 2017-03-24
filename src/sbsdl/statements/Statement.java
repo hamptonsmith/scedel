@@ -1,5 +1,6 @@
 package sbsdl.statements;
 
+import sbsdl.ParseLocation;
 import sbsdl.Sbsdl;
 import sbsdl.ScriptEnvironment;
 import sbsdl.expressions.Expression;
@@ -15,11 +16,16 @@ public interface Statement {
                         int indentUnit, int indentLevels, StringBuilder b) {
                     b.append("NO-OP");
                 }
+
+                @Override
+                public ParseLocation getParseLocation() {
+                    return ParseLocation.INTERNAL;
+                }
             };
     
     public void execute(Sbsdl.HostEnvironment h, ScriptEnvironment s);
-    
     public void prettyRender(int indentUnit, int indentLevels, StringBuilder b);
+    public ParseLocation getParseLocation();
     
     public static class Util {
         public static void indent(

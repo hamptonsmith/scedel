@@ -1,38 +1,44 @@
 package sbsdl.values;
 
+import sbsdl.InternalExecutionException;
+import sbsdl.ParseLocation;
 import sbsdl.Sbsdl;
 import sbsdl.ScriptEnvironment;
 
 public abstract class SkeletonValue<C extends Value> implements Value<C> {
     @Override
-    public VNumber assertIsNumber() {
-        throw new Sbsdl.ExecutionException("Value is not a number: " + this);
+    public final ParseLocation getParseLocation() {
+        return ParseLocation.INTERNAL;
     }
     
     @Override
-    public VBoolean assertIsBoolean() {
-        throw new Sbsdl.ExecutionException("Value is not a boolean: " + this);
-    }
-
-    @Override
-    public VDict assertIsDict() {
-        throw new Sbsdl.ExecutionException(
-                "Value is not a dictionary: " + this);
+    public VNumber assertIsNumber(ParseLocation at) {
+        throw InternalExecutionException.notANumber(at, this);
     }
     
     @Override
-    public VSeq assertIsSeq() {
-        throw new Sbsdl.ExecutionException("Value is not a sequence: " + this);
+    public VBoolean assertIsBoolean(ParseLocation at) {
+        throw InternalExecutionException.notABoolean(at, this);
     }
 
     @Override
-    public VFunction assertIsFunction() {
-        throw new Sbsdl.ExecutionException("Value is not a function: " + this);
+    public VDict assertIsDict(ParseLocation at) {
+        throw InternalExecutionException.notADictionary(at, this);
+    }
+    
+    @Override
+    public VSeq assertIsSeq(ParseLocation at) {
+        throw InternalExecutionException.notASequence(at, this);
     }
 
     @Override
-    public VString assertIsString() {
-        throw new Sbsdl.ExecutionException("Value is not a string: " + this);
+    public VFunction assertIsFunction(ParseLocation at) {
+        throw InternalExecutionException.notAFunction(at, this);
+    }
+
+    @Override
+    public VString assertIsString(ParseLocation at) {
+        throw InternalExecutionException.notAString(at, this);
     }
 
     @Override

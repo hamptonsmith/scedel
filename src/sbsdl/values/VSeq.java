@@ -4,16 +4,17 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
-import sbsdl.Sbsdl;
+import sbsdl.ExecutionException;
+import sbsdl.ParseLocation;
 
 public class VSeq extends ContainerValue<VSeq> {
     public final LinkedList<Value> myValue = new LinkedList<>();
     
-    public VSeq(String proxiesForbiddedError, List<Value> vs) {
-        super(proxiesForbiddedError != null);
+    public VSeq(ExecutionException onProxy, List<Value> vs) {
+        super(onProxy != null);
         
         for (Value v : vs) {
-            myValue.add(v.copy(proxiesForbiddedError));
+            myValue.add(v.copy(onProxy));
         }
     }
     
@@ -43,11 +44,11 @@ public class VSeq extends ContainerValue<VSeq> {
     
     public Value get(int i) {
         if (i < 0) {
-            throw new Sbsdl.ExecutionException("Negative index: " + i);
+            throw new RuntimeException();
         }
         
         if (i >= myValue.size()) {
-            throw new Sbsdl.ExecutionException("Index past last element: " + i);
+            throw new RuntimeException();
         }
         
         return myValue.get(i);
@@ -58,7 +59,7 @@ public class VSeq extends ContainerValue<VSeq> {
     }
 
     @Override
-    public VSeq assertIsSeq() {
+    public VSeq assertIsSeq(ParseLocation at) {
         return this;
     }
     
@@ -88,7 +89,7 @@ public class VSeq extends ContainerValue<VSeq> {
     }
 
     @Override
-    public VSeq copy(String proxiesForbiddedError) {
-        return new VSeq(proxiesForbiddedError, myValue);
+    public VSeq copy(ExecutionException onProxy) {
+        return new VSeq(onProxy, myValue);
     }
 }

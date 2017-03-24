@@ -1,16 +1,20 @@
 package sbsdl.statements;
 
+import sbsdl.ExecutionException;
+import sbsdl.InternalExecutionException;
+import sbsdl.ParseLocation;
 import sbsdl.Sbsdl;
 import sbsdl.ScriptEnvironment;
 import sbsdl.expressions.Expression;;
 import sbsdl.values.Value;
 
-public class VariableIntroductionStatement implements Statement {
+public class VariableIntroductionStatement extends SkeletonStatement {
     private final Sbsdl.Symbol myName;
     private final Expression myInitialValue;
     
     public VariableIntroductionStatement(
-            Sbsdl.Symbol name, Expression initialValue) {
+            ParseLocation l, Sbsdl.Symbol name, Expression initialValue) {
+        super(l);
         myName = name;
         myInitialValue = initialValue;
     }
@@ -18,8 +22,17 @@ public class VariableIntroductionStatement implements Statement {
     @Override
     public void execute(Sbsdl.HostEnvironment h, ScriptEnvironment s) {
         Value initialValue = myInitialValue.evaluate(h, s);
-        s.introduceSymbol(myName, initialValue.copy(
-                cannotContainProxyMessage(myName.isBaked(), initialValue)));
+        
+        ExecutionException proxyGuard;
+        if (myName.isBaked()) {
+            proxyGuard = InternalExecutionException.cannotBakeProxy(
+                    getParseLocation()).getExecutionException();
+        }
+        else {
+            proxyGuard = null;
+        }
+        
+        s.introduceSymbol(myName, initialValue.copy(proxyGuard));
     }
     
     private String cannotContainProxyMessage(boolean bake, Value v) {

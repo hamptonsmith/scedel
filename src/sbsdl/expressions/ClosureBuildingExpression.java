@@ -2,6 +2,7 @@ package sbsdl.expressions;
 
 import java.util.LinkedList;
 import java.util.List;
+import sbsdl.ParseLocation;
 import sbsdl.Sbsdl;
 import sbsdl.ScriptEnvironment;
 import sbsdl.statements.MultiplexingStatement;
@@ -9,12 +10,13 @@ import sbsdl.statements.Statement;
 import sbsdl.values.VFunction;
 import sbsdl.values.Value;
 
-public class ClosureBuildingExpression implements Expression {
+public class ClosureBuildingExpression extends SkeletonExpression {
     private final List<Sbsdl.Symbol> myArgumentNames;
     private final MultiplexingStatement myCode;
     
-    public ClosureBuildingExpression(
+    public ClosureBuildingExpression(ParseLocation l,
             List<Sbsdl.Symbol> argNames, MultiplexingStatement code) {
+        super(l);
         myArgumentNames = new LinkedList<>(argNames);
         myCode = code;
     }

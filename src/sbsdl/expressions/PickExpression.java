@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import sbsdl.InternalExecutionException;
+import sbsdl.ParseLocation;
 import sbsdl.Sbsdl;
 import sbsdl.ScriptEnvironment;
 import sbsdl.statements.Statement;
@@ -14,7 +16,7 @@ import sbsdl.values.VSeq;
 import sbsdl.values.VUnavailable;
 import sbsdl.values.Value;
 
-public class PickExpression implements Expression {
+public class PickExpression extends SkeletonExpression {
     private final Sbsdl.Decider myDecider;
     private final Sbsdl.Symbol myExemplar;
     private final Expression myPool;
@@ -23,9 +25,10 @@ public class PickExpression implements Expression {
     private final Expression myWeighter;
     private final Expression myWhere;
     
-    public PickExpression(Sbsdl.Symbol exemplar, Expression pool,
-            Expression count, Expression unique, Expression weighter,
-            Expression where, Sbsdl.Decider decider) {
+    public PickExpression(ParseLocation l, Sbsdl.Symbol exemplar,
+            Expression pool, Expression count, Expression unique,
+            Expression weighter, Expression where, Sbsdl.Decider decider) {
+        super(l);
         myDecider = decider;
         myExemplar = exemplar;
         myPool = pool;
@@ -43,14 +46,19 @@ public class PickExpression implements Expression {
     
     @Override
     public Value evaluate(Sbsdl.HostEnvironment h, ScriptEnvironment s) {
-        VSeq poolSeq = myPool.evaluate(h, s).assertIsSeq();
+        VSeq poolSeq =
+                myPool.evaluate(h, s).assertIsSeq(myPool.getParseLocation());
         Value weighter = myWeighter.evaluate(h, s);
         
-        int requestedCt = myCount.evaluate(h, s).assertIsNumber()
-                .assertNonNegativeReasonableInteger();
+        int requestedCt = myCount.evaluate(h, s).assertIsNumber(
+                    myCount.getParseLocation())
+                .assertNonNegativeReasonableInteger(
+                    myCount.getParseLocation(), "pick count");
         boolean unique =
-                myUniqueFlag.evaluate(h, s).assertIsBoolean().getValue();
+                myUniqueFlag.evaluate(h, s).assertIsBoolean(
+                        myUniqueFlag.getParseLocation()).getValue();
         
+        int index = 0;
         int nonZeroWeightCt = 0;
         int totalWeight = 0;
         Map<Value, Integer> weights = new HashMap<>();
@@ -58,8 +66,9 @@ public class PickExpression implements Expression {
             s.pushScope(false);
             s.introduceSymbol(myExemplar, e);
             
-            if (myWhere.evaluate(h, s).assertIsBoolean().getValue()) {
-                int weight = weight(weighter, e, h, s);
+            if (myWhere.evaluate(h, s).assertIsBoolean(
+                    myWhere.getParseLocation()).getValue()) {
+                int weight = weight(weighter, e, index, h, s);
                 totalWeight += weight;
                 
                 if (weight > 0) {
@@ -68,6 +77,8 @@ public class PickExpression implements Expression {
                 
                 weights.put(e, weight);
             }
+            
+            index++;
         }
         
         Value result = null;
@@ -132,26 +143,30 @@ public class PickExpression implements Expression {
         return false;
     }
     
-    private int weight(Value weighter, Value query, Sbsdl.HostEnvironment h,
-            ScriptEnvironment s) {
+    private int weight(Value weighter, Value query, int queryIndex,
+            Sbsdl.HostEnvironment h, ScriptEnvironment s) {
         Value weight;
         if (weighter instanceof VDict) {
             weight = ((VDict) weighter).get(query);
         }
         else if (weighter instanceof VFunction) {
             List<Expression> params = new ArrayList<>(1);
-            params.add(new VariableNameExpression(myExemplar));
+            params.add(new VariableNameExpression(
+                    myWeighter.getParseLocation(), myExemplar));
             
-            FunctionCallExpression fCall =
-                    new FunctionCallExpression(weighter, params);
+            FunctionCallExpression fCall = new FunctionCallExpression(
+                    getParseLocation(), weighter, params);
             weight = fCall.evaluate(h, s);
         }
         else {
-            throw new Sbsdl.ExecutionException(
-                    "Weighter is not a dictionary or a function: " + weighter);
+            throw InternalExecutionException.invalidWeighter(
+                    myWeighter.getParseLocation(), weighter);
         }
         
-        return weight.assertIsNumber().assertNonNegativeReasonableInteger();
+        return weight.assertIsNumber(myWeighter.getParseLocation())
+                .assertNonNegativeReasonableInteger(
+                        myWeighter.getParseLocation(), "calculated weight for "
+                                + "element " + queryIndex + " (" + query + ")");
     }
 
     @Override

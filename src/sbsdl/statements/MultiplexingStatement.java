@@ -3,13 +3,16 @@ package sbsdl.statements;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import sbsdl.ParseLocation;
 import sbsdl.Sbsdl;
 import sbsdl.ScriptEnvironment;
 
-public class MultiplexingStatement implements Statement {
+public class MultiplexingStatement extends SkeletonStatement {
     private final List<Statement> mySubStatements;
     
-    public MultiplexingStatement(List<Statement> subStatements) {
+    public MultiplexingStatement(
+            ParseLocation l, List<Statement> subStatements) {
+        super(l);
         mySubStatements = new LinkedList<>(subStatements);
     }
 

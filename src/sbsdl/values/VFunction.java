@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import sbsdl.InternalExecutionException;
+import sbsdl.ParseLocation;
 import sbsdl.Sbsdl;
 import sbsdl.ScriptEnvironment;
 import sbsdl.statements.MultiplexingStatement;
@@ -13,8 +15,8 @@ public class VFunction extends ImmutableValue<VFunction> {
     public static VFunction buildConstantFunction(final Value result) {
         return new VFunction() {
             @Override
-            public Value call(Sbsdl.HostEnvironment h, ScriptEnvironment s,
-                    List<Value> parameters) {
+            public Value call(ParseLocation l, Sbsdl.HostEnvironment h,
+                    ScriptEnvironment s, List<Value> parameters) {
                 return result;
             }
         };
@@ -37,8 +39,8 @@ public class VFunction extends ImmutableValue<VFunction> {
         myBakedValues = new HashMap<>();
     }
     
-    public Value call(Sbsdl.HostEnvironment h, ScriptEnvironment s,
-            List<Value> parameters) {
+    public Value call(ParseLocation at, Sbsdl.HostEnvironment h,
+            ScriptEnvironment s, List<Value> parameters) {
         s.pushScope(false);
         for (Map.Entry<Sbsdl.Symbol, Value> bakedEntry
                 : myBakedValues.entrySet()) {
@@ -47,10 +49,8 @@ public class VFunction extends ImmutableValue<VFunction> {
         
         s.pushScope(true);
         if (myArgumentNames.size() != parameters.size()) {
-            throw new Sbsdl.ExecutionException(
-                    "Incorrect number of parameters.  Expected "
-                            + myArgumentNames.size() + " got "
-                            + parameters.size() + ".");
+            throw InternalExecutionException.incorrectNumberOfParameters(
+                    at, myArgumentNames.size(), parameters.size());
         }
         
         Iterator<Value> paramIter = parameters.iterator();
@@ -72,7 +72,7 @@ public class VFunction extends ImmutableValue<VFunction> {
     }
     
     @Override
-    public VFunction assertIsFunction() {
+    public VFunction assertIsFunction(ParseLocation at) {
         return this;
     }
 }

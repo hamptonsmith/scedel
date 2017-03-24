@@ -2,16 +2,19 @@ package sbsdl.expressions;
 
 import java.util.ArrayList;
 import java.util.List;
+import sbsdl.InternalExecutionException;
+import sbsdl.ParseLocation;
 import sbsdl.Sbsdl;
 import sbsdl.ScriptEnvironment;
 import sbsdl.statements.Statement;
 import sbsdl.values.Value;
 
-public class HostExpression implements Expression {
+public class HostExpression extends SkeletonExpression {
     private final String myId;
     private final List<Expression> myParameters;
     
-    public HostExpression(String id, List<Expression> params) {
+    public HostExpression(ParseLocation l, String id, List<Expression> params) {
+        super(l);
         myId = id;
         myParameters = params == null ? null : new ArrayList<>(params);
     }
@@ -40,8 +43,8 @@ public class HostExpression implements Expression {
             }
         }
         catch (Sbsdl.HostEnvironmentException hee) {
-            throw new Sbsdl.ExecutionException(
-                    "Host expression evaluation error: " + hee.getMessage());
+            throw InternalExecutionException.hostEnvironmentException(
+                    getParseLocation(), myId);
         }
         
         return result;

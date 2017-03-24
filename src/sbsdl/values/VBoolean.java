@@ -1,5 +1,7 @@
 package sbsdl.values;
 
+import sbsdl.ParseLocation;
+
 public class VBoolean extends ImmutableValue<VBoolean> {
     public static final VBoolean TRUE = new VBoolean(true);
     public static final VBoolean FALSE = new VBoolean(false);
@@ -31,7 +33,7 @@ public class VBoolean extends ImmutableValue<VBoolean> {
     }
     
     @Override
-    public VBoolean assertIsBoolean() {
+    public VBoolean assertIsBoolean(ParseLocation at) {
         return this;
     }
 

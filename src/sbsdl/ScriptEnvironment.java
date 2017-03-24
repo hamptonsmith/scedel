@@ -154,8 +154,7 @@ public class ScriptEnvironment {
             result = myVariables.get(name);
             if (result == null) {
                 if (myParent == null) {
-                    throw new Sbsdl.ExecutionException(
-                            "Variable not found: " + name);
+                    throw new RuntimeException();
                 }
                 
                 result = myParent.lookupVariable(name);

@@ -2,16 +2,19 @@ package sbsdl.expressions;
 
 import java.util.HashMap;
 import java.util.Map;
+import sbsdl.ParseLocation;
 import sbsdl.Sbsdl;
 import sbsdl.ScriptEnvironment;
 import sbsdl.statements.Statement;
 import sbsdl.values.VDict;
 import sbsdl.values.Value;
 
-public class DictionaryExpression implements Expression {
+public class DictionaryExpression extends SkeletonExpression {
     private final Map<Expression, Expression> myExpressions = new HashMap<>();
     
-    public DictionaryExpression(Map<Expression, Expression> exps) {
+    public DictionaryExpression(
+            ParseLocation l, Map<Expression, Expression> exps) {
+        super(l);
         myExpressions.putAll(exps);
     }
     

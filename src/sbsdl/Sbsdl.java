@@ -22,6 +22,7 @@ import com.shieldsbetter.flexcompilator.matchers.MRepeated;
 import com.shieldsbetter.flexcompilator.matchers.MRequire;
 import com.shieldsbetter.flexcompilator.matchers.MWithSkipper;
 import com.shieldsbetter.flexcompilator.matchers.Matcher;
+import java.io.PrintWriter;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -162,7 +163,7 @@ public class Sbsdl {
                     null);
     
     private final Matcher SEQUENCE_LITERAL =
-            new MSequence(new MLiteral("["),
+            new MAction(true, new MSequence(new MLiteral("["),
                     new MDo() {
                         @Override
                         public void run(ParseHead h) {
@@ -191,14 +192,14 @@ public class Sbsdl {
                                                     .add(exp);
                                         }
                                     })),
-                    new MLiteral("]"),
-                    new MDo() {
+                    new MLiteral("]"))) {
                         @Override
-                        public void run(ParseHead h) {
+                        public void onMatched(ParseHead h) {
                             h.pushOnParseStack(new SequenceExpression(
+                                    loc(getNotedPosition()),
                                     (List<Expression>) h.popFromParseStack()));
                         }
-                    });
+                    };
     
     private final Matcher IDENTIFIER =
             new MAction(
@@ -216,30 +217,6 @@ public class Sbsdl {
                 @Override
                 public void onMatched(ParseHead h) {
                     h.pushOnParseStack(h.popCapture());
-                }
-            };
-    
-    private final Matcher IDENTIFIER_EXP =
-            new MAction(true, IDENTIFIER) {
-                @Override
-                public void onMatched(ParseHead h) {
-                    String symName = (String) h.popFromParseStack();
-                    
-                    try {
-                        Symbol idSym = myLexicalScope.getSymbol(symName);
-                        h.pushOnParseStack(idSym);
-                    }
-                    catch (NoSuchSymbolException nsse) {
-                        throw new ExecutionException(
-                                "No such symbol '" + symName + "'.\n\n"
-                                + renderPosition(getNotedPosition()));
-                    }
-                    catch (SymbolInaccessibleException sie) {
-                        throw new ExecutionException(
-                                "This expression:\n\n"
-                                + renderPosition(getNotedPosition()) + "\n\n"
-                                + sie.getMessage());
-                    }
                 }
             };
     
@@ -262,7 +239,7 @@ public class Sbsdl {
             };
     
     private final Matcher HOST_EXP =
-            new MAction(new MSequence(
+            new MAction(true, new MSequence(
                     new MAction(new MWithSkipper(
                             new MSequence(new MLiteral("#"),
                                     new MCapture(
@@ -289,8 +266,8 @@ public class Sbsdl {
                     List parameterList = (List) h.popFromParseStack();
                     String hostId = (String) h.popFromParseStack();
 
-                    h.pushOnParseStack(
-                            new HostExpression(hostId, parameterList));
+                    h.pushOnParseStack(new HostExpression(
+                            loc(getNotedPosition()), hostId, parameterList));
                 }
             };
     
@@ -320,7 +297,7 @@ public class Sbsdl {
                 }
             });
     
-    private final Matcher DICTIONARY_LITERAL = new MSequence(
+    private final Matcher DICTIONARY_LITERAL = new MAction(true, new MSequence(
             new MLiteral("{"),
             new MDo() {
                 @Override
@@ -335,18 +312,17 @@ public class Sbsdl {
                                     "Expected ',' or '}'."),
                             new MLiteral(","),
                             DICTIONARY_FIELD_PAIR)),
-            new MLiteral("}"),
-            new MDo() {
+            new MLiteral("}"))) {
                 @Override
-                public void run(ParseHead h) {
+                public void onMatched(ParseHead h) {
                     Map<Expression, Expression> fields =
                             (Map<Expression, Expression>) h.popFromParseStack();
                     
-                    DictionaryExpression dict =
-                            new DictionaryExpression(fields);
+                    DictionaryExpression dict = new DictionaryExpression(
+                            loc(getNotedPosition()), fields);
                     h.pushOnParseStack(dict);
                 }
-            });
+            };
     
     private final Matcher SINGLE_ARGUMENT_DECLARATION =
             new MAction(true, IDENTIFIER) {
@@ -373,7 +349,7 @@ public class Sbsdl {
             };
     
     private final Matcher FUNCTION_LITERAL =
-            new MAction(new MSequence(new MLiteral("fn"),
+            new MAction(true, new MSequence(new MLiteral("fn"),
                     new MDo() {
                         @Override
                         public void run(ParseHead h) {
@@ -397,6 +373,7 @@ public class Sbsdl {
                             (MultiplexingStatement) h.popFromParseStack();
                     h.pushOnParseStack(
                             new ClosureBuildingExpression(
+                                    loc(getNotedPosition()),
                                     (List<Symbol>) h.popFromParseStack(),
                                     code));
                 }
@@ -424,31 +401,29 @@ public class Sbsdl {
             new MNoAssign(HOST_EXP, "a host expression"),
             new MAction(true, IDENTIFIER) {
                 @Override
-                public void onMatched(final ParseHead h)
-                        throws WellFormednessException {
+                public void onMatched(final ParseHead h) {
                     final String idName = (String) h.popFromParseStack();
                     final ParseHead.Position pos = getNotedPosition();
                     h.pushOnParseStack(new LHSAccess() {
                                 @Override
                                 public Expression toValue() {
                                     Symbol idSym = nameToSymbol(idName, pos);
-                                    return new VariableNameExpression(idSym);
+                                    return new VariableNameExpression(
+                                            loc(pos), idSym);
                                 }
 
                                 @Override
                                 public Statement toAssignment(
-                                        Expression value)
-                                        throws WellFormednessException {
+                                        Expression value) {
                                     Symbol idSym = nameToSymbol(idName, pos);
                                     
                                     if (idSym.isBaked()) {
-                                        throw new WellFormednessException(
-                                                "Can't modify a baked variable.",
-                                                h);
+                                        throw InternalStaticCodeException
+                                                .bakedModifyForbidden(loc(h));
                                     }
                                     
                                     return new TopLevelVariableAssignmentStatement(
-                                            idSym, value);
+                                            loc(pos), idSym, value);
                                 }
                             });
                 }
@@ -456,7 +431,7 @@ public class Sbsdl {
     
     private final Matcher LHS =
             new MSequence(BOUNDED_EXP, new MRepeated(new MAlternatives(
-                    new MAction(new MSequence(new MLiteral("."), 
+                    new MAction(true, new MSequence(new MLiteral("."), 
                             new MAlternatives(NAKED_STRING_IDENTIFIER,
                                     PARENTHETICAL_EXP))) {
                         @Override
@@ -466,12 +441,14 @@ public class Sbsdl {
                             final Expression dict =
                                     ((LHSAccess) h.popFromParseStack())
                                             .toValue();
+                            final ParseHead.Position pos = getNotedPosition();
                             
                             h.pushOnParseStack(
                                     new LHSAccess() {
                                         @Override
                                         public Expression toValue() {
-                                            return new BinaryExpression(dict,
+                                            return new BinaryExpression(
+                                                    loc(pos), dict,
                                                     BinaryExpression.Operator
                                                             .LOOK_UP_KEY,
                                                     key);
@@ -479,21 +456,20 @@ public class Sbsdl {
 
                                         @Override
                                         public Statement toAssignment(
-                                                Expression value)
-                                                throws WellFormednessException {
+                                                Expression value) {
                                             if (dict.yeildsBakedLValues()) {
-                                                throw new WellFormednessException(
-                                                        "Can't modify a baked variable.",
-                                                        h);
+                                                throw InternalStaticCodeException
+                                                        .bakedModifyForbidden(
+                                                                loc(h));
                                             }
                                             
                                             return new FieldAssignmentStatement(
-                                                    dict, key, value);
+                                                    loc(pos), dict, key, value);
                                         }
                                     });
                         }
                     },
-                    new MAction(new MSequence(
+                    new MAction(true, new MSequence(
                             new MLiteral("["), EXP, new MLiteral("]"))) {
                         @Override
                         public void onMatched(final ParseHead h) {
@@ -502,12 +478,14 @@ public class Sbsdl {
                             final Expression seq =
                                     ((LHSAccess) h.popFromParseStack())
                                             .toValue();
+                            final ParseHead.Position pos = getNotedPosition();
                             
                             h.pushOnParseStack(
                                     new LHSAccess() {
                                         @Override
                                         public Expression toValue() {
-                                            return new BinaryExpression(seq,
+                                            return new BinaryExpression(
+                                                    loc(pos), seq,
                                                     BinaryExpression.Operator
                                                             .INDEX_SEQ,
                                                     index);
@@ -515,21 +493,21 @@ public class Sbsdl {
 
                                         @Override
                                         public Statement toAssignment(
-                                                Expression value)
-                                                throws WellFormednessException {
+                                                Expression value) {
                                             if (seq.yeildsBakedLValues()) {
-                                                throw new WellFormednessException(
-                                                        "Can't modify a baked variable.",
-                                                        h);
+                                                throw InternalStaticCodeException
+                                                        .bakedModifyForbidden(
+                                                                loc(h));
                                             }
                                             
                                             return new SequenceAssignmentStatement(
-                                                    seq, index, value);
+                                                    loc(pos), seq, index,
+                                                    value);
                                         }
                                     });
                         }
                     },
-                    new MAction(new MSequence(
+                    new MAction(true, new MSequence(
                             new MLiteral("("), PARAM_LIST_INNARDS,
                             new MLiteral(")"))) {
                         @Override
@@ -539,21 +517,23 @@ public class Sbsdl {
                             final Expression f =
                                     ((LHSAccess) h.popFromParseStack())
                                             .toValue();
+                            final ParseHead.Position startP =
+                                    getNotedPosition();
+                            final ParseHead.Position endP = h.getPosition();
                             
                             h.pushOnParseStack(new LHSAccess() {
                                         @Override
                                         public Expression toValue() {
                                             return new FunctionCallExpression(
-                                                    f, args);
+                                                    loc(startP), f, args);
                                         }
 
                                         @Override
                                         public Statement toAssignment(
-                                                Expression value)
-                                                throws WellFormednessException {
-                                            throw new WellFormednessException(
-                                                    "Expected end of "
-                                                    + "statement.", h);
+                                                Expression value) {
+                                            throw InternalStaticCodeException
+                                                    .expectedEndOfStatement(
+                                                            loc(endP));
                                         }
                                     });
                         }
@@ -571,21 +551,30 @@ public class Sbsdl {
     
     private final Matcher PREFIX_EXP =
             new MSequence(
-                    new MRepeated(
-                            new MPush(new MLiteral("not"),
-                                    UnaryExpression.Operator.BOOLEAN_NEGATE)),
-                    new MAction(LHS_EXP) {
+                    new MRepeated(new MAction(true, new MLiteral("not")) {
+                                @Override
+                                public void onMatched(ParseHead h) throws WellFormednessException {
+                                    h.pushOnParseStack(getNotedPosition());
+                                    h.pushOnParseStack(UnaryExpression.Operator
+                                            .BOOLEAN_NEGATE);
+                                }
+                            }),
+                    LHS_EXP,
+                    new MDo() {
                         @Override
-                        public void onMatched(ParseHead h) {
+                        public void run(ParseHead h) {
                             Expression baseExp =
                                     (Expression) h.popFromParseStack();
                             while (!h.isParseStackEmpty()
                                     && (h.peekFromParseStack() instanceof
                                         UnaryExpression.Operator)) {
-                                baseExp = new UnaryExpression(
+                                UnaryExpression.Operator op =
                                         (UnaryExpression.Operator)
-                                                h.popFromParseStack(),
-                                        baseExp);
+                                                h.popFromParseStack();
+                                baseExp = new UnaryExpression(
+                                        loc((ParseHead.Position)
+                                                h.popFromParseStack()),
+                                        op, baseExp);
                             }
                             
                             h.pushOnParseStack(baseExp);
@@ -594,7 +583,8 @@ public class Sbsdl {
     
     private final Matcher POW_PRECEDENCE_EXP =
             new MSequence(PREFIX_EXP, new MRepeated(
-                    new MAction(new MSequence(new MLiteral("^"), PREFIX_EXP)) {
+                    new MAction(true,
+                            new MSequence(new MLiteral("^"), PREFIX_EXP)) {
                         @Override
                         public void onMatched(ParseHead h) {
                             Expression right =
@@ -602,7 +592,8 @@ public class Sbsdl {
                             Expression left =
                                     (Expression) h.popFromParseStack();
                             
-                            h.pushOnParseStack(new BinaryExpression(left,
+                            h.pushOnParseStack(new BinaryExpression(
+                                    loc(getNotedPosition()), left,
                                     BinaryExpression.Operator.RAISED_TO,
                                     right));
                         }
@@ -728,9 +719,10 @@ public class Sbsdl {
                         }
                     },
                     new MSequence(
-                            new MAction(new MLiteral("{")) {
+                            new MAction(true, new MLiteral("{")) {
                                 @Override
                                 public void onMatched(ParseHead h) {
+                                    h.pushOnParseStack(getNotedPosition());
                                     h.pushOnParseStack(new LinkedList());
                                 }
                             },
@@ -739,8 +731,7 @@ public class Sbsdl {
                                             new MLiteral(","), POOL_ELEMENT),
                             new MAction(new MLiteral("}")) {
                                 @Override
-                                public void onMatched(ParseHead h)
-                                        throws WellFormednessException {
+                                public void onMatched(ParseHead h) {
                                     Map<Expression, Expression> weighter =
                                             new HashMap<>();
                                     List<Expression> seq = new LinkedList<>();
@@ -760,24 +751,16 @@ public class Sbsdl {
                                             if (explicitWeight
                                                     && elObj.getWeight()
                                                         == null) {
-                                                throw new WellFormednessException(
-                                                        "If first element of "
-                                                        + "pool has an explicit"
-                                                        + " weight, then all "
-                                                        + "elements must have "
-                                                        + "explicit weights.",
-                                                        h);
+                                                throw InternalStaticCodeException
+                                                        .pickCollectionAllNeedWeights(
+                                                                loc(h));
                                             }
                                             else if (!explicitWeight
                                                     && elObj.getWeight()
                                                         != null) {
-                                                throw new WellFormednessException(
-                                                        "If first element of "
-                                                        + "pool has no explicit"
-                                                        + " weight, no elements"
-                                                        + " may have explicit "
-                                                        + "weight.",
-                                                        h);
+                                                throw InternalStaticCodeException
+                                                        .pickCollectionNoWeights(
+                                                                loc(h));
                                             }
                                         }
                                         
@@ -787,14 +770,17 @@ public class Sbsdl {
                                         }
                                     }
                                     
+                                    ParseLocation loc = loc((ParseHead.Position)
+                                            h.popFromParseStack());
+                                    
                                     IntermediatePickExpression ipe =
                                             new IntermediatePickExpression(
                                                     new SequenceExpression(
-                                                            seq));
+                                                            loc, seq));
                                     if (explicitWeight) {
                                         ipe.fillInWeighter(
                                                 new DictionaryExpression(
-                                                        weighter), h);
+                                                        loc, weighter), h);
                                     }
                                     
                                     h.pushOnParseStack(ipe);
@@ -838,7 +824,7 @@ public class Sbsdl {
                 }
             });
     
-    private final Matcher REQUIRED_PICK_EXP = new MAction(new MSequence(
+    private final Matcher REQUIRED_PICK_EXP = new MAction(true, new MSequence(
                     new MLiteral("pick"), PICK_COUNT_SPECIFIER,
                     new MLiteral("from"),
                     new MDo() {
@@ -864,9 +850,10 @@ public class Sbsdl {
                     Expression unique = (Expression) h.popFromParseStack();
                     Expression count = (Expression) h.popFromParseStack();
                     
-                    h.pushOnParseStack(new PickExpression(exemplar,
-                            ipe.getPool(), count, unique, ipe.getWeighter(),
-                            where, myDecider));
+                    h.pushOnParseStack(new PickExpression(
+                            loc(getNotedPosition()), exemplar, ipe.getPool(),
+                            count, unique, ipe.getWeighter(), where,
+                            myDecider));
                 }
             };
     
@@ -892,6 +879,7 @@ public class Sbsdl {
             new MDo() {
                 @Override
                 public void run(ParseHead h) {
+                    h.pushOnParseStack(loc(h));
                     h.pushOnParseStack(new LinkedList());
                 }
             },
@@ -907,7 +895,8 @@ public class Sbsdl {
                 public void run(ParseHead h) {
                     List<Statement> stmts =
                             (List<Statement>) h.popFromParseStack();
-                    h.pushOnParseStack(new MultiplexingStatement(stmts));
+                    h.pushOnParseStack(new MultiplexingStatement(
+                            (ParseLocation) h.popFromParseStack(), stmts));
                 }
             });
     
@@ -949,20 +938,20 @@ public class Sbsdl {
             new MAlternatives(
                     new MAction(true, new MLiteral(";")) {
                         @Override
-                        public void onMatched(ParseHead h)
-                                throws WellFormednessException {
+                        public void onMatched(ParseHead h) {
                             Expression eval =
                                     ((LHSAccess) h.popFromParseStack())
                                             .toValue();
                             
                             if (!(eval instanceof FunctionCallExpression)
                                     && !(eval instanceof HostExpression)) {
-                                throw new WellFormednessException(
-                                        "Expected statement.",
-                                        getNotedPosition());
+                                throw InternalStaticCodeException
+                                        .expectedEndOfStatement(
+                                                loc(getNotedPosition()));
                             }
                             
-                            h.pushOnParseStack(new EvaluateStatement(eval));
+                            h.pushOnParseStack(new EvaluateStatement(
+                                    eval.getParseLocation(), eval));
                         }
                     },
                     new MAction(new MSequence(new MLiteral("="), EXP,
@@ -981,7 +970,8 @@ public class Sbsdl {
             ));
     
     private final Matcher FOR_EACH_STMT =
-            new MAction(new MSequence(new MLiteral("for"), new MLiteral("each"),
+            new MAction(true, new MSequence(new MLiteral("for"),
+                    new MLiteral("each"),
                     new MDo() {
                         @Override
                         public void run(ParseHead h) {
@@ -997,8 +987,7 @@ public class Sbsdl {
                         }
                     })) {
                 @Override
-                public void onMatched(ParseHead h)
-                        throws WellFormednessException {
+                public void onMatched(ParseHead h) {
                     Statement codeBlock = (Statement) h.popFromParseStack();
                     Expression where = (Expression) h.popFromParseStack();
                     IntermediatePickExpression ipe =
@@ -1006,17 +995,24 @@ public class Sbsdl {
                     Symbol exemplar = (Symbol) h.popFromParseStack();
                     
                     if (ipe.getWeighter() != null) {
-                        throw new WellFormednessException("Weights not allowed "
-                                + "in for-each statement.", h);
+                        throw InternalStaticCodeException
+                                .weightsDisallowedInForEach(loc(h));
                     }
                     
                     h.pushOnParseStack(new ForEachStatement(
-                            exemplar, ipe.getPool(), where, codeBlock));
+                            loc(getNotedPosition()), exemplar, ipe.getPool(),
+                            where, codeBlock));
                 }
             };
     
     private final Matcher IF_STMT = new MSequence(
-            new MLiteral("if"),
+            new MAction(true,
+                    new MLiteral("if")) {
+                        @Override
+                        public void onMatched(ParseHead h) {
+                            h.pushOnParseStack(loc(getNotedPosition()));
+                        }
+                    },
             new MRequire(EXP, "Expected condition expression."),
             REQUIRED_INNER_LEXICAL_SCOPE_BLOCK,
             new MDo() {
@@ -1024,14 +1020,24 @@ public class Sbsdl {
                 public void run(ParseHead h) {
                     Statement codeBlock = (Statement) h.popFromParseStack();
                     Expression exp = (Expression) h.popFromParseStack();
+                    ParseLocation loc = (ParseLocation) h.popFromParseStack();
                     
                     h.pushOnParseStack(new LinkedList());
                     
+                    ((Deque) h.peekFromParseStack()).push(loc);
                     ((Deque) h.peekFromParseStack()).push(exp);
                     ((Deque) h.peekFromParseStack()).push(codeBlock);
                 }
             },
-            new MRepeated(new MLiteral("else"), new MLiteral("if"), EXP,
+            new MRepeated(
+                    new MAction(true, new MSequence(new MLiteral("else"),
+                            new MLiteral("if"))) {
+                        @Override
+                        public void onMatched(ParseHead h) {
+                            ((Deque) h.peekFromParseStack()).push(
+                                    loc(getNotedPosition()));
+                        }
+                    }, EXP,
                     REQUIRED_INNER_LEXICAL_SCOPE_BLOCK,
                     new MDo() {
                         @Override
@@ -1043,7 +1049,14 @@ public class Sbsdl {
                             ((Deque) h.peekFromParseStack()).push(codeBlock);
                         }
                     }),
-            new MOptional(new MLiteral("else"),
+            new MOptional(
+                    new MAction(true, new MLiteral("else")) {
+                        @Override
+                        public void onMatched(ParseHead h) {
+                            ((Deque) h.peekFromParseStack()).push(
+                                    loc(getNotedPosition()));
+                        }
+                    },
                     REQUIRED_INNER_LEXICAL_SCOPE_BLOCK,
                     new MDo() {
                         @Override
@@ -1064,8 +1077,9 @@ public class Sbsdl {
                     do {
                         Statement onTrue = (Statement) ifComponents.pop();
                         Expression condition = (Expression) ifComponents.pop();
+                        ParseLocation loc = (ParseLocation) ifComponents.pop();
                         
-                        curIf = new IfStatement(condition, onTrue, curIf);
+                        curIf = new IfStatement(loc, condition, onTrue, curIf);
                     } while (!ifComponents.isEmpty());
                     
                     h.pushOnParseStack(curIf);
@@ -1073,11 +1087,12 @@ public class Sbsdl {
             });
     
     private final Matcher RETURN_STMT =
-            new MAction(new MSequence(
+            new MAction(true, new MSequence(
                     new MLiteral("return"), EXP, new MLiteral(";"))) {
                 @Override
                 public void onMatched(ParseHead h) {
                     h.pushOnParseStack(new ReturnStatement(
+                            loc(getNotedPosition()),
                             (Expression) h.popFromParseStack()));
                 }
             };
@@ -1098,9 +1113,17 @@ public class Sbsdl {
     
     private final Matcher INTRO_STMT =
             new MSequence(
-                    new MAlternatives(
+                    new MAction(true, new MAlternatives(
                             new MPush(new MLiteral("intro"), false),
-                            new MPush(new MLiteral("bake"), true)),
+                            new MPush(new MLiteral("bake"), true))) {
+                                @Override
+                                public void onMatched(ParseHead h) {
+                                    boolean bake =
+                                            (Boolean) h.popFromParseStack();
+                                    h.pushOnParseStack(loc(getNotedPosition()));
+                                    h.pushOnParseStack(bake);
+                                }
+                            },
                     INTRO_IDENTIFIER,
                     new MRequireAhead(
                             new MAlternatives(
@@ -1125,6 +1148,8 @@ public class Sbsdl {
                             
                             h.pushOnParseStack(
                                     new VariableIntroductionStatement(
+                                            (ParseLocation)
+                                                    h.popFromParseStack(),
                                             sym, initialValue));
                         }
                     });
@@ -1173,7 +1198,7 @@ public class Sbsdl {
         myDecider = d;
     }
     
-    public void printParseTree(String input) throws WellFormednessException {
+    public void printParseTree(String input) throws StaticCodeException {
         ParseHead h = parse(input);
 
         StringBuilder b = new StringBuilder();
@@ -1181,19 +1206,26 @@ public class Sbsdl {
         System.out.println(b);
     }
     
-    public void run(String input) throws WellFormednessException {
+    public void run(String input)
+            throws StaticCodeException, ExecutionException {
         ParseHead h = parse(input);
         
         ScriptEnvironment s = new ScriptEnvironment();
-        ((MultiplexingStatement) h.popFromParseStack())
-                .execute(myHostEnvironment, s);
+        
+        try {
+            ((MultiplexingStatement) h.popFromParseStack())
+                    .execute(myHostEnvironment, s);
+        }
+        catch (InternalExecutionException iee) {
+            throw iee.getExecutionException().copy();
+        }
         
         if (!h.getParseStackCopy().isEmpty()) {
             throw new RuntimeException();
         }
     }
     
-    private ParseHead parse(String input) throws WellFormednessException { 
+    private ParseHead parse(String input) throws StaticCodeException { 
         ParseHead h;
         
         if (DEBUG) {
@@ -1206,14 +1238,26 @@ public class Sbsdl {
         
         try {
             h.require(CODE);
+            
+            if (h.hasNextChar()) {
+                throw new StaticCodeException(
+                        StaticCodeException.ErrorType.GENERIC_SYNTAX_ERROR,
+                        "Don't understand: " + h.remainingText().split("\n")[0],
+                        loc(h));
+            }
+        }
+        catch (InternalStaticCodeException isce) {
+            throw isce.getStaticCodeException().copy();
+        }
+        catch (WellFormednessException wfe) {
+            throw new StaticCodeException(
+                    StaticCodeException.ErrorType.GENERIC_SYNTAX_ERROR,
+                    wfe.getMessage(), loc(wfe));
         }
         catch (NoMatchException nme) {
-            throw new WellFormednessException("Couldn't parse input.", h);
-        }
-        
-        if (h.hasNextChar()) {
-            throw new WellFormednessException("Don't understand: "
-                    + h.remainingText().split("\n")[0], h);
+            throw new StaticCodeException(
+                    StaticCodeException.ErrorType.GENERIC_SYNTAX_ERROR,
+                    nme.getMessage(), loc(h));
         }
         
         return h;
@@ -1225,13 +1269,11 @@ public class Sbsdl {
             idSym = myLexicalScope.getSymbol(name);
         }
         catch (NoSuchSymbolException nsse) {
-            throw new ExecutionException("No such symbol '" + name + "'.\n\n"
-                    + renderPosition(pos));
+            throw InternalStaticCodeException.noSuchSymbol(loc(pos));
         }
         catch (SymbolInaccessibleException sie) {
-            throw new ExecutionException(
-                    "This expression:\n\n" + renderPosition(pos) + "\n\n"
-                    + sie.getMessage());
+            throw InternalStaticCodeException.inaccessibleSymbol(
+                    loc(pos), sie.getDefinitionLocation());
         }
         
         return idSym;
@@ -1244,12 +1286,25 @@ public class Sbsdl {
             result = myLexicalScope.introduceSymbol(name, baked, pos);
         }
         catch (DuplicateSymbolException dse) {
-            throw new ExecutionException("Tried to introduce symbol '"
-                    + name + "' here:\n\n" + renderPosition(pos) + "\n\n"
-                    + "But that symbol already exists.  " + dse.getMessage());
+            throw InternalStaticCodeException.duplicateSymbol(
+                    loc(pos), dse.getPreviousDefinitionLocation());
         }
         
         return result;
+    }
+    
+    private static ParseLocation loc(WellFormednessException e) {
+        return new ParseLocation(e.getLineNumber(), e.getColNumber(),
+                e.getAlignmentPrefix(), e.getLineContents());
+    }
+    
+    private static ParseLocation loc(ParseHead h) {
+        return loc(h.getPosition());
+    }
+    
+    private static ParseLocation loc(ParseHead.Position p) {
+        return new ParseLocation(p.getLineNumber(), p.getColumn(),
+                p.getAlignmentPrefix(), p.getLineContents());
     }
     
     private static String renderPosition(ParseHead.Position p) {
@@ -1298,11 +1353,6 @@ public class Sbsdl {
                 throws HostEnvironmentException;
     }
     
-    public static class ExecutionException extends RuntimeException {
-        public ExecutionException(String msg) {
-            super(msg);
-        }
-    }
     
     private class MPush extends MAction {
         private final Object myObject;
@@ -1347,7 +1397,7 @@ public class Sbsdl {
         }
         
         public MBinaryExpression(Matcher base) {
-            super(base);
+            super(true, base);
             
             myInstantiationLocation = new RuntimeException().getStackTrace()[1];
         }
@@ -1367,7 +1417,8 @@ public class Sbsdl {
                     (BinaryExpression.Operator) h.popFromParseStack();
             Expression left = (Expression) h.popFromParseStack();
 
-            h.pushOnParseStack(new BinaryExpression(left, op, right));
+            h.pushOnParseStack(new BinaryExpression(
+                    loc(getNotedPosition()), left, op, right));
             
             if (DEBUG) {
                 System.out.println(
@@ -1418,12 +1469,10 @@ public class Sbsdl {
             return myWeighter;
         }
         
-        public void fillInWeighter(Expression w, ParseHead h)
-                throws WellFormednessException {
+        public void fillInWeighter(Expression w, ParseHead h) {
             if (myWeighter != null) {
-                throw new WellFormednessException("Pick pools with explicit "
-                        + "weightings cannot also have a 'weighted by' "
-                        + "clause.", h);
+                throw InternalStaticCodeException
+                        .explicitWeightsDisallowWeightedByClause(loc(h));
             }
             
             myWeighter = w;
@@ -1448,10 +1497,9 @@ public class Sbsdl {
                         }
 
                         @Override
-                        public Statement toAssignment(Expression value)
-                                throws WellFormednessException {
-                            throw new WellFormednessException("Cannot "
-                                    + "assign to " + myDescription + ".", h);
+                        public Statement toAssignment(Expression value) {
+                            throw InternalStaticCodeException.illegalLValue(
+                                    myDescription, loc(h));
                         }
                     });
         }
@@ -1610,8 +1658,7 @@ public class Sbsdl {
                 ParseHead.Position p) throws DuplicateSymbolException {
             Symbol def = mySymbols.get(name);
             if (def != null) {
-                throw new DuplicateSymbolException("Previous occurrence:\n\n"
-                        + renderPosition(def.getPosition()));
+                throw new DuplicateSymbolException(loc(def.getPosition()));
             }
             
             def = new Symbol(name, baked, p);
@@ -1664,13 +1711,8 @@ public class Sbsdl {
                 def = getParentSymbol(name);
                 
                 if (!def.isBaked()) {
-                    throw new SymbolInaccessibleException("Seems to reference "
-                            + "this variable:\n\n"
-                            + "Line " + def.getLineNumber() + "\n"
-                            + def.getLineContents() + "\n"
-                            + def.getIndent() + "^\n\n"
-                            + "But that variable would need to be baked to be "
-                            + "accessible.");
+                    throw new SymbolInaccessibleException(
+                            loc(def.getPosition()));
                 }
             }
             
@@ -1692,15 +1734,69 @@ public class Sbsdl {
     
     private static final class SymbolInaccessibleException
             extends Exception {
-        public SymbolInaccessibleException(String msg) {
-            super(msg);
+        private final ParseLocation myLocation;
+        
+        public SymbolInaccessibleException(ParseLocation location) {
+            myLocation = location;
+        }
+        
+        public ParseLocation getDefinitionLocation() {
+            return myLocation;
         }
     }
     
     private static final class DuplicateSymbolException
             extends Exception {
-        public DuplicateSymbolException(String msg) {
-            super(msg);
+        private final ParseLocation myPreviousDefinitionLocation;
+        
+        public DuplicateSymbolException(ParseLocation l) {
+            myPreviousDefinitionLocation = l;
+        }
+        
+        public ParseLocation getPreviousDefinitionLocation() {
+            return myPreviousDefinitionLocation;
+        }
+    }
+    
+    public static final class ParseException extends Exception {
+        private final int myLineNumber;
+        private final int myColumn;
+        
+        private final String myLineContents;
+        private final String myAlignmentPrefix;
+        
+        public ParseException(int lineNumber, int column, String lineContents,
+                String alignmentPrefix, String message) {
+            super(message);
+            
+            myLineNumber = lineNumber;
+            myColumn = column;
+            myLineContents = lineContents;
+            myAlignmentPrefix = alignmentPrefix;
+        }
+        
+        public int getLineNumber() {
+            return myLineNumber;
+        }
+        
+        public int getColumn() {
+            return myColumn;
+        }
+        
+        public String getLineContents() {
+            return myLineContents;
+        }
+        
+        public String getAlignmentPrefix() {
+            return myAlignmentPrefix;
+        }
+        
+        public void print(PrintWriter w) {
+            w.println(getMessage());
+            w.println();
+            w.println("Line " + myLineNumber + ":");
+            w.println(myLineContents);
+            w.println(myAlignmentPrefix + "^");
         }
     }
 }

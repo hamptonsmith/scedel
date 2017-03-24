@@ -1,27 +1,11 @@
 package sbsdl.values;
 
-import java.util.Collections;
-import java.util.Map;
-import sbsdl.Sbsdl;
+import sbsdl.ExecutionException;
+import sbsdl.InternalExecutionException;
 
 public class VProxy extends VDict {
-    public static String cannotContainProxyMessage(boolean forbidden) {
-        String result;
-        if (forbidden) {
-            result = "Proxy objects cannot contain other proxy objects.";
-        }
-        else {
-            result = null;
-        }
-        return result;
-    }
-    
     public VProxy() {
-        this(Collections.EMPTY_MAP);
-    }
-    
-    public VProxy(Map<Value, Value> value) {
-        super(cannotContainProxyMessage(true), value);
+        super(true);
     }
 
     @Override
@@ -35,9 +19,9 @@ public class VProxy extends VDict {
     }
     
     @Override
-    public final VDict copy(String proxiesForbiddedError) {
-        if (proxiesForbiddedError != null) {
-            throw new Sbsdl.ExecutionException(proxiesForbiddedError);
+    public final VDict copy(ExecutionException onProxy) {
+        if (onProxy != null) {
+            throw new InternalExecutionException(onProxy);
         }
         
         return this;
