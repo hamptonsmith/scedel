@@ -2,6 +2,7 @@ package sbsdl.expressions;
 
 import java.util.ArrayList;
 import java.util.List;
+import sbsdl.InternalExecutionException;
 import sbsdl.ParseLocation;
 import sbsdl.Sbsdl;
 import sbsdl.ScriptEnvironment;
@@ -30,7 +31,22 @@ public class FunctionCallExpression extends SkeletonExpression {
             paramVals.add(p.evaluate(h, s).copy(null));
         }
         
-        return fValue.call(getParseLocation(), h, s, paramVals);
+        if (myParameters.size() != fValue.getArgumentCount()) {
+            throw InternalExecutionException.incorrectNumberOfParameters(
+                    getParseLocation(), myParameters.size(),
+                    fValue.getArgumentCount());
+        }
+        
+        Value result;
+        try {
+            result = fValue.call(getParseLocation(), h, s, paramVals);
+        }
+        catch (InternalExecutionException iee) {
+            iee.pushStackLevel(getParseLocation());
+            throw iee;
+        }
+        
+        return result;
     }
 
     @Override

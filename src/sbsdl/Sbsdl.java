@@ -1224,7 +1224,7 @@ public class Sbsdl {
                     .execute(myHostEnvironment, s);
         }
         catch (InternalExecutionException iee) {
-            throw iee.getExecutionException().copy();
+            throw iee.getExecutionException();
         }
         
         if (!h.getParseStackCopy().isEmpty()) {

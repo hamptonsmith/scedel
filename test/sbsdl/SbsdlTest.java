@@ -1144,24 +1144,47 @@ public class SbsdlTest {
                         .PLUS_FIRST_PARAMETER_MUST_BE_NUMBER_OR_STRING);
     }
     
+    @Test
+    public void stackTrace() throws ExecutionException, StaticCodeException {
+        List<ParseLocation> st = executionTest(
+                "intro f = fn(g) {\n"
+              + "  return g(0);\n"
+              + "};\n"
+              + "intro h = fn(x) {\n"
+              + "  return 5 / x;\n"
+              + "};\n"
+              + "intro y = f(h);",
+                ExecutionException.ErrorType.DIVISION_BY_ZERO);
+        
+        Assert.assertEquals(2, st.get(0).getLineNumber());
+        Assert.assertEquals(7, st.get(1).getLineNumber());
+        Assert.assertEquals(2, st.size());
+    }
+    
     private static <T> List<T> list(final T ... ts) {
         return Arrays.asList(ts);
     }
     
-    private void executionTest(String setup, ExecutionException.ErrorType type,
-            boolean ... deciderValues) {
+    private List<ParseLocation> executionTest(String setup,
+            ExecutionException.ErrorType type, boolean ... deciderValues) {
+        
+        List<ParseLocation> stackTrace = null;
         try {
             executionTest(setup, "true", VBoolean.TRUE, deciderValues);
             Assert.fail("Expected error: " + type);
         }
-        catch (ExecutionException see) {
+        catch (ExecutionException ee) {
             Assert.assertEquals(
-                    "Expected error: " + type, type, see.getErrorType());
+                    "Expected error: " + type, type, ee.getErrorType());
+            
+            stackTrace = ee.getScriptStackTrace();
         }
-        catch (StaticCodeException see) {
+        catch (StaticCodeException sce) {
             Assert.fail("Expected execution exception " + type
-                    + ". Got static code exception: " + see.getErrorType());
+                    + ". Got static code exception: " + sce.getErrorType());
         }
+        
+        return stackTrace;
     }
     
     private void executionTest(String setup, StaticCodeException.ErrorType type,

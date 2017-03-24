@@ -1,6 +1,8 @@
 package sbsdl;
 
 import java.io.PrintStream;
+import java.util.LinkedList;
+import java.util.List;
 import sbsdl.values.Value;
 
 public class ExecutionException extends Exception {
@@ -27,15 +29,26 @@ public class ExecutionException extends Exception {
     private final String myPrefixMessage;
     private final ParseLocation myLocation;
     private final Value myOffendingValue;
+    private final List<ParseLocation> myStackTrace;
     
     public ExecutionException(ErrorType e, String message, ParseLocation l,
             Value offendingValue) {
+        this(e, message, l, offendingValue, new LinkedList<ParseLocation>());
+    }
+    
+    public ExecutionException(ErrorType e, String message, ParseLocation l,
+            Value offendingValue, List<ParseLocation> stackTrace) {
         super("Execution Exception " + e);
         
         myErrorType = e;
         myPrefixMessage = message;
         myLocation = l;
         myOffendingValue = offendingValue;
+        myStackTrace = new LinkedList<>(stackTrace);
+    }
+    
+    public List<ParseLocation> getScriptStackTrace() {
+        return new LinkedList<>(myStackTrace);
     }
     
     public ErrorType getErrorType() {
@@ -46,14 +59,21 @@ public class ExecutionException extends Exception {
         return myOffendingValue;
     }
     
-    public ExecutionException copy() {
+    public ExecutionException copy(List<ParseLocation> stackTrace) {
         return new ExecutionException(
-                myErrorType, myPrefixMessage, myLocation, myOffendingValue);
+                myErrorType, myPrefixMessage, myLocation, myOffendingValue,
+                stackTrace);
     }
     
     public void print(PrintStream w) {
         w.println(myPrefixMessage);
         w.println();
         myLocation.print(w);
+        
+        for (ParseLocation s : myStackTrace) {
+            w.println();
+            w.print("via ");
+            s.print(w);
+        }
     }
 }

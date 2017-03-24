@@ -5,19 +5,24 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import sbsdl.InternalExecutionException;
 import sbsdl.ParseLocation;
 import sbsdl.Sbsdl;
 import sbsdl.ScriptEnvironment;
 import sbsdl.statements.MultiplexingStatement;
 
 public class VFunction extends ImmutableValue<VFunction> {
-    public static VFunction buildConstantFunction(final Value result) {
+    public static VFunction buildConstantFunction(
+            final int argCt, final Value result) {
         return new VFunction() {
             @Override
             public Value call(ParseLocation l, Sbsdl.HostEnvironment h,
                     ScriptEnvironment s, List<Value> parameters) {
                 return result;
+            }
+
+            @Override
+            public int getArgumentCount() {
+                return argCt;
             }
         };
     }
@@ -39,6 +44,10 @@ public class VFunction extends ImmutableValue<VFunction> {
         myBakedValues = new HashMap<>();
     }
     
+    public int getArgumentCount() {
+        return myArgumentNames.size();
+    }
+    
     public Value call(ParseLocation at, Sbsdl.HostEnvironment h,
             ScriptEnvironment s, List<Value> parameters) {
         s.pushScope(false);
@@ -49,8 +58,7 @@ public class VFunction extends ImmutableValue<VFunction> {
         
         s.pushScope(true);
         if (myArgumentNames.size() != parameters.size()) {
-            throw InternalExecutionException.incorrectNumberOfParameters(
-                    at, myArgumentNames.size(), parameters.size());
+            throw new RuntimeException();
         }
         
         Iterator<Value> paramIter = parameters.iterator();

@@ -37,7 +37,7 @@ public class PickExpression extends SkeletonExpression {
         myWhere = where;
         
         if (weighter == null) {
-            myWeighter = VFunction.buildConstantFunction(VNumber.of(1, 1));
+            myWeighter = VFunction.buildConstantFunction(1, VNumber.of(1, 1));
         }
         else {
             myWeighter = weighter;

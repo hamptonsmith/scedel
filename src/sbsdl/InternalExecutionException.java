@@ -1,5 +1,7 @@
 package sbsdl;
 
+import java.util.LinkedList;
+import java.util.List;
 import sbsdl.values.Value;
 
 public class InternalExecutionException extends RuntimeException {
@@ -145,12 +147,17 @@ public class InternalExecutionException extends RuntimeException {
     }
     
     private final ExecutionException myExecutionException;
+    private final List<ParseLocation> myCallStack = new LinkedList<>();
     
     public InternalExecutionException(ExecutionException e) {
         myExecutionException = e;
     }
     
     public ExecutionException getExecutionException() {
-        return myExecutionException;
+        return myExecutionException.copy(myCallStack);
+    }
+    
+    public void pushStackLevel(ParseLocation l) {
+        myCallStack.add(l);
     }
 }
