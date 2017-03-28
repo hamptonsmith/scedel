@@ -19,6 +19,14 @@ public class HostExpression extends SkeletonExpression {
         myParameters = params == null ? null : new ArrayList<>(params);
     }
     
+    public String getId() {
+        return myId;
+    }
+    
+    public List<Expression> getParameters() {
+        return myParameters;
+    }
+    
     @Override
     public Value evaluate(Scedel.HostEnvironment h, ScriptEnvironment s) {
         List<Value> evaluatedParams = null;

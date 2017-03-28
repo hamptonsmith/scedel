@@ -13,6 +13,10 @@ public class VariableNameExpression extends SkeletonExpression {
         myVariableName = name;
     }
     
+    public Scedel.Symbol getSymbol() {
+        return myVariableName;
+    }
+    
     @Override
     public Value evaluate(Scedel.HostEnvironment h, ScriptEnvironment s) {
         return s.lookupVariable(myVariableName);

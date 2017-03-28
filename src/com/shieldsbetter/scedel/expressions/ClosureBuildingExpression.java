@@ -21,6 +21,14 @@ public class ClosureBuildingExpression extends SkeletonExpression {
         myCode = code;
     }
 
+    public List<Scedel.Symbol> getArgumentNames() {
+        return myArgumentNames;
+    }
+    
+    public MultiplexingStatement getCode() {
+        return myCode;
+    }
+    
     @Override
     public Value evaluate(Scedel.HostEnvironment h, ScriptEnvironment s) {
         return new VFunction(myArgumentNames, myCode, s);

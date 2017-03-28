@@ -18,6 +18,14 @@ public class VariableIntroductionStatement extends SkeletonStatement {
         myInitialValue = initialValue;
     }
     
+    public Scedel.Symbol getSymbol() {
+        return myName;
+    }
+    
+    public Expression getInitialValue() {
+        return myInitialValue;
+    }
+    
     @Override
     public void execute(Scedel.HostEnvironment h, ScriptEnvironment s) {
         Value initialValue = myInitialValue.evaluate(h, s);

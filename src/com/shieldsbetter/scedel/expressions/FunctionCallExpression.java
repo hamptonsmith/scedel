@@ -21,6 +21,14 @@ public class FunctionCallExpression extends SkeletonExpression {
         myParameters = new ArrayList<>(parameters);
     }
     
+    public Expression getFunction() {
+        return myFunction;
+    }
+    
+    public List<Expression> getParameters() {
+        return myParameters;
+    }
+    
     @Override
     public Value evaluate(Scedel.HostEnvironment h, ScriptEnvironment s) {
         VFunction fValue = myFunction.evaluate(h, s).assertIsFunction(

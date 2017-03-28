@@ -8,7 +8,6 @@ import com.shieldsbetter.scedel.ScriptEnvironment;
 import com.shieldsbetter.scedel.statements.Statement;
 import com.shieldsbetter.scedel.values.VDict;
 import com.shieldsbetter.scedel.values.Value;
-import java.io.PrintWriter;
 
 public class DictionaryExpression extends SkeletonExpression {
     private final Map<Expression, Expression> myExpressions = new HashMap<>();
@@ -17,6 +16,14 @@ public class DictionaryExpression extends SkeletonExpression {
             ParseLocation l, Map<Expression, Expression> exps) {
         super(l);
         myExpressions.putAll(exps);
+    }
+    
+    public Iterable<Map.Entry<Expression, Expression>> entries() {
+        return myExpressions.entrySet();
+    }
+    
+    public int size() {
+        return myExpressions.size();
     }
     
     @Override

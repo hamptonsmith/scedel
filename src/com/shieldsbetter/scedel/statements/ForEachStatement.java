@@ -22,6 +22,22 @@ public class ForEachStatement extends SkeletonStatement {
         myCode = code;
     }
     
+    public Scedel.Symbol getExemplar() {
+        return myExemplar;
+    }
+    
+    public Expression getCollection() {
+        return myCollection;
+    }
+    
+    public Expression getWhere() {
+        return myWhere;
+    }
+    
+    public Statement getCode() {
+        return myCode;
+    }
+    
     @Override
     public void execute(Scedel.HostEnvironment h, ScriptEnvironment s) {
         VSeq pool = myCollection.evaluate(h, s).assertIsSeq(

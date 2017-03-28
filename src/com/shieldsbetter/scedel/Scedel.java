@@ -1217,6 +1217,8 @@ public class Scedel {
     private RootLexicalScope myLexicalScope =
             new InnerLexicalScope(new RootLexicalScope());
     
+    private String mySourceDescription;
+    
     public Scedel(HostEnvironment e) {
         this(e, new Decider() {
                     @Override
@@ -1241,6 +1243,16 @@ public class Scedel {
     
     public void run(String input)
             throws StaticCodeException, ExecutionException {
+        StackTraceElement e = new RuntimeException().getStackTrace()[1];
+        String sourceDesc = "string from " + e.getFileName() + ", line "
+                + e.getLineNumber();
+        
+        run(sourceDesc, input);
+    }
+    
+    public void run(String sourceDescription, String input)
+            throws StaticCodeException, ExecutionException {
+        mySourceDescription = sourceDescription;
         ParseHead h = parse(input);
         
         ScriptEnvironment s = new ScriptEnvironment();
@@ -1326,18 +1338,18 @@ public class Scedel {
         return result;
     }
     
-    private static ParseLocation loc(WellFormednessException e) {
-        return new ParseLocation(e.getLineNumber(), e.getColNumber(),
-                e.getAlignmentPrefix(), e.getLineContents());
+    private ParseLocation loc(WellFormednessException e) {
+        return new ParseLocation(mySourceDescription, e.getLineNumber(),
+                e.getColNumber(), e.getAlignmentPrefix(), e.getLineContents());
     }
     
-    private static ParseLocation loc(ParseHead h) {
+    private ParseLocation loc(ParseHead h) {
         return loc(h.getPosition());
     }
     
-    private static ParseLocation loc(ParseHead.Position p) {
-        return new ParseLocation(p.getLineNumber(), p.getColumn(),
-                p.getAlignmentPrefix(), p.getLineContents());
+    private ParseLocation loc(ParseHead.Position p) {
+        return new ParseLocation(mySourceDescription, p.getLineNumber(),
+                p.getColumn(), p.getAlignmentPrefix(), p.getLineContents());
     }
     
     private static String renderPosition(ParseHead.Position p) {
@@ -1486,7 +1498,7 @@ public class Scedel {
         }
     }
     
-    private static class IntermediatePickExpression {
+    private class IntermediatePickExpression {
         private final Expression myCollection;
         private Expression myWeighter;
         
@@ -1607,9 +1619,9 @@ public class Scedel {
     public static final class Symbol {
         private final String myName;
         private final boolean myBakedFlag;
-        private final ParseHead.Position myPosition;
+        private final ParseLocation myPosition;
         
-        public Symbol(String name, boolean baked, ParseHead.Position p) {
+        public Symbol(String name, boolean baked, ParseLocation p) {
             myName = name;
             myBakedFlag = baked;
             myPosition = p;
@@ -1624,7 +1636,7 @@ public class Scedel {
         }
         
         public int getColumn() {
-            return myPosition.getColumn();
+            return myPosition.getColumnNumber();
         }
         
         public String getLineContents() {
@@ -1635,7 +1647,7 @@ public class Scedel {
             return myPosition.getAlignmentPrefix();
         }
         
-        public ParseHead.Position getPosition() {
+        public ParseLocation getPosition() {
             return myPosition;
         }
         
@@ -1646,7 +1658,7 @@ public class Scedel {
         @Override
         public String toString() {
             return myName + " (" + myPosition.getLineNumber() + ":"
-                    + myPosition.getColumn() + ") "
+                    + myPosition.getColumnNumber() + ") "
                     + (myBakedFlag ? "bake" : "intro");
         }
     }
@@ -1676,7 +1688,7 @@ public class Scedel {
         }
     }
     
-    private static class InnerLexicalScope extends RootLexicalScope {
+    private class InnerLexicalScope extends RootLexicalScope {
         private final RootLexicalScope myParent;
         
         private final Map<String, Symbol> mySymbols = new HashMap<>();
@@ -1695,10 +1707,10 @@ public class Scedel {
                 ParseHead.Position p) throws DuplicateSymbolException {
             Symbol def = mySymbols.get(name);
             if (def != null) {
-                throw new DuplicateSymbolException(loc(def.getPosition()));
+                throw new DuplicateSymbolException(def.getPosition());
             }
             
-            def = new Symbol(name, baked, p);
+            def = new Symbol(name, baked, loc(p));
             
             mySymbols.put(name, def);
             
@@ -1734,7 +1746,7 @@ public class Scedel {
         }
     }
     
-    private static class ClosingLexicalScope extends InnerLexicalScope {
+    private class ClosingLexicalScope extends InnerLexicalScope {
         public ClosingLexicalScope(RootLexicalScope parent) {
             super(parent);
         }
@@ -1748,8 +1760,7 @@ public class Scedel {
                 def = getParentSymbol(name);
                 
                 if (!def.isBaked()) {
-                    throw new SymbolInaccessibleException(
-                            loc(def.getPosition()));
+                    throw new SymbolInaccessibleException(def.getPosition());
                 }
             }
             

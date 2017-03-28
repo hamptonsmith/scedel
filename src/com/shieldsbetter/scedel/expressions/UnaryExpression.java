@@ -8,17 +8,34 @@ import com.shieldsbetter.scedel.values.Value;
 
 public class UnaryExpression extends SkeletonExpression {
     public static enum Operator {
-        BOOLEAN_NEGATE {
+        BOOLEAN_NEGATE("not") {
             @Override
             public Value apply(BinaryExpression.Lazy operand,
                     Scedel.HostEnvironment he, ScriptEnvironment s) {
                 return operand.evaluate().assertIsBoolean(
                         operand.getParseLocation()).not();
             }
+
+            @Override
+            public void accept(OperatorVisitor v, Expression operand) {
+                v.visitBooleanNegate(operand);
+            }
         };
+        
+        private final String myKey;
+        
+        Operator(String key) {
+            myKey = key;
+        }
+        
+        public String getKey() {
+            return myKey;
+        }
         
         public abstract Value apply(BinaryExpression.Lazy operand,
                 Scedel.HostEnvironment he, ScriptEnvironment s);
+        
+        public abstract void accept(OperatorVisitor v, Expression operand);
     }
     
     private final Operator myOperator;
@@ -29,6 +46,14 @@ public class UnaryExpression extends SkeletonExpression {
         super(l);
         myOperator = operator;
         myOperand = operand;
+    }
+    
+    public Operator getOperator() {
+        return myOperator;
+    }
+    
+    public Expression getOperand() {
+        return myOperand;
     }
     
     @Override
@@ -69,5 +94,9 @@ public class UnaryExpression extends SkeletonExpression {
     @Override
     public void accept(Visitor v) {
         v.visitUnaryExpression(this);
+    }
+    
+    public static interface OperatorVisitor {
+        public void visitBooleanNegate(Expression operand);
     }
 }

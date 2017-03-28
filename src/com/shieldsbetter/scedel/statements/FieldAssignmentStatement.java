@@ -26,6 +26,18 @@ public class FieldAssignmentStatement extends SkeletonStatement {
         myValue = value;
     }
     
+    public Expression getBase() {
+        return myBase;
+    }
+    
+    public Expression getField() {
+        return myField;
+    }
+    
+    public Expression getAssigned() {
+        return myValue;
+    }
+    
     @Override
     public void execute(Scedel.HostEnvironment h, ScriptEnvironment s) {
         VDict baseDict = myBase.evaluate(h, s).assertIsDict(

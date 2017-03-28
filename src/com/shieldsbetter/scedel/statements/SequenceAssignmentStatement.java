@@ -26,6 +26,18 @@ public class SequenceAssignmentStatement extends SkeletonStatement {
         myValue = value;
     }
     
+    public Expression getBase() {
+        return myBase;
+    }
+    
+    public Expression getIndex() {
+        return myIndex;
+    }
+    
+    public Expression getAssigned() {
+        return myValue;
+    }
+    
     @Override
     public void execute(Scedel.HostEnvironment h, ScriptEnvironment s) {
         VSeq baseSeq = myBase.evaluate(h, s).assertIsSeq(

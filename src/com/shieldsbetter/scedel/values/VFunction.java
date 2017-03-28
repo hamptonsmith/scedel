@@ -33,15 +33,36 @@ public class VFunction extends ImmutableValue<VFunction> {
     
     public VFunction(List<Scedel.Symbol> argumentNames,
             MultiplexingStatement code, ScriptEnvironment environment) {
+        this(argumentNames, code, environment.getBakedValues());
+    }
+    
+    public VFunction(List<Scedel.Symbol> argumentNames,
+            MultiplexingStatement code, Map<Scedel.Symbol, Value> bakedVals) {
         myArgumentNames = new ArrayList<>(argumentNames);
         myCode = code;
-        myBakedValues = environment.getBakedValues();
+        myBakedValues = new HashMap<>(bakedVals);
     }
     
     private VFunction() {
         myArgumentNames = null;
         myCode = null;
         myBakedValues = new HashMap<>();
+    }
+    
+    public List<Scedel.Symbol> getArgumentNames() {
+        return myArgumentNames;
+    }
+    
+    public MultiplexingStatement getCode() {
+        return myCode;
+    }
+    
+    public int getBakedValueCount() {
+        return myBakedValues.size();
+    }
+    
+    public Iterable<Map.Entry<Scedel.Symbol, Value>> getBakedValues() {
+        return myBakedValues.entrySet();
     }
     
     public int getArgumentCount() {

@@ -18,6 +18,18 @@ public class IfStatement extends SkeletonStatement {
         myOnFalse = onFalse;
     }
     
+    public Expression getCondition() {
+        return myCondition;
+    }
+    
+    public Statement getOnTrue() {
+        return myOnTrue;
+    }
+    
+    public Statement getOnFalse() {
+        return myOnFalse;
+    }
+    
     @Override
     public void execute(Scedel.HostEnvironment h, ScriptEnvironment s) {
         boolean conditionResult =

@@ -17,6 +17,10 @@ public class SequenceExpression extends SkeletonExpression {
         myExpressionElements = new LinkedList<>(elements);
     }
     
+    public List<Expression> getElements() {
+        return myExpressionElements;
+    }
+    
     @Override
     public Value evaluate(Scedel.HostEnvironment h, ScriptEnvironment s) {
         VSeq seq = new VSeq();

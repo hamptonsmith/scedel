@@ -13,6 +13,10 @@ public class EvaluateStatement extends SkeletonStatement {
         myExpression = e;
     }
 
+    public Expression getExpression() {
+        return myExpression;
+    }
+    
     @Override
     public void execute(Scedel.HostEnvironment h, ScriptEnvironment s) {
         myExpression.evaluate(h, s);

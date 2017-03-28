@@ -1,6 +1,5 @@
 package com.shieldsbetter.scedel.values;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -25,6 +24,14 @@ public class VDict extends ContainerValue<VDict> {
             myValue.put(entry.getKey().copy(onProxy),
                     entry.getValue().copy(onProxy));
         }
+    }
+    
+    public int size() {
+        return myValue.size();
+    }
+    
+    public Iterable<Map.Entry<Value, Value>> entries() {
+        return myValue.entrySet();
     }
     
     public VDict put(Value key, Value val) {

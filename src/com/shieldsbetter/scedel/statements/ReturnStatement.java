@@ -13,6 +13,10 @@ public class ReturnStatement extends SkeletonStatement {
         myExpression = e;
     }
     
+    public Expression getExpression() {
+        return myExpression;
+    }
+    
     @Override
     public void execute(Scedel.HostEnvironment h, ScriptEnvironment s) {
         s.setReturn(myExpression.evaluate(h, s));

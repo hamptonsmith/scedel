@@ -21,6 +21,10 @@ public class LiteralExpression extends SkeletonExpression {
         myValue = v;
     }
     
+    public Value getValue() {
+        return myValue;
+    }
+    
     @Override
     public Value evaluate(Scedel.HostEnvironment h, ScriptEnvironment s) {
         return myValue.evaluate(h, s);

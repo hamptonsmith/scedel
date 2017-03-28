@@ -20,6 +20,14 @@ public class TopLevelVariableAssignmentStatement extends SkeletonStatement {
         myExpression = value;
     }
 
+    public Scedel.Symbol getSymbol() {
+        return myVarName;
+    }
+    
+    public Expression getAssigned() {
+        return myExpression;
+    }
+    
     @Override
     public void execute(Scedel.HostEnvironment h, ScriptEnvironment s) {
         s.assignValue(myVarName, myExpression.evaluate(h, s).copy(null));

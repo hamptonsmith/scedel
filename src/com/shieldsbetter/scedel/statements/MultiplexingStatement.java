@@ -16,6 +16,10 @@ public class MultiplexingStatement extends SkeletonStatement {
         mySubStatements = new LinkedList<>(subStatements);
     }
 
+    public List<Statement> getSubStatements() {
+        return mySubStatements;
+    }
+    
     @Override
     public void execute(Scedel.HostEnvironment h, ScriptEnvironment s) {
         Iterator<Statement> statementIter = mySubStatements.iterator();

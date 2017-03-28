@@ -44,6 +44,30 @@ public class PickExpression extends SkeletonExpression {
         }
     }
     
+    public Scedel.Symbol getExamplar() {
+        return myExemplar;
+    }
+    
+    public Expression getCollection() {
+        return myPool;
+    }
+    
+    public Expression getCount() {
+        return myCount;
+    }
+    
+    public Expression getUnique() {
+        return myUniqueFlag;
+    }
+    
+    public Expression getWeighter() {
+        return myWeighter;
+    }
+    
+    public Expression getWhere() {
+        return myWhere;
+    }
+    
     @Override
     public Value evaluate(Scedel.HostEnvironment h, ScriptEnvironment s) {
         VSeq poolSeq =
