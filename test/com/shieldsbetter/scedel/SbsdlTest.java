@@ -1197,13 +1197,18 @@ public class SbsdlTest {
             throws ExecutionException, StaticCodeException {
         executionTest(
                 "intro selections;"
-              + "decide [0, 4, 2, 1] {"
+              + "intro remainder;"
+              + "decide [2, 2, 1] {"
               + "  decide [1, 3, 0] {"
               + "    selections = pick 3 from ['a', 'b', 'c', 'd', 'e'];"
               + "  }"
+              + "  remainder = pick from ['a', 'b', 'c', 'd', 'e'];"
               + "}",
-                "selections", new VSeq(new VString("b"), new VString("d"),
-                        new VString("a")));
+                "[selections, remainder]",
+                new VSeq(
+                        new VSeq(new VString("b"), new VString("d"),
+                                new VString("a")),
+                        new VString("c")));
     }
     
     @Test
