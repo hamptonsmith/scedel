@@ -88,6 +88,8 @@ public class Scedel {
     private final MPlaceholder REQUIRED_NO_SCOPE_BLOCK = new MPlaceholder();
     private final MPlaceholder REQUIRED_INNER_LEXICAL_SCOPE_BLOCK =
             new MPlaceholder();
+    private final MPlaceholder OPTIONAL_INNER_LEXICAL_SCOPE_BLOCK =
+            new MPlaceholder();
     
     private final Matcher STRING_INNARDS =
             new MCapture(new MRepeated(new MSequence(
@@ -971,6 +973,24 @@ public class Scedel {
                     }
                 },
                 new MLiteral("}")));
+        OPTIONAL_INNER_LEXICAL_SCOPE_BLOCK.fillIn(new MSequence(
+                new MLiteral("{"),
+                new MDo() {
+                    @Override
+                    public void run(ParseHead h) {
+                        myLexicalScope = new InnerLexicalScope(myLexicalScope);
+                    }
+                },
+                CODE,
+                new MForbid(MEndOfInput.INSTANCE, "Reached end of input before "
+                        + "close of code block."),
+                new MDo() {
+                    @Override
+                    public void run(ParseHead h) {
+                        myLexicalScope = myLexicalScope.getParent();
+                    }
+                },
+                new MLiteral("}")));
         REQUIRED_NO_SCOPE_BLOCK.fillIn(new MSequence(
                 new MRequire(new MLiteral("{"),
                         "Expected opening of code block with '{'."),
@@ -1225,7 +1245,9 @@ public class Scedel {
                         + "begin a statement.  Try surrounding it in "
                         + "parentheses."),
                 new MAlternatives(INTRO_STMT, RETURN_STMT, FOR_EACH_STMT,
-                        IF_STMT, DECIDE_STMT, ASSIGN_OR_CALL_STMT)));
+                        IF_STMT, DECIDE_STMT,
+                        OPTIONAL_INNER_LEXICAL_SCOPE_BLOCK,
+                        ASSIGN_OR_CALL_STMT)));
     }
     
     private final MPlaceholder COMMENT = new MPlaceholder();
@@ -1527,7 +1549,7 @@ public class Scedel {
     
     private class IntermediatePickExpression {
         private final Symbol myExemplar;
-        private Expression myCollection;
+        private final Expression myCollection;
         private Expression myWeighter;
         
         public IntermediatePickExpression(

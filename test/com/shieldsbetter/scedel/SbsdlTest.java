@@ -1226,6 +1226,17 @@ public class SbsdlTest {
                 "selections1 = selections2", VBoolean.TRUE);
     }
     
+    @Test
+    public void scopingBlock() throws ExecutionException, StaticCodeException {
+        executionTest(
+                "intro x = 4;"
+              + "{"
+              + "  intro x;"
+              + "  x = 5;"
+              + "}",
+                "x", VNumber.of(4, 1));
+    }
+    
     private static <T> List<T> list(final T ... ts) {
         return Arrays.asList(ts);
     }
