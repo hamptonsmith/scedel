@@ -39,6 +39,7 @@ import com.shieldsbetter.scedel.expressions.PickExpression;
 import com.shieldsbetter.scedel.expressions.SequenceExpression;
 import com.shieldsbetter.scedel.expressions.UnaryExpression;
 import com.shieldsbetter.scedel.expressions.VariableNameExpression;
+import com.shieldsbetter.scedel.statements.DecideStatement;
 import com.shieldsbetter.scedel.statements.EvaluateStatement;
 import com.shieldsbetter.scedel.statements.FieldAssignmentStatement;
 import com.shieldsbetter.scedel.statements.ForEachStatement;
@@ -756,8 +757,12 @@ public class Scedel {
                     new MAction(BOOLEAN_LEVEL_EXPRESSION) {
                         @Override
                         public void onMatched(ParseHead h) {
+                            Expression sourceCollection =
+                                    (Expression) h.popFromParseStack();
+                            Symbol exemplar = (Symbol) h.popFromParseStack();
+                            
                             h.pushOnParseStack(new IntermediatePickExpression(
-                                    (Expression) h.popFromParseStack()));
+                                    exemplar, sourceCollection));
                         }
                     },
                     new MSequence(
@@ -815,14 +820,25 @@ public class Scedel {
                                     ParseLocation loc = loc((ParseHead.Position)
                                             h.popFromParseStack());
                                     
+                                    Symbol exemplar =
+                                            (Symbol) h.popFromParseStack();
+                                    
                                     IntermediatePickExpression ipe =
                                             new IntermediatePickExpression(
+                                                    exemplar,
                                                     new SequenceExpression(
                                                             loc, seq));
                                     if (explicitWeight) {
                                         ipe.fillInWeighter(
-                                                new DictionaryExpression(
-                                                        loc, weighter), h);
+                                                new BinaryExpression(loc,
+                                                        new DictionaryExpression(
+                                                                loc, weighter),
+                                                        BinaryExpression
+                                                        .Operator
+                                                        .LOOK_UP_KEY,
+                                                        new VariableNameExpression(
+                                                                loc, exemplar)),
+                                                        h);
                                     }
                                     
                                     h.pushOnParseStack(ipe);
@@ -888,7 +904,7 @@ public class Scedel {
                     Expression where = (Expression) h.popFromParseStack();
                     IntermediatePickExpression ipe =
                             (IntermediatePickExpression) h.popFromParseStack();
-                    Symbol exemplar = (Symbol) h.popFromParseStack();
+                    Symbol exemplar = ipe.getExemplar();
                     Expression unique = (Expression) h.popFromParseStack();
                     Expression count = (Expression) h.popFromParseStack();
                     
@@ -1033,7 +1049,7 @@ public class Scedel {
                     Expression where = (Expression) h.popFromParseStack();
                     IntermediatePickExpression ipe =
                             (IntermediatePickExpression) h.popFromParseStack();
-                    Symbol exemplar = (Symbol) h.popFromParseStack();
+                    Symbol exemplar = ipe.getExemplar();
                     
                     if (ipe.getWeighter() != null) {
                         throw InternalStaticCodeException
@@ -1196,14 +1212,19 @@ public class Scedel {
                     });
     
     private final Matcher DECIDE_STMT =
-            new MSequence(new MLiteral("decide"), EXP,
-                    REQUIRED_INNER_LEXICAL_SCOPE_BLOCK,
-                    new MDo() {
+            new MAction(true, new MSequence(new MLiteral("decide"), EXP,
+                    REQUIRED_INNER_LEXICAL_SCOPE_BLOCK)) {
                         @Override
-                        public void run(ParseHead h) {
+                        public void onMatched(ParseHead h) {
+                            MultiplexingStatement code = (MultiplexingStatement)
+                                    h.popFromParseStack();
+                            Expression decider =
+                                    (Expression) h.popFromParseStack();
                             
+                            h.pushOnParseStack(new DecideStatement(
+                                    loc(getNotedPosition()), decider, code));
                         }
-                    });
+                    };
     
     {
         STATEMENT.fillIn(new MSequence(
@@ -1211,7 +1232,7 @@ public class Scedel {
                         + "begin a statement.  Try surrounding it in "
                         + "parentheses."),
                 new MAlternatives(INTRO_STMT, RETURN_STMT, FOR_EACH_STMT,
-                        IF_STMT, ASSIGN_OR_CALL_STMT)));
+                        IF_STMT, DECIDE_STMT, ASSIGN_OR_CALL_STMT)));
     }
     
     private final MPlaceholder COMMENT = new MPlaceholder();
@@ -1512,11 +1533,18 @@ public class Scedel {
     }
     
     private class IntermediatePickExpression {
-        private final Expression myCollection;
+        private final Symbol myExemplar;
+        private Expression myCollection;
         private Expression myWeighter;
         
-        public IntermediatePickExpression(Expression collection) {
+        public IntermediatePickExpression(
+                Symbol exemplar, Expression collection) {
+            myExemplar = exemplar;
             myCollection = collection;
+        }
+        
+        public Symbol getExemplar() {
+            return myExemplar;
         }
         
         public Expression getPool() {

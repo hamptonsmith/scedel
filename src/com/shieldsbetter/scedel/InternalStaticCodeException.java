@@ -89,7 +89,7 @@ public class InternalStaticCodeException extends RuntimeException {
                         StaticCodeException.ErrorType
                                 .EXPLICIT_WEIGHTS_DISALLOW_WEIGHTED_BY_CLAUSE,
                         "Pick collections with explicit weightings cannot also "
-                                + "have a 'weighted by' clause.",
+                                + "have a 'with weight' clause.",
                         detected));
     }
             

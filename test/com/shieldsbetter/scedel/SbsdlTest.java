@@ -276,12 +276,11 @@ public class SbsdlTest {
     }
     
     @Test
-    public void pickingMultilpleFromNoGoodOptionsYieldsSequenceOfUnavailable()
+    public void pickingMultilpleFromNoGoodOptionsYieldsUnavailable()
             throws ExecutionException, StaticCodeException,
                 Scedel.HostEnvironmentException {
         evaluationTest("pick 3 from {'foo' {0}, 'bar' {0}, 'bazz' {0}}",
-                new VSeq(VUnavailable.INSTANCE, VUnavailable.INSTANCE,
-                        VUnavailable.INSTANCE));
+                VUnavailable.INSTANCE);
     }
     
     @Test
