@@ -5,6 +5,15 @@ import java.util.List;
 import com.shieldsbetter.scedel.values.Value;
 
 public class InternalExecutionException extends RuntimeException {
+    public static InternalExecutionException pickIndexOutOfRange(
+            ParseLocation detected, int index) {
+        return new InternalExecutionException(
+                new ExecutionException(
+                        ExecutionException.ErrorType.PICK_INDEX_OUT_OF_RANGE,
+                        "Pick index out of range.  Bad index: " + index,
+                        detected, null));
+    }
+    
     public static InternalExecutionException deciderIndexesExhausted(
             ParseLocation detected, int index) {
         return new InternalExecutionException(

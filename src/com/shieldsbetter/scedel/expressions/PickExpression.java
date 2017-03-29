@@ -229,6 +229,11 @@ public class PickExpression extends SkeletonExpression {
             for (int i = 0; i < requestedCt; i++) {
                 int pickedIndex = picker.pick(selectedList, totalWeight);
 
+                if (pickedIndex < 0 || pickedIndex >= selectedList.size()) {
+                    throw InternalExecutionException.pickIndexOutOfRange(
+                            getParseLocation(), index);
+                }
+                
                 Picker.Option pickedOption = selectedList.get(pickedIndex);
                 picked.enqueue(pickedOption.getValue().copy(null));
 

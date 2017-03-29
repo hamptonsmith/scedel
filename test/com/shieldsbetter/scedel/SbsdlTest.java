@@ -1160,6 +1160,67 @@ public class SbsdlTest {
         Assert.assertEquals(2, st.size());
     }
     
+    @Test
+    public void decideSequenceNegative()
+            throws ExecutionException, StaticCodeException {
+        executionTest(
+                "decide [1, -1, 3, 2] {"
+              + "  intro selections = pick 3 from ['a', 'b', 'c', 'd', 'e'];"
+              + "}",
+                ExecutionException.ErrorType.NEGATIVE);
+    }
+    
+    @Test
+    public void decideSequenceOutOfRange()
+            throws ExecutionException, StaticCodeException {
+        executionTest(
+                "decide [1, 5, 3, 2] {"
+              + "  intro selections = pick 3 from ['a', 'b', 'c', 'd', 'e'];"
+              + "}",
+                ExecutionException.ErrorType.PICK_INDEX_OUT_OF_RANGE);
+    }
+    
+    @Test
+    public void decideSequence()
+            throws ExecutionException, StaticCodeException {
+        executionTest(
+                "intro selections;"
+              + "decide [0, 4, 2, 1] {"
+              + "  selections = pick 3 from ['a', 'b', 'c', 'd', 'e'];"
+              + "}",
+                "selections", new VSeq(new VString("a"), new VString("e"),
+                        new VString("c")));
+    }
+    
+    @Test
+    public void decideNestedSequence()
+            throws ExecutionException, StaticCodeException {
+        executionTest(
+                "intro selections;"
+              + "decide [0, 4, 2, 1] {"
+              + "  decide [1, 3, 0] {"
+              + "    selections = pick 3 from ['a', 'b', 'c', 'd', 'e'];"
+              + "  }"
+              + "}",
+                "selections", new VSeq(new VString("b"), new VString("d"),
+                        new VString("a")));
+    }
+    
+    @Test
+    public void decideSequenceSeed()
+            throws ExecutionException, StaticCodeException {
+        executionTest(
+                "intro selections1;"
+              + "intro selections2;"
+              + "decide 'apple' {"
+              + "  selections1 = pick 3 from ['a', 'b', 'c', 'd', 'e', 'f'];"
+              + "}"
+              + "decide 'apple' {"
+              + "  selections2 = pick 3 from ['a', 'b', 'c', 'd', 'e', 'f'];"
+              + "}",
+                "selections1 = selections2", VBoolean.TRUE);
+    }
+    
     private static <T> List<T> list(final T ... ts) {
         return Arrays.asList(ts);
     }
