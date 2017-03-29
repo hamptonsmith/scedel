@@ -779,8 +779,8 @@ public class Scedel {
                             new MAction(new MLiteral("}")) {
                                 @Override
                                 public void onMatched(ParseHead h) {
-                                    Map<Expression, Expression> weighter =
-                                            new HashMap<>();
+                                    List<Expression> weighter =
+                                            new LinkedList<>();
                                     List<Expression> seq = new LinkedList<>();
                                     
                                     boolean explicitWeight = false;
@@ -812,8 +812,7 @@ public class Scedel {
                                         }
                                         
                                         if (elObj.getWeight() != null) {
-                                            weighter.put(elObj.getExpression(),
-                                                    elObj.getWeight());
+                                            weighter.add(elObj.getWeight());
                                         }
                                     }
                                     
@@ -830,15 +829,9 @@ public class Scedel {
                                                             loc, seq));
                                     if (explicitWeight) {
                                         ipe.fillInWeighter(
-                                                new BinaryExpression(loc,
-                                                        new DictionaryExpression(
-                                                                loc, weighter),
-                                                        BinaryExpression
-                                                        .Operator
-                                                        .LOOK_UP_KEY,
-                                                        new VariableNameExpression(
-                                                                loc, exemplar)),
-                                                        h);
+                                                new SequenceExpression(
+                                                        loc, weighter),
+                                                h);
                                     }
                                     
                                     h.pushOnParseStack(ipe);

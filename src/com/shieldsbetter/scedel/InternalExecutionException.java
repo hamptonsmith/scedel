@@ -100,12 +100,11 @@ public class InternalExecutionException extends RuntimeException {
     }
     
     public static InternalExecutionException invalidWeighter(
-            ParseLocation detected, Value offendingValue) {
+            ParseLocation detected, String error, Value offendingValue) {
         return new InternalExecutionException(
                 new ExecutionException(
                         ExecutionException.ErrorType.INVALID_WEIGHTER,
-                        "Weighter is not a dictionary or function.", detected,
-                        offendingValue));
+                        error, detected, offendingValue));
     }
     
     public static InternalExecutionException hostEnvironmentException(

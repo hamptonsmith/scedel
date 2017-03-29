@@ -1,16 +1,21 @@
 package com.shieldsbetter.scedel.expressions;
 
+import com.shieldsbetter.scedel.InternalExecutionException;
 import java.util.ArrayList;
 import java.util.List;
 import com.shieldsbetter.scedel.ParseLocation;
 import com.shieldsbetter.scedel.Picker;
 import com.shieldsbetter.scedel.Scedel;
+import com.shieldsbetter.scedel.Scedel.HostEnvironment;
 import com.shieldsbetter.scedel.ScriptEnvironment;
 import com.shieldsbetter.scedel.statements.Statement;
+import com.shieldsbetter.scedel.values.VDict;
+import com.shieldsbetter.scedel.values.VFunction;
 import com.shieldsbetter.scedel.values.VNumber;
 import com.shieldsbetter.scedel.values.VSeq;
 import com.shieldsbetter.scedel.values.VUnavailable;
 import com.shieldsbetter.scedel.values.Value;
+import java.util.LinkedList;
 
 /**
  * <p>Fully explicit, a {@code pick expression} looks like this:</p>
@@ -19,8 +24,8 @@ import com.shieldsbetter.scedel.values.Value;
  * <strong>unique(</strong><em>&lt;unique flag&gt;</em><strong>) from</strong>
  * <em>&lt;exemplar name&gt;</em> <strong>:</strong>
  * <em>&lt;source collection&gt;</em> <strong>where</strong>
- * <em>&lt;selection predicate&gt;</em> <strong>with weight</strong>
- * <em>&lt;weight expression&gt;</em></p>
+ * <em>&lt;selection predicate&gt;</em> <strong>weighted by</strong>
+ * <em>&lt;weighter&gt;</em></p>
  * 
  * <p>Of these, only the <em>source collection</em> is required.  With all
  * optional parts removed, the shortest form of the expression looks like
@@ -40,7 +45,7 @@ import com.shieldsbetter.scedel.values.Value;
  *         value of the unique flag expression is {@code false}.</li>
  *     <li><strong>examplar</strong>: &#64;</li>
  *     <li><strong>selection predicate</strong>: {@code true}</li>
- *     <li><strong>weight expression</strong>: {@code 1}
+ *     <li><strong>weighted by</strong>: {@code fn(index, value) { return 1; }}
  * </ul>
  * 
  * <p>The semantics of a pick expression are then as follows:</p>
@@ -56,25 +61,29 @@ import com.shieldsbetter.scedel.values.Value;
  *         literal</em>, evaluate the value portion of each entry in order
  *         and concatenate them into a <em>source collection value</em>, then
  *         evaluate the weight portion of each entry in order and construct an
- *         appropriate <em>weight expression</em>.  Otherwise, the
- *         <em>source collection</em> is an expression; evaluate it into a
- *         <em>source collection value</em>.  In the first case, the source
- *         collection value will be a sequence by construction.  In the second
- *         case, it is a runtime error for the source collection value not to be
- *         a sequence.</li>
+ *         appropriate <em>weighter</em>.  Otherwise, the <em>source
+ *         collection</em> is an expression; evaluate it into a <em>source
+ *         collection value</em>.  In the first case, the source collection
+ *         value will be a sequence by construction.  In the second case, it is
+ *         a runtime error for the source collection value not to be a
+ *         sequence.</li>
  *     <li>If the <em>source collection</em> is a <em>pick collection
- *         literal</em>, and the <strong>with weight</strong> clause has not
+ *         literal</em>, and the <strong>weighted by</strong> clause has not
  *         been omitted, this is a syntax error.</li>
+ *     <li>Evaluate the <em>weighter</em> into a <em>weighter value</em>.  If
+ *         this value is not a sequence with length at least as large as the
+ *         number of elements in the source collection value, a dictionary, or
+ *         a function taking two arguments, this is a runtime error.</li>
  *     <li>For each non-{@code unavailable} element of the source collection
  *         value, the <em>selection predicate</em> is evaluated in a context
  *         where the exemplar symbol is mapped to that element's value.  It is a
  *         runtime error for this predicate to evaluate to a non-boolean value.
  *         If this evaluates to true:
  *         <ol>
- *             <li>Evaluate the <em>weight expression</em> in the same
- *                 context. It is a runtime error if the resulting value is not
- *                 a number, is a non-integral number, is a negative number, or
- *                 is a number of unreasonable size.</li>
+ *             <li><em>Weight</em> (defined below) the candidate value using the
+ *                 <em>weighter value</em>. It is a runtime error if the
+ *                 resulting value is not a number, is a non-integral number, is
+ *                 a negative number, or is a number of unreasonable size.</li>
  *             <li>Add the selected value and its weight as a pair to the
  *                 <em>selected list</em>, a meta-construct.</li>
  *         </ol>
@@ -102,18 +111,43 @@ import com.shieldsbetter.scedel.values.Value;
  *         evaluates to the empty sequence in cases where the <em>round count
  *         value</em> is {@code 0}.</li>
  * </ol>
+ * 
+ * <p>The process of <em>weighting</em> a candidate value is performed as
+ * follows:</p>
+ * 
+ * <ul>
+ *     <li>If the <em>weighter value</em> is a function, the candidate value's
+ *         weight is the result of calling that function with a first parameter
+ *         equal to the index of the candidate value in the source collection
+ *         (not the selected list!) and its second parameter equal to the
+ *         candidate value itself.</li>
+ *     <li>If the <em>weighter value</em> is a dictionary, the candidate value's
+ *         weight is determined as though the weighter value was
+ *         {@code fn(index, value) { return d.(value); }}, where {@code d} is
+ *         the original weighter value dictionary.</li>
+ *     <li>If the <em>weighter value</em> is a sequence, the candidate value's
+ *         weight is determined as though the weighter value was
+ *         {@code fn(index, value) { return s[index]; }}, where {@code s} is the
+ *         original weighter value sequence.</li>
+ *     <li>In any case, if the resulting weight is not a number, or is a
+ *         negative number, or a non-integral number, or is an unreasonably
+ *         large number, this is a runtime error.</li>
+ * </ul>
  */
 public class PickExpression extends SkeletonExpression {
+    private static final VFunction DEFAULT_WEIGHTER =
+            VFunction.buildConstantFunction(2, VNumber.of(1, 1));
+    
     private final Scedel.Symbol myExemplar;
     private final Expression myPool;
     private final Expression myCount;
     private final Expression myUniqueFlag;
-    private final Expression myWeightExpression;
+    private final Expression myWeighter;
     private final Expression myWhere;
     
     public PickExpression(ParseLocation l, Scedel.Symbol exemplar,
             Expression pool, Expression count, Expression unique,
-            Expression weight, Expression where) {
+            Expression weighter, Expression where) {
         super(l);
         myExemplar = exemplar;
         myPool = pool;
@@ -121,11 +155,11 @@ public class PickExpression extends SkeletonExpression {
         myUniqueFlag = unique;
         myWhere = where;
         
-        if (weight == null) {
-            myWeightExpression = VNumber.of(1, 1);
+        if (weighter == null) {
+            myWeighter = DEFAULT_WEIGHTER;
         }
         else {
-            myWeightExpression = weight;
+            myWeighter = weighter;
         }
     }
     
@@ -146,7 +180,7 @@ public class PickExpression extends SkeletonExpression {
     }
     
     public Expression getWeighExpression() {
-        return myWeightExpression;
+        return myWeighter;
     }
     
     public Expression getWhere() {
@@ -167,6 +201,9 @@ public class PickExpression extends SkeletonExpression {
         VSeq poolSeq =
                 myPool.evaluate(h, s).assertIsSeq(myPool.getParseLocation());
         
+        Value weighter = myWeighter.evaluate(h, s);
+        validateWeighter(weighter, poolSeq);
+        
         int totalWeight = 0;
         List<Picker.Option> selectedList = new ArrayList<>(poolSeq.length());
         int index = 0;
@@ -176,12 +213,7 @@ public class PickExpression extends SkeletonExpression {
             
             if (myWhere.evaluate(h, s).assertIsBoolean(
                     myWhere.getParseLocation()).getValue()) {
-                int weight = myWeightExpression.evaluate(h, s).assertIsNumber(
-                        myWeightExpression.getParseLocation())
-                        .assertNonNegativeReasonableInteger(
-                        myWeightExpression.getParseLocation(),
-                        "calculated weight for element " + index + " (" + e +
-                                ")");
+                int weight = weight(index, e, weighter, h, s);
                 totalWeight += weight;
                 
                 selectedList.add(new Picker.Option(e, weight));
@@ -244,11 +276,64 @@ public class PickExpression extends SkeletonExpression {
         Statement.Util.labeledChild(
                 indentUnit, indentLevels, "where:", myWhere, b);
         Statement.Util.labeledChild(
-                indentUnit, indentLevels, "weight:", myWeightExpression, b);
+                indentUnit, indentLevels, "weight:", myWeighter, b);
     }
 
     @Override
     public void accept(Visitor v) {
         v.visitPickExpression(this);
+    }
+
+    private void validateWeighter(Value weighter, VSeq sourceCollection) {
+        if (weighter instanceof VFunction) {
+            if (((VFunction) weighter).getArgumentCount() != 2) {
+                throw InternalExecutionException.invalidWeighter(
+                        weighter.getParseLocation(),
+                        "Weighter function does not take 2 arguments: "
+                                + weighter, weighter);
+            }
+        }
+        else if (weighter instanceof VSeq) {
+            if (((VSeq) weighter).getElementCount()
+                    < sourceCollection.getElementCount()) {
+                throw InternalExecutionException.invalidWeighter(
+                        weighter.getParseLocation(),
+                        "Weighter sequence has too few elements: " + weighter,
+                        weighter);
+            }
+        }
+        else if (!(weighter instanceof VDict)) {
+            throw InternalExecutionException.invalidWeighter(
+                    weighter.getParseLocation(),
+                    "Weighter is not a function, sequence, or dictionary: "
+                            + weighter, weighter);
+        }
+    }
+    
+    private int weight(int index, Value v, Value weighter, HostEnvironment h,
+            ScriptEnvironment s) {
+        Value resultVal;
+        
+        if (weighter instanceof VFunction) {
+            List<Value> parameters = new LinkedList<>();
+            parameters.add(VNumber.of(index, 1));
+            parameters.add(v.copy(null));
+            resultVal = ((VFunction) weighter).call(
+                    weighter.getParseLocation(), h, s, parameters);
+        }
+        else if (weighter instanceof VDict) {
+            resultVal = ((VDict) weighter).get(v);
+        }
+        else if (weighter instanceof VSeq) {
+            resultVal = ((VSeq) weighter).get(index);
+        }
+        else {
+            throw new RuntimeException();
+        }
+        
+        return resultVal.assertIsNumber(weighter.getParseLocation())
+                .assertNonNegativeReasonableInteger(weighter.getParseLocation(),
+                        "calculated weight for element " + index + " (" + v
+                                + ")");
     }
 }
