@@ -19,6 +19,7 @@ import com.shieldsbetter.scedel.values.VString;
 import com.shieldsbetter.scedel.values.VToken;
 import com.shieldsbetter.scedel.values.VUnavailable;
 import com.shieldsbetter.scedel.values.Value;
+import java.util.Scanner;
 
 public class SbsdlTest {
     @Test
@@ -1237,6 +1238,18 @@ public class SbsdlTest {
                 "x", VNumber.of(4, 1));
     }
     
+    @Test
+    public void dynamicTests()
+            throws ExecutionException, StaticCodeException {
+        String code;
+        try (Scanner s = new Scanner(
+                SbsdlTest.class.getResourceAsStream("tests.scedel"))) {
+            code = s.useDelimiter("\\A").hasNext() ? s.next() : "";
+        }
+        
+        executionTest(code + "();", "true", VBoolean.TRUE);
+    }
+    
     private static <T> List<T> list(final T ... ts) {
         return Arrays.asList(ts);
     }
@@ -1436,6 +1449,13 @@ public class SbsdlTest {
                 result = new VToken(
                         parameters.get(0).assertIsString(
                                 ParseLocation.INTERNAL).getValue());
+            }
+            else if (name.equals("assert")) {
+                if (!((VBoolean) parameters.get(0)).getValue()) {
+                    Assert.fail(((VString) parameters.get(1)).getValue());
+                }
+                
+                result = VUnavailable.INSTANCE;
             }
             else {
                 throw new RuntimeException();

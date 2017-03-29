@@ -1,0 +1,31 @@
+fn() {
+    intro assert = fn(c, m) { #assert(c, m); };
+    intro assertFalse = fn(c, m) { #assert(not c, m); };
+
+    (* literals *)
+    assert(unavailable = unavailable, 'unavailable literal');
+    assert(none = none, 'none literal');
+    assert(true, 'true literal');
+    assertFalse(false, 'false literal');
+    assert(123.457 = 123.457, 'numeric literal');
+
+    (* boolean operations *)
+    assert(not false, 'not false');
+    assertFalse(not true, 'not true');
+
+    assert(true and true, 'true and true');
+    assertFalse(false and true, 'false and true');
+    assertFalse(true and false, 'true and false');
+    assertFalse(false and false, 'false and false');
+
+    assert(true or true, 'true or true');
+    assert(false or true, 'false or true');
+    assert(true or false, 'true or false');
+    assertFalse(false or false, 'false or false');
+
+    assert(not (0 = 1), 'paren precedence');
+
+    (* short circuits *)
+    assert(true or 5, 'or short circuit');
+    assert(not (false and 5), 'and short circuit');
+}
