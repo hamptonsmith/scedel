@@ -596,12 +596,19 @@ public class Scedel {
     
     private final Matcher PREFIX_EXP =
             new MSequence(
+                    new MDo() {
+                        @Override
+                        public void run(ParseHead h) {
+                            h.pushOnParseStack(new LinkedList<>());
+                        }
+                    },
                     new MRepeated(new MAction(true, new MLiteral("not")) {
                                 @Override
                                 public void onMatched(ParseHead h) throws WellFormednessException {
-                                    h.pushOnParseStack(getNotedPosition());
-                                    h.pushOnParseStack(UnaryExpression.Operator
-                                            .BOOLEAN_NEGATE);
+                                    Deque d = (Deque) h.peekFromParseStack();
+                                    d.push(getNotedPosition());
+                                    d.push(UnaryExpression.Operator
+                                           .BOOLEAN_NEGATE);
                                 }
                             }),
                     LHS_EXP,
@@ -610,15 +617,12 @@ public class Scedel {
                         public void run(ParseHead h) {
                             Expression baseExp =
                                     (Expression) h.popFromParseStack();
-                            while (!h.isParseStackEmpty()
-                                    && (h.peekFromParseStack() instanceof
-                                        UnaryExpression.Operator)) {
+                            Deque d = (Deque) h.popFromParseStack();
+                            while (!d.isEmpty()) {
                                 UnaryExpression.Operator op =
-                                        (UnaryExpression.Operator)
-                                                h.popFromParseStack();
+                                        (UnaryExpression.Operator) d.pop();
                                 baseExp = new UnaryExpression(
-                                        loc((ParseHead.Position)
-                                                h.popFromParseStack()),
+                                        loc((ParseHead.Position) d.pop()),
                                         op, baseExp);
                             }
                             

@@ -1239,6 +1239,13 @@ public class SbsdlTest {
     }
     
     @Test
+    public void parenPrecedenceTest()
+            throws ExecutionException, StaticCodeException,
+                Scedel.HostEnvironmentException {
+        evaluationTest("not (0 = 1)", VBoolean.TRUE);
+    }
+    
+    @Test
     public void dynamicTests()
             throws ExecutionException, StaticCodeException {
         String code;
