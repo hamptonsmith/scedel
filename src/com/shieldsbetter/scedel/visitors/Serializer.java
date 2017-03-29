@@ -47,16 +47,16 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 
 public class Serializer implements Statement.Visitor, Expression.Visitor {
-    private final Map<String, DeserializeAction> DESERIALIZE_ACTIONS =
+    private static final Map<String, DeserializeAction> DESERIALIZE_ACTIONS =
             new HashMap<>();
     
-    private final Map<String, BinaryExpression.Operator> BIN_OP_KEYS =
+    private static final Map<String, BinaryExpression.Operator> BIN_OP_KEYS =
             new HashMap<>();
     
-    private final Map<String, UnaryExpression.Operator> UN_OP_KEYS =
+    private static final Map<String, UnaryExpression.Operator> UN_OP_KEYS =
             new HashMap<>();
     
-    {
+    static {
         for (BinaryExpression.Operator binop
                 : BinaryExpression.Operator.values()) {
             BIN_OP_KEYS.put(binop.getKey(), binop);
@@ -88,7 +88,11 @@ public class Serializer implements Statement.Visitor, Expression.Visitor {
                 });
     }
     
-    public Value deserialize(Reader r) throws IOException {
+    public static void serialize(Value v, PrintWriter out) throws IOException {
+        v.accept(new Serializer(out));
+    }
+    
+    public static Value deserialize(Reader r) throws IOException {
         Input i = new Input(r);
         String magicHeader = i.nextToken();
         
@@ -98,7 +102,8 @@ public class Serializer implements Statement.Visitor, Expression.Visitor {
         
         Value result;
         try {
-            result = deserialize(new Input(r), new DeserializeState());
+            result = deserialize(new Input(r),
+                    new DeserializeState(Scedel.buildRandomDecider()));
         }
         catch (Throwable t) {
             throw new IOException("Error deserializing.", t);
@@ -107,7 +112,7 @@ public class Serializer implements Statement.Visitor, Expression.Visitor {
         return result;
     }
             
-    private Value deserialize(Input i, DeserializeState s)
+    private static Value deserialize(Input i, DeserializeState s)
             throws IOException {
         while (i.hasNextToken()) {
             String actionId = i.nextToken();
@@ -122,15 +127,13 @@ public class Serializer implements Statement.Visitor, Expression.Visitor {
     }
     
     private final PrintWriter myOut;
-    private final Scedel.Decider myDecider;
-    
-    public Serializer(PrintWriter w, Scedel.Decider d) {
-        myOut = w;
-        myDecider = d;
-    }
     
     private String myCurrentSource;
     private int myCurrentLine;
+    
+    public Serializer(PrintWriter w) {
+        myOut = w;
+    }
     
     private void outToken(String tkn) {
         myOut.println(tkn + " ");
@@ -142,7 +145,7 @@ public class Serializer implements Statement.Visitor, Expression.Visitor {
         outToken(s.getName());
     }
     
-    {
+    static {
         DESERIALIZE_ACTIONS.put("sym", new DeserializeAction() {
                     @Override
                     public void execute(DeserializeState s, Input i)
@@ -246,7 +249,7 @@ public class Serializer implements Statement.Visitor, Expression.Visitor {
         outToken("evalstmt");
     }
     
-    {
+    static {
         DESERIALIZE_ACTIONS.put("evalstmt", new DeserializeAction() {
                     @Override
                     public void execute(DeserializeState s, Input i) {
@@ -266,7 +269,7 @@ public class Serializer implements Statement.Visitor, Expression.Visitor {
         outToken("assgnfield");
     }
     
-    {
+    static {
         DESERIALIZE_ACTIONS.put("assgnfield", new DeserializeAction() {
                     @Override
                     public void execute(DeserializeState s, Input i) {
@@ -291,7 +294,7 @@ public class Serializer implements Statement.Visitor, Expression.Visitor {
         outToken("foreach");
     }
     
-    {
+    static {
         DESERIALIZE_ACTIONS.put("foreach", new DeserializeAction() {
                     @Override
                     public void execute(DeserializeState s, Input i) {
@@ -316,7 +319,7 @@ public class Serializer implements Statement.Visitor, Expression.Visitor {
         outToken("ifelse");
     }
     
-    {
+    static {
         DESERIALIZE_ACTIONS.put("ifelse", new DeserializeAction() {
                     @Override
                     public void execute(DeserializeState s, Input i) {
@@ -341,7 +344,7 @@ public class Serializer implements Statement.Visitor, Expression.Visitor {
         outToken("" + s.getSubStatements().size());
     }
     
-    {
+    static {
         DESERIALIZE_ACTIONS.put("mux", new DeserializeAction() {
                     @Override
                     public void execute(DeserializeState s, Input i)
@@ -367,7 +370,7 @@ public class Serializer implements Statement.Visitor, Expression.Visitor {
         outToken("return");
     }
     
-    {
+    static {
         DESERIALIZE_ACTIONS.put("return", new DeserializeAction() {
                     @Override
                     public void execute(DeserializeState s, Input i) {
@@ -388,7 +391,7 @@ public class Serializer implements Statement.Visitor, Expression.Visitor {
         outToken("assgnindex");
     }
     
-    {
+    static {
         DESERIALIZE_ACTIONS.put("assgnindex", new DeserializeAction() {
                     @Override
                     public void execute(DeserializeState s, Input i) {
@@ -408,7 +411,7 @@ public class Serializer implements Statement.Visitor, Expression.Visitor {
         outToken("noop");
     }
     
-    {
+    static {
         DESERIALIZE_ACTIONS.put("noop", new DeserializeAction() {
                     @Override
                     public void execute(DeserializeState s, Input i) {
@@ -427,7 +430,7 @@ public class Serializer implements Statement.Visitor, Expression.Visitor {
         outToken("assgnvar");
     }
     
-    {
+    static {
         DESERIALIZE_ACTIONS.put("assgnvar", new DeserializeAction() {
                     @Override
                     public void execute(DeserializeState s, Input i) {
@@ -450,7 +453,7 @@ public class Serializer implements Statement.Visitor, Expression.Visitor {
         outToken("var");
     }
     
-    {
+    static {
         DESERIALIZE_ACTIONS.put("var", new DeserializeAction() {
                     @Override
                     public void execute(DeserializeState s, Input i) {
@@ -473,7 +476,7 @@ public class Serializer implements Statement.Visitor, Expression.Visitor {
         outToken(e.getOperator().getKey());
     }
     
-    {
+    static {
         DESERIALIZE_ACTIONS.put("binop", new DeserializeAction() {
                     @Override
                     public void execute(DeserializeState s, Input i)
@@ -502,7 +505,7 @@ public class Serializer implements Statement.Visitor, Expression.Visitor {
         outToken("" + e.getArgumentNames().size());
     }
 
-    {
+    static {
         DESERIALIZE_ACTIONS.put("fn", new DeserializeAction() {
                     @Override
                     public void execute(DeserializeState s, Input i)
@@ -535,7 +538,7 @@ public class Serializer implements Statement.Visitor, Expression.Visitor {
         outToken("" + e.size());
     }
     
-    {
+    static {
         DESERIALIZE_ACTIONS.put("dictexp", new DeserializeAction() {
                     @Override
                     public void execute(DeserializeState s, Input i)
@@ -569,7 +572,7 @@ public class Serializer implements Statement.Visitor, Expression.Visitor {
         outToken("" + e.getParameters().size());
     }
 
-    {
+    static {
         DESERIALIZE_ACTIONS.put("fncall", new DeserializeAction() {
                     @Override
                     public void execute(DeserializeState s, Input i)
@@ -608,7 +611,7 @@ public class Serializer implements Statement.Visitor, Expression.Visitor {
         }
     }
     
-    {
+    static {
         DESERIALIZE_ACTIONS.put("hostexp", new DeserializeAction() {
                     @Override
                     public void execute(DeserializeState s, Input i)
@@ -642,7 +645,7 @@ public class Serializer implements Statement.Visitor, Expression.Visitor {
         outToken("lit");
     }
     
-    {
+    static {
         DESERIALIZE_ACTIONS.put("lit", new DeserializeAction() {
                     @Override
                     public void execute(DeserializeState s, Input i) {
@@ -665,7 +668,7 @@ public class Serializer implements Statement.Visitor, Expression.Visitor {
         outToken("pick");
     }
     
-    {
+    static {
         DESERIALIZE_ACTIONS.put("pick", new DeserializeAction() {
                     @Override
                     public void execute(DeserializeState s, Input i) {
@@ -678,7 +681,7 @@ public class Serializer implements Statement.Visitor, Expression.Visitor {
                         
                         s.push(new PickExpression(s.getParseLocation(),
                                 exemplar, collection, count, unique, weighter,
-                                where, myDecider));
+                                where, s.getDecider()));
                     }
                 });
     }           
@@ -694,7 +697,7 @@ public class Serializer implements Statement.Visitor, Expression.Visitor {
         outToken("" + e.getElements().size());
     }
     
-    {
+    static {
         DESERIALIZE_ACTIONS.put("seqexp", new DeserializeAction() {
                     @Override
                     public void execute(DeserializeState s, Input i)
@@ -721,7 +724,7 @@ public class Serializer implements Statement.Visitor, Expression.Visitor {
         outToken(e.getOperator().getKey());
     }
     
-    {
+    static {
         DESERIALIZE_ACTIONS.put("unop", new DeserializeAction() {
                     @Override
                     public void execute(DeserializeState s, Input i)
@@ -742,7 +745,7 @@ public class Serializer implements Statement.Visitor, Expression.Visitor {
         outToken(e.getSymbol().getName());
     }
     
-    {
+    static {
         DESERIALIZE_ACTIONS.put("lookup", new DeserializeAction() {
                     @Override
                     public void execute(DeserializeState s, Input i) {
@@ -759,7 +762,7 @@ public class Serializer implements Statement.Visitor, Expression.Visitor {
         outToken("" + v.getValue());
     }
     
-    {
+    static {
         DESERIALIZE_ACTIONS.put("true", new DeserializeAction() {
                     @Override
                     public void execute(DeserializeState s, Input i) {
@@ -785,7 +788,7 @@ public class Serializer implements Statement.Visitor, Expression.Visitor {
         outToken("" + v.size());
     }
     
-    {
+    static {
         DESERIALIZE_ACTIONS.put("dict", new DeserializeAction() {
                     @Override
                     public void execute(DeserializeState s, Input i)
@@ -823,7 +826,7 @@ public class Serializer implements Statement.Visitor, Expression.Visitor {
         outToken("" + v.getArgumentNames());
     }
     
-    {
+    static {
         DESERIALIZE_ACTIONS.put("closure", new DeserializeAction() {
                     @Override
                     public void execute(DeserializeState s, Input i)
@@ -857,7 +860,7 @@ public class Serializer implements Statement.Visitor, Expression.Visitor {
         outToken("none");
     }
     
-    {
+    static {
         DESERIALIZE_ACTIONS.put("none", new DeserializeAction() {
                     @Override
                     public void execute(DeserializeState s, Input i)
@@ -874,7 +877,7 @@ public class Serializer implements Statement.Visitor, Expression.Visitor {
         outBI(v.getDenominator());
     }
     
-    {
+    static {
         DESERIALIZE_ACTIONS.put("num", new DeserializeAction() {
                     @Override
                     public void execute(DeserializeState s, Input i)
@@ -918,7 +921,7 @@ public class Serializer implements Statement.Visitor, Expression.Visitor {
         outToken("" + v.getElementCount());
     }
     
-    {
+    static {
         DESERIALIZE_ACTIONS.put("seq", new DeserializeAction() {
                     @Override
                     public void execute(DeserializeState s, Input i)
@@ -941,7 +944,7 @@ public class Serializer implements Statement.Visitor, Expression.Visitor {
         outToken("'" + escapeForStringLiteral(v.getValue()) + "'");
     }
     
-    {
+    static {
         DESERIALIZE_ACTIONS.put("str", new DeserializeAction() {
                     @Override
                     public void execute(DeserializeState s, Input i)
@@ -959,7 +962,7 @@ public class Serializer implements Statement.Visitor, Expression.Visitor {
         outToken("'" + escapeForStringLiteral(v.getBackingKey()) + "'");
     }
     
-    {
+    static {
         DESERIALIZE_ACTIONS.put("tkn", new DeserializeAction() {
                     @Override
                     public void execute(DeserializeState s, Input i)
@@ -976,7 +979,7 @@ public class Serializer implements Statement.Visitor, Expression.Visitor {
         outToken("unavailable");
     }
     
-    {
+    static {
         DESERIALIZE_ACTIONS.put("str", new DeserializeAction() {
                     @Override
                     public void execute(DeserializeState s, Input i) {
@@ -1055,9 +1058,18 @@ public class Serializer implements Statement.Visitor, Expression.Visitor {
     }
     
     private static final class DeserializeState {
+        private final Scedel.Decider myDecider;
         private final Deque myStack = new ArrayDeque<>();
         private String mySourceDesription;
         private int myLineNumber;
+        
+        public DeserializeState(Scedel.Decider d) {
+            myDecider = d;
+        }
+        
+        public Scedel.Decider getDecider() {
+            return myDecider;
+        }
         
         public int getStackDepth() {
             return myStack.size();

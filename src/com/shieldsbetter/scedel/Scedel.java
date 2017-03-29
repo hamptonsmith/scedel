@@ -59,6 +59,15 @@ import com.shieldsbetter.scedel.values.Value;
 public class Scedel {    
     public static final boolean DEBUG = false;
     
+    public static Decider buildRandomDecider() {
+        return new Decider() {
+                    @Override
+                    public boolean randomize(double chance) {
+                        return Math.random() < chance;
+                    }
+                };
+    }
+    
     private final String[] KEYWORDS =
             {"from", "if", "for", "each", "pick", "unique", "true", "false",
              "unavailable", "none", "intro", "bake", "not", "and", "or",
@@ -1220,12 +1229,7 @@ public class Scedel {
     private String mySourceDescription;
     
     public Scedel(HostEnvironment e) {
-        this(e, new Decider() {
-                    @Override
-                    public boolean randomize(double chance) {
-                        return Math.random() < chance;
-                    }
-                });
+        this(e, buildRandomDecider());
     }
     
     public Scedel(HostEnvironment e, Decider d) {
