@@ -9,6 +9,7 @@ public abstract class SkeletonStatement implements Statement {
         myParseLocation = l;
     }
     
+    @Override
     public ParseLocation getParseLocation() {
         return myParseLocation;
     }

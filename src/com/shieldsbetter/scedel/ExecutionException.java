@@ -8,6 +8,7 @@ import com.shieldsbetter.scedel.values.Value;
 public class ExecutionException extends Exception {
     public static enum ErrorType {
         CANNOT_BAKE_PROXY,
+        DECIDER_INDEXES_EXHAUSTED,
         DIVISION_BY_ZERO,
         HOST_ENVIRONMENT_EXCEPTION,
         ILLEGAL_PROXY_CONTAINMENT,

@@ -13,6 +13,7 @@ import com.shieldsbetter.scedel.expressions.PickExpression;
 import com.shieldsbetter.scedel.expressions.SequenceExpression;
 import com.shieldsbetter.scedel.expressions.UnaryExpression;
 import com.shieldsbetter.scedel.expressions.VariableNameExpression;
+import com.shieldsbetter.scedel.statements.DecideStatement;
 import com.shieldsbetter.scedel.statements.EvaluateStatement;
 import com.shieldsbetter.scedel.statements.FieldAssignmentStatement;
 import com.shieldsbetter.scedel.statements.ForEachStatement;
@@ -102,8 +103,7 @@ public class Serializer implements Statement.Visitor, Expression.Visitor {
         
         Value result;
         try {
-            result = deserialize(new Input(r),
-                    new DeserializeState(Scedel.buildRandomDecider()));
+            result = deserialize(new Input(r), new DeserializeState());
         }
         catch (Throwable t) {
             throw new IOException("Error deserializing.", t);
@@ -305,6 +305,29 @@ public class Serializer implements Statement.Visitor, Expression.Visitor {
                         
                         s.push(new ForEachStatement(s.getParseLocation(),
                                 exemplar, collection, where, code));
+                    }
+                });
+    }
+
+    @Override
+    public void visitDecideStatement(DecideStatement s) {
+        s.getDecider().accept(this);
+        s.getCode().accept(this);
+        
+        assertLocation(s);
+        outToken("decide");
+    }
+    
+    static {
+        DESERIALIZE_ACTIONS.put("decide", new DeserializeAction() {
+                    @Override
+                    public void execute(DeserializeState s, Input i) {
+                        MultiplexingStatement code =
+                                (MultiplexingStatement) s.pop();
+                        Expression decide = (Expression) s.pop();
+                        
+                        s.push(new DecideStatement(
+                                s.getParseLocation(), decide, code));
                     }
                 });
     }
@@ -662,7 +685,7 @@ public class Serializer implements Statement.Visitor, Expression.Visitor {
         e.getUnique().accept(this);
         e.getCollection().accept(this);
         e.getWhere().accept(this);
-        e.getWeighter().accept(this);
+        e.getWeighExpression().accept(this);
         
         assertLocation(e);
         outToken("pick");
@@ -681,7 +704,7 @@ public class Serializer implements Statement.Visitor, Expression.Visitor {
                         
                         s.push(new PickExpression(s.getParseLocation(),
                                 exemplar, collection, count, unique, weighter,
-                                where, s.getDecider()));
+                                where));
                     }
                 });
     }           
@@ -1058,18 +1081,9 @@ public class Serializer implements Statement.Visitor, Expression.Visitor {
     }
     
     private static final class DeserializeState {
-        private final Scedel.Decider myDecider;
         private final Deque myStack = new ArrayDeque<>();
         private String mySourceDesription;
         private int myLineNumber;
-        
-        public DeserializeState(Scedel.Decider d) {
-            myDecider = d;
-        }
-        
-        public Scedel.Decider getDecider() {
-            return myDecider;
-        }
         
         public int getStackDepth() {
             return myStack.size();

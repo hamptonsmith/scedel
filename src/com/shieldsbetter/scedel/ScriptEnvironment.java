@@ -3,9 +3,32 @@ package com.shieldsbetter.scedel;
 import java.util.HashMap;
 import java.util.Map;
 import com.shieldsbetter.scedel.values.Value;
+import java.util.Deque;
+import java.util.LinkedList;
 
 public class ScriptEnvironment {
+    private final Deque<Picker> myPickers = new LinkedList<>();
     private Scope myCurrentScope = new RootScope(null);
+    
+    public ScriptEnvironment(Scedel.Decider d) {
+        myPickers.push(Picker.Util.buildStandardPicker(d));
+    }
+    
+    public void pushPicker(Picker p) {
+        myPickers.push(p);
+    }
+    
+    public void popPicker() {
+        if (myPickers.size() == 1) {
+            throw new RuntimeException();
+        }
+        
+        myPickers.pop();
+    }
+    
+    public Picker getPicker() {
+        return myPickers.peek();
+    }
     
     public Map<Scedel.Symbol, Value> getBakedValues() {
         Map<Scedel.Symbol, Value> result = new HashMap<>();

@@ -62,7 +62,7 @@ public class Scedel {
     public static Decider buildRandomDecider() {
         return new Decider() {
                     @Override
-                    public boolean randomize(double chance) {
+                    public boolean decide(double chance) {
                         return Math.random() < chance;
                     }
                 };
@@ -71,7 +71,7 @@ public class Scedel {
     private final String[] KEYWORDS =
             {"from", "if", "for", "each", "pick", "unique", "true", "false",
              "unavailable", "none", "intro", "bake", "not", "and", "or",
-             "otherwise"};
+             "otherwise", "decide"};
     
     private final Matcher KEYWORD;
     {
@@ -894,8 +894,7 @@ public class Scedel {
                     
                     h.pushOnParseStack(new PickExpression(
                             loc(getNotedPosition()), exemplar, ipe.getPool(),
-                            count, unique, ipe.getWeighter(), where,
-                            myDecider));
+                            count, unique, ipe.getWeighter(), where));
                 }
             };
     
@@ -1196,6 +1195,16 @@ public class Scedel {
                         }
                     });
     
+    private final Matcher DECIDE_STMT =
+            new MSequence(new MLiteral("decide"), EXP,
+                    REQUIRED_INNER_LEXICAL_SCOPE_BLOCK,
+                    new MDo() {
+                        @Override
+                        public void run(ParseHead h) {
+                            
+                        }
+                    });
+    
     {
         STATEMENT.fillIn(new MSequence(
                 new MForbid(new MLiteral("pick"), "Pick expression cannot "
@@ -1259,7 +1268,7 @@ public class Scedel {
         mySourceDescription = sourceDescription;
         ParseHead h = parse(input);
         
-        ScriptEnvironment s = new ScriptEnvironment();
+        ScriptEnvironment s = new ScriptEnvironment(myDecider);
         
         try {
             ((MultiplexingStatement) h.popFromParseStack())
@@ -1560,10 +1569,6 @@ public class Scedel {
                 throws WellFormednessException;
     }
     
-    public static interface Decider {
-        public boolean randomize(double chance);
-    }
-    
     public class DebugParseHead extends ParseHead {
         public DebugParseHead(String input) {
             super(input);
@@ -1850,5 +1855,9 @@ public class Scedel {
             w.println(myLineContents);
             w.println(myAlignmentPrefix + "^");
         }
+    }
+    
+    public static interface Decider {
+        public boolean decide(double chance);
     }
 }

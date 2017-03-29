@@ -64,6 +64,7 @@ public interface Statement {
     }
     
     public static interface Visitor {
+        public void visitDecideStatement(DecideStatement s);
         public void visitEvaluateStatement(EvaluateStatement s);
         public void visitFieldAssignmentStatement(FieldAssignmentStatement s);
         public void visitForEachStatement(ForEachStatement s);

@@ -22,6 +22,10 @@ public class VSeq extends ContainerValue<VSeq> {
         this(null, Arrays.asList(vs));
     }
     
+    public int length() {
+        return myValue.size();
+    }
+    
     public int getElementCount() {
         return myValue.size();
     }

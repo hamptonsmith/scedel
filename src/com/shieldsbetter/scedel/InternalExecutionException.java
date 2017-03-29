@@ -5,6 +5,15 @@ import java.util.List;
 import com.shieldsbetter.scedel.values.Value;
 
 public class InternalExecutionException extends RuntimeException {
+    public static InternalExecutionException deciderIndexesExhausted(
+            ParseLocation detected, int index) {
+        return new InternalExecutionException(
+                new ExecutionException(
+                        ExecutionException.ErrorType.DECIDER_INDEXES_EXHAUSTED,
+                        "Decider indexes exhausted.  Bad index: " + index,
+                        detected, null));
+    }
+    
     public static InternalExecutionException cannotBakeProxy(
             ParseLocation detected) {
         return new InternalExecutionException(

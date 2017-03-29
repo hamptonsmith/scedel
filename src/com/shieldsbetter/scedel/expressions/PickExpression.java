@@ -1,46 +1,131 @@
 package com.shieldsbetter.scedel.expressions;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import com.shieldsbetter.scedel.InternalExecutionException;
 import com.shieldsbetter.scedel.ParseLocation;
+import com.shieldsbetter.scedel.Picker;
 import com.shieldsbetter.scedel.Scedel;
 import com.shieldsbetter.scedel.ScriptEnvironment;
 import com.shieldsbetter.scedel.statements.Statement;
-import com.shieldsbetter.scedel.values.VDict;
-import com.shieldsbetter.scedel.values.VFunction;
 import com.shieldsbetter.scedel.values.VNumber;
 import com.shieldsbetter.scedel.values.VSeq;
 import com.shieldsbetter.scedel.values.VUnavailable;
 import com.shieldsbetter.scedel.values.Value;
 
+/**
+ * <p>Fully explicit, a {@code pick expression} looks like this:</p>
+ * 
+ * <p><strong>pick</strong> <em>&lt;round count&gt;</em>
+ * <strong>unique(</strong><em>&lt;unique flag&gt;</em><strong>) from</strong>
+ * <em>&lt;exemplar name&gt;</em> <strong>:</strong>
+ * <em>&lt;source collection&gt;</em> <strong>where</strong>
+ * <em>&lt;selection predicate&gt;</em> <strong>with weight</strong>
+ * <em>&lt;weight expression&gt;</em></p>
+ * 
+ * <p>Of these, only the <em>source collection</em> is required.  With all
+ * optional parts removed, the shortest form of the expression looks like
+ * this:</p>
+ * 
+ * <p><strong>pick from</strong> <em>&lt;source collection&gt;</em></p>
+ * 
+ * <p>The default values of the optional clauses are as follows:</p>
+ * 
+ * <ul>
+ *     <li><strong>round count</strong>: {@code 1}</li>
+ *     <li><strong>unique flag</strong>: The <strong>unique</strong> keyword may
+ *         be specified omitting the subsequent parenthetical
+ *         <em>unique flag</em> expression, in which case the default value of
+ *         the unique flag expression is {@code true}.  If the
+ *         <strong>unique</strong> keyword itself is also omitted, the default
+ *         value of the unique flag expression is {@code false}.</li>
+ *     <li><strong>examplar</strong>: &#64;</li>
+ *     <li><strong>selection predicate</strong>: {@code true}</li>
+ *     <li><strong>weight expression</strong>: {@code 1}
+ * </ul>
+ * 
+ * <p>The semantics of a pick expression are then as follows:</p>
+ * 
+ * <ol>
+ *     <li>Evaluate the <em>round count expression</em> into a
+ *         <em>round count value</em>.  If this value is not a positive integral
+ *         number of reasonable size, this is a runtime error.</li>
+ *     <li>Evaluate the <em>unique flag expression</em> into a
+ *         <em>unique flag value</em>.  If this value is not a a boolean, this
+ *         is a runtime error.</li>
+ *     <li>If the <em>source collection</em> is a <em>pick collection
+ *         literal</em>, evaluate the value portion of each entry in order
+ *         and concatenate them into a <em>source collection value</em>, then
+ *         evaluate the weight portion of each entry in order and construct an
+ *         appropriate <em>weight expression</em>.  Otherwise, the
+ *         <em>source collection</em> is an expression; evaluate it into a
+ *         <em>source collection value</em>.  In the first case, the source
+ *         collection value will be a sequence by construction.  In the second
+ *         case, it is a runtime error for the source collection value not to be
+ *         a sequence.</li>
+ *     <li>If the <em>source collection</em> is a <em>pick collection
+ *         literal</em>, and the <strong>with weight</strong> clause has not
+ *         been omitted, this is a syntax error.</li>
+ *     <li>For each non-{@code unavailable} element of the source collection
+ *         value, the <em>selection predicate</em> is evaluated in a context
+ *         where the exemplar symbol is mapped to that element's value.  It is a
+ *         runtime error for this predicate to evaluate to a non-boolean value.
+ *         If this evaluates to true:
+ *         <ol>
+ *             <li>Evaluate the <em>weight expression</em> in the same
+ *                 context. It is a runtime error if the resulting value is not
+ *                 a number, is a non-integral number, is a negative number, or
+ *                 is a number of unreasonable size.</li>
+ *             <li>Add the selected value and its weight as a pair to the
+ *                 <em>selected list</em>, a meta-construct.</li>
+ *         </ol>
+ *     </li>
+ *     <li>Now do the following a number of times equal to the <em>round count
+ *         value</em>:
+ *         <ol>
+ *             <li>Defer to the current execution environment's <em>picker</em>
+ *                 (a meta-construct) to pick a value/weight pair from the
+ *                 <em>selected list</em>.</li>
+ *             <li>If the picker throws a {@code Picker#CannotPickException},
+ *                 this pick expression evaluates to {@code unavailable}.</li>
+ *             <li>Otherwise, the picked value (i.e., the first part of the
+ *                 picked value/weight pair) is added to the <em>picked
+ *                 sequence</em>.</li>
+ *             <li>If the <em>unique flag</em> is {@code true}, the weight of
+ *                 the picked value/weight entry in the <em>selected list</em>
+ *                 is changed to {@code 0}.</li>
+ *         </ol>
+ *     </li>
+ *     <li>If the <em>round count value</em> is {@code 1}, this pick expression
+ *         evaluates to the sole entry in the <em>picked sequence</em>.</li>
+ *     <li>Otherwise, this pick expression evaluates to the <em>picked
+ *         sequence</em> itself.  Note that this means that this pick expression
+ *         evaluates to the empty sequence in cases where the <em>round count
+ *         value</em> is {@code 0}.</li>
+ * </ol>
+ */
 public class PickExpression extends SkeletonExpression {
-    private final Scedel.Decider myDecider;
     private final Scedel.Symbol myExemplar;
     private final Expression myPool;
     private final Expression myCount;
     private final Expression myUniqueFlag;
-    private final Expression myWeighter;
+    private final Expression myWeightExpression;
     private final Expression myWhere;
     
     public PickExpression(ParseLocation l, Scedel.Symbol exemplar,
             Expression pool, Expression count, Expression unique,
-            Expression weighter, Expression where, Scedel.Decider decider) {
+            Expression weight, Expression where) {
         super(l);
-        myDecider = decider;
         myExemplar = exemplar;
         myPool = pool;
         myCount = count;
         myUniqueFlag = unique;
         myWhere = where;
         
-        if (weighter == null) {
-            myWeighter = VFunction.buildConstantFunction(1, VNumber.of(1, 1));
+        if (weight == null) {
+            myWeightExpression = VNumber.of(1, 1);
         }
         else {
-            myWeighter = weighter;
+            myWeightExpression = weight;
         }
     }
     
@@ -60,8 +145,8 @@ public class PickExpression extends SkeletonExpression {
         return myUniqueFlag;
     }
     
-    public Expression getWeighter() {
-        return myWeighter;
+    public Expression getWeighExpression() {
+        return myWeightExpression;
     }
     
     public Expression getWhere() {
@@ -70,96 +155,69 @@ public class PickExpression extends SkeletonExpression {
     
     @Override
     public Value evaluate(Scedel.HostEnvironment h, ScriptEnvironment s) {
-        VSeq poolSeq =
-                myPool.evaluate(h, s).assertIsSeq(myPool.getParseLocation());
-        Value weighter = myWeighter.evaluate(h, s);
-        
         int requestedCt = myCount.evaluate(h, s).assertIsNumber(
                     myCount.getParseLocation())
                 .assertNonNegativeReasonableInteger(
-                    myCount.getParseLocation(), "pick count");
+                    myCount.getParseLocation(), "pick round count");
+        
         boolean unique =
                 myUniqueFlag.evaluate(h, s).assertIsBoolean(
                         myUniqueFlag.getParseLocation()).getValue();
         
-        int index = 0;
-        int nonZeroWeightCt = 0;
+        VSeq poolSeq =
+                myPool.evaluate(h, s).assertIsSeq(myPool.getParseLocation());
+        
         int totalWeight = 0;
-        Map<Value, Integer> weights = new HashMap<>();
+        List<Picker.Option> selectedList = new ArrayList<>(poolSeq.length());
+        int index = 0;
         for (Value e : poolSeq.elements()) {
             s.pushScope(false);
             s.introduceSymbol(myExemplar, e);
             
             if (myWhere.evaluate(h, s).assertIsBoolean(
                     myWhere.getParseLocation()).getValue()) {
-                int weight = weight(weighter, e, index, h, s);
+                int weight = myWeightExpression.evaluate(h, s).assertIsNumber(
+                        myWeightExpression.getParseLocation())
+                        .assertNonNegativeReasonableInteger(
+                        myWeightExpression.getParseLocation(),
+                        "calculated weight for element " + index + " (" + e +
+                                ")");
                 totalWeight += weight;
                 
-                if (weight > 0) {
-                    nonZeroWeightCt++;
-                }
-                
-                weights.put(e, weight);
+                selectedList.add(new Picker.Option(e, weight));
             }
             
             index++;
         }
         
-        Value result = null;
-        if (nonZeroWeightCt == 0) {
+        Value result;
+        try {
+            Picker picker = s.getPicker();
+            VSeq picked = new VSeq();
+            for (int i = 0; i < requestedCt; i++) {
+                int pickedIndex = picker.pick(selectedList, totalWeight);
+
+                Picker.Option pickedOption = selectedList.get(pickedIndex);
+                picked.enqueue(pickedOption.getValue().copy(null));
+
+                if (unique) {
+                    totalWeight -= pickedOption.getWeight();
+                    pickedOption.zeroWeight();
+                }
+            }
+            
             if (requestedCt == 1) {
-                result = VUnavailable.INSTANCE;
+                result = picked.get(0);
             }
             else {
-                result = new VSeq();
-                
-                for (int i = 0; i < requestedCt; i++) {
-                    ((VSeq) result).enqueue(VUnavailable.INSTANCE);
-                }
+                result = picked;
             }
         }
-        else {
-            if (unique && nonZeroWeightCt < requestedCt) {
-                result = VUnavailable.INSTANCE;
-            }
-            else {
-                if (requestedCt != 1) {
-                    result = new VSeq();
-                }
-
-                for (int i = 0; i < requestedCt; i++) {
-                    Value chosen = null;
-                    double remainingChance = 1.0;
-
-                    // For testability, we always iterate over the elements in
-                    // order.
-                    for (Value potentialOption : poolSeq.elements()) {
-                        if (weights.containsKey(potentialOption)) {
-                            if (myDecider.randomize(remainingChance)) {
-                                chosen = potentialOption;
-                            }
-
-                            remainingChance -= (weights.get(potentialOption)
-                                    / (double) totalWeight);
-                        }
-                    }
-
-                    if (unique) {
-                        int weight = weights.remove(chosen);
-                        totalWeight -= weight;
-                    }
-
-                    if (requestedCt == 1) {
-                        result = chosen;
-                    }
-                    else {
-                        ((VSeq) result).enqueue(chosen);
-                    }
-                }
-            }
+        catch (Picker.CannotPickException cpe) {
+            result = VUnavailable.INSTANCE;
         }
         
-        return result.copy(null);
+        return result;
     }
 
     @Override
@@ -167,32 +225,6 @@ public class PickExpression extends SkeletonExpression {
         return false;
     }
     
-    private int weight(Value weighter, Value query, int queryIndex,
-            Scedel.HostEnvironment h, ScriptEnvironment s) {
-        Value weight;
-        if (weighter instanceof VDict) {
-            weight = ((VDict) weighter).get(query);
-        }
-        else if (weighter instanceof VFunction) {
-            List<Expression> params = new ArrayList<>(1);
-            params.add(new VariableNameExpression(
-                    myWeighter.getParseLocation(), myExemplar));
-            
-            FunctionCallExpression fCall = new FunctionCallExpression(
-                    getParseLocation(), weighter, params);
-            weight = fCall.evaluate(h, s);
-        }
-        else {
-            throw InternalExecutionException.invalidWeighter(
-                    myWeighter.getParseLocation(), weighter);
-        }
-        
-        return weight.assertIsNumber(myWeighter.getParseLocation())
-                .assertNonNegativeReasonableInteger(
-                        myWeighter.getParseLocation(), "calculated weight for "
-                                + "element " + queryIndex + " (" + query + ")");
-    }
-
     @Override
     public void prettyRender(
             int indentUnit, int indentLevels, StringBuilder b) {
@@ -212,7 +244,7 @@ public class PickExpression extends SkeletonExpression {
         Statement.Util.labeledChild(
                 indentUnit, indentLevels, "where:", myWhere, b);
         Statement.Util.labeledChild(
-                indentUnit, indentLevels, "weighter:", myWeighter, b);
+                indentUnit, indentLevels, "weight:", myWeightExpression, b);
     }
 
     @Override

@@ -1271,7 +1271,7 @@ public class SbsdlTest {
         }
         
         @Override
-        public boolean randomize(double chance) {
+        public boolean decide(double chance) {
             return myResults.next();
         }
     }
