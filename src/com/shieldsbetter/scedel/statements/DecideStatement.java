@@ -6,7 +6,9 @@ import com.shieldsbetter.scedel.Picker;
 import com.shieldsbetter.scedel.Scedel;
 import com.shieldsbetter.scedel.ScriptEnvironment;
 import com.shieldsbetter.scedel.expressions.Expression;
+import com.shieldsbetter.scedel.values.VNone;
 import com.shieldsbetter.scedel.values.VSeq;
+import com.shieldsbetter.scedel.values.VUnavailable;
 import com.shieldsbetter.scedel.values.Value;
 import java.util.List;
 import java.util.Random;
@@ -53,7 +55,12 @@ public class DecideStatement extends SkeletonStatement {
                                                 myLastIndex);
                             }
                             
-                            return indexes.get(myLastIndex)
+                            Value next = indexes.get(myLastIndex);
+                            if (next == VNone.INSTANCE) {
+                                throw Picker.CannotPickException.INSTANCE;
+                            }
+                            
+                            return next
                                     .assertIsNumber(
                                             myDecider.getParseLocation())
                                     .assertNonNegativeReasonableInteger(

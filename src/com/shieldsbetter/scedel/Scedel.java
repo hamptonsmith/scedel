@@ -883,7 +883,7 @@ public class Scedel {
     
     private final Matcher REQUIRED_PICK_EXP = new MAction(true, new MSequence(
                     new MLiteral("pick"), PICK_COUNT_SPECIFIER,
-                    new MLiteral("from"),
+                    new MRequire(new MLiteral("from"), "Expected 'from'."),
                     new MDo() {
                         @Override
                         public void run(ParseHead h) {

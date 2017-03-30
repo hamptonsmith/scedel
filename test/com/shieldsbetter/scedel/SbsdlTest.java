@@ -180,6 +180,27 @@ public class SbsdlTest {
     }
     
     @Test
+    public void dictionaryLiteral() throws ExecutionException,
+            StaticCodeException, Scedel.HostEnvironmentException {
+        evaluationTest("{foo: 5, bar: 2 + 4}",
+                    new VDict().put(new VString("foo"), VNumber.of(5, 1))
+                            .put(new VString("bar"), VNumber.of(6, 1)));
+    }
+    
+    @Test
+    public void emptyDictionary() throws ExecutionException,
+            StaticCodeException, Scedel.HostEnvironmentException {
+        evaluationTest("{}", new VDict());
+    }
+    
+    @Test
+    public void singletonDictionary() throws ExecutionException,
+            StaticCodeException, Scedel.HostEnvironmentException {
+        evaluationTest("{foo: 5}",
+                    new VDict().put(new VString("foo"), VNumber.of(5, 1)));
+    }
+    
+    @Test
     public void uniquePickExplicitWeight() throws ExecutionException,
             StaticCodeException, Scedel.HostEnvironmentException {
         evaluationTest(
@@ -289,27 +310,6 @@ public class SbsdlTest {
             StaticCodeException, Scedel.HostEnvironmentException {
         evaluationTest("pick from [] otherwise pick from {true}",
                 VBoolean.TRUE, true);
-    }
-    
-    @Test
-    public void dictionaryLiteral() throws ExecutionException,
-            StaticCodeException, Scedel.HostEnvironmentException {
-        evaluationTest("{foo: 5, bar: 2 + 4}",
-                    new VDict().put(new VString("foo"), VNumber.of(5, 1))
-                            .put(new VString("bar"), VNumber.of(6, 1)));
-    }
-    
-    @Test
-    public void emptyDictionary() throws ExecutionException,
-            StaticCodeException, Scedel.HostEnvironmentException {
-        evaluationTest("{}", new VDict());
-    }
-    
-    @Test
-    public void singletonDictionary() throws ExecutionException,
-            StaticCodeException, Scedel.HostEnvironmentException {
-        evaluationTest("{foo: 5}",
-                    new VDict().put(new VString("foo"), VNumber.of(5, 1)));
     }
     
     @Test
