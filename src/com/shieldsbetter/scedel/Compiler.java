@@ -244,6 +244,9 @@ public class Compiler {
     
     private final Matcher PARAM_LIST_INNARDS =
             new MAction(new MOptional(EXP_FOR_PARAM_LIST,
+                    new MRequireAhead(new MAlternatives(
+                            new MLiteral(","), new MLiteral(")")),
+                            "Expected ',' or ')'."),
                     new MRepeated(new MLiteral(","), EXP_FOR_PARAM_LIST))) {
                 @Override
                 public void before(ParseHead h) {

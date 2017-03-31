@@ -523,4 +523,298 @@ fn() {
             },
             'ILLEGAL_PROXY_CONTAINMENT',
             'proxy cannot contain proxy field');
+
+    #expectError(
+            fn() {
+                intro x = #proxy('x');
+                x.foo = [#proxy('y')];
+            },
+            'ILLEGAL_PROXY_CONTAINMENT',
+            'proxy cannot contain proxy element');
+
+    #expectError(
+            fn() {
+                intro x = {foo: #proxy('x')};
+                bake y = x;
+            },
+            'CANNOT_BAKE_PROXY',
+            'previously valid proxy forbidden by bake');
+
+    (* We expect no error here.
+     * previously proxy-unsafe hierarchy ok when copied out 
+     *)
+    {
+        intro x = #proxy('x');
+        x.foo = {bar: ['z']};
+        intro y = x.foo;
+        y.bar[0] = x;
+    }
+
+    (* baked variable accessible *)
+    {
+        bake x;
+        fn() { return x; }();
+    }
+
+    (* pick exemplar evaporates *)
+    decide 'apple' {
+        (pick from x : [fn(){}])();
+        intro x;
+    }
+
+    (* for each exemplar evaporates *)
+    {
+        for each x : []{}
+        intro x;
+    }
+
+    (* up values *)
+    {
+        intro foo = fn() {
+            bake x = 6;
+            return fn() { return x; };
+        };
+        assert(foo()() = 6, 'up values');
+    }
+
+    (* tokens *)
+    assert(#token('abc') = #token('abc'), 'token equality');
+
+    {
+        bake x = {foo: #token('abc')};
+    }
+
+    #expectError(
+            fn() {
+                intro x = 5 / 0;
+            },
+            'DIVISION_BY_ZERO',
+            'division by zero');
+
+    #expectError(
+            fn() {
+                intro f = fn(x, y) { return x; };
+                f(1, 2, 3);
+            },
+            'INCORRECT_NUMBER_OF_PARAMETERS',
+            'incorrect number of parameters');
+
+    #expectError(
+            fn() {
+                intro s = []; s = s[-1];
+            },
+            'NEGATIVE',
+            'negative index');
+
+    #expectError(
+            fn() {
+                intro s = []; s = s[1/2];
+            },
+            'NON_INTEGRAL',
+            'non-integral index');
+
+    #expectError(
+            fn() {
+                decide 'apple' {
+                    (pick -1 from [])();
+                }
+            },
+            'NEGATIVE',
+            'negative pick count');
+
+    #expectError(
+            fn() {
+                decide 'apple' {
+                    (pick 1 from {'abc' {-1}})();
+                }
+            },
+            'NEGATIVE',
+            'negative pick weight');
+
+    #expectError(
+            fn() {
+                decide 'apple' {
+                    (pick 1/2 from [])();
+                }
+            },
+            'NON_INTEGRAL',
+            'non-integral pick count');
+
+    #expectError(
+            fn() {
+                decide 'apple' {
+                    (pick 1 from {'abc' {1/2}})();
+                }
+            },
+            'NON_INTEGRAL',
+            'non-integral pick weight');
+
+    #expectError(
+            fn() {
+                intro x = 5 and true;
+            },
+            'NOT_A_BOOLEAN',
+            'and not a boolean 1');
+
+    #expectError(
+            fn() {
+                intro x = true and 5;
+            },
+            'NOT_A_BOOLEAN',
+            'and not a boolean 2');
+
+    #expectError(
+            fn() {
+                intro x = 5 or false;
+            },
+            'NOT_A_BOOLEAN',
+            'or not a boolean 1');
+
+    #expectError(
+            fn() {
+                intro x = false or 5;
+            },
+            'NOT_A_BOOLEAN',
+            'or not a boolean 2');
+
+    #expectError(
+            fn() {
+                intro x = not 5;
+            },
+            'NOT_A_BOOLEAN',
+            'not not a boolean');
+
+    #expectError(
+            fn() {
+                (pick 1 unique(3) from [])();
+            },
+            'NOT_A_BOOLEAN',
+            'unique not a boolean');
+
+    #expectError(
+            fn() {
+                if 2 {}
+            },
+            'NOT_A_BOOLEAN',
+            'if condition not a boolean');
+
+    #expectError(
+            fn() {
+                if false {} else if 2 {}
+            },
+            'NOT_A_BOOLEAN',
+            'else if condition not a boolean');
+
+    #expectError(
+            fn() {
+                for each ['abc'] where 2 {}
+            },
+            'NOT_A_BOOLEAN',
+            'for each where not a boolean');
+
+    #expectError(
+            fn() {
+                (pick from ['abc'] where 2)();
+            },
+            'NOT_A_BOOLEAN',
+            'pick where not a boolean');
+
+    #expectError(
+            fn() {
+                intro x = [].foo;
+            },
+            'NOT_A_DICTIONARY',
+            'not a dictionary');
+
+    #expectError(
+            fn() {
+                intro x = []();
+            },
+            'NOT_A_FUNCTION',
+            'not a function');
+
+    #expectError(
+            fn() {
+                intro x = 2 + 'abc';
+            },
+            'NOT_A_NUMBER',
+            'not a number');
+
+    #expectError(
+            fn() {
+                intro x = 'abc'[2];
+            },
+            'NOT_A_SEQUENCE',
+            'not a sequence');
+
+    #expectError(
+            fn() {
+                intro x = [] + 3;
+            },
+            'PLUS_FIRST_PARAMETER_MUST_BE_NUMBER_OR_STRING',
+            'wrong plus first param');
+
+    #expectError(
+            fn() {
+                decide [1, -1, 3, 2] {
+                    intro selections = pick 3 from ['a', 'b', 'c', 'd', 'e'];
+                }
+            },
+            'NEGATIVE',
+            'decide sequence negative');
+
+    #expectError(
+            fn() {
+                decide [1, 5, 3, 2] {
+                    intro selections = pick 3 from ['a', 'b', 'c', 'd', 'e'];
+                }
+            },
+            'PICK_INDEX_OUT_OF_RANGE',
+            'decide sequence out of range');
+
+    {
+        intro selections;
+        decide [0, 4, 2, 1] {
+            selections = pick 3 from ['a', 'b', 'c', 'd', 'e'];
+        }
+        assert(selections = ['a', 'e', 'c'], 'decide sequence');
+    }
+
+    {
+        intro selections;
+        intro remainder;
+        decide [2, 2, 1] {
+            decide [1, 3, 0] {
+                selections = pick 3 from ['a', 'b', 'c', 'd', 'e'];
+            }
+            remainder = pick from ['a', 'b', 'c', 'd', 'e'];
+        }
+        assert([selections, remainder] = [['b', 'd', 'a'], 'c'],
+                'decide nested sequence');
+    }
+
+    {
+        intro selections1;
+        intro selections2;
+        decide 'apple' {
+            selections1 = pick 3 from ['a', 'b', 'c', 'd', 'e', 'f'];
+        }
+        decide 'apple' {
+            selections2 = pick 3 from ['a', 'b', 'c', 'd', 'e', 'f'];
+        }
+        assert(selections1 = selections2, 'decide sequence seed');
+    }
+
+    {
+        intro x = 4;
+        {
+            intro x;
+            x = 5;
+        }
+        assert(x = 4, 'scoping block');
+    }
+
+    {
+        assert(not (0 = 1), 'paren precedence test');
+    }
 }
