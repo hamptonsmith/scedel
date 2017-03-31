@@ -9,22 +9,26 @@ import com.shieldsbetter.scedel.ParseLocation;
 import com.shieldsbetter.scedel.Scedel;
 import com.shieldsbetter.scedel.ScriptEnvironment;
 import com.shieldsbetter.scedel.statements.MultiplexingStatement;
+import com.shieldsbetter.scedel.statements.ReturnStatement;
+import com.shieldsbetter.scedel.statements.Statement;
+import java.util.Collections;
+import java.util.LinkedList;
 
 public class VFunction extends ImmutableValue<VFunction> {
     public static VFunction buildConstantFunction(
             final int argCt, final Value result) {
-        return new VFunction() {
-            @Override
-            public Value call(ParseLocation l, Scedel.HostEnvironment h,
-                    ScriptEnvironment s, List<Value> parameters) {
-                return result;
-            }
-
-            @Override
-            public int getArgumentCount() {
-                return argCt;
-            }
-        };
+        List<Scedel.Symbol> args = new LinkedList<>();
+        for (int i = 0; i < argCt; i++) {
+            args.add(new Scedel.Symbol("a" + i));
+        }
+        
+        List<Statement> code = new LinkedList<>();
+        code.add(new ReturnStatement(
+                ParseLocation.INTERNAL, result.copy(null)));
+        
+        return new VFunction(args,
+                new MultiplexingStatement(ParseLocation.INTERNAL, code),
+                Collections.EMPTY_MAP);
     }
     
     private final List<Scedel.Symbol> myArgumentNames;
@@ -41,12 +45,6 @@ public class VFunction extends ImmutableValue<VFunction> {
         myArgumentNames = new ArrayList<>(argumentNames);
         myCode = code;
         myBakedValues = new HashMap<>(bakedVals);
-    }
-    
-    private VFunction() {
-        myArgumentNames = null;
-        myCode = null;
-        myBakedValues = new HashMap<>();
     }
     
     public List<Scedel.Symbol> getArgumentNames() {

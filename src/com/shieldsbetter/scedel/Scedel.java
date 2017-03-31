@@ -67,7 +67,40 @@ public class Scedel {
                         f.getParseLocation(), f, copiedParams))));
     }
     
-    public CompiledCode parseCode(String input) throws StaticCodeException {
+    
+    public Value evaluate(String expression)
+            throws StaticCodeException, ExecutionException {
+        StackTraceElement e = new RuntimeException().getStackTrace()[1];
+        String sourceDesc = "string from " + e.getFileName() + ", line "
+                + e.getLineNumber();
+        
+        return evaluate(sourceDesc, expression);
+    }
+    
+    public Value evaluate(String sourceDescription, String expression)
+            throws StaticCodeException, ExecutionException {
+        Expression parsedExpression =
+                Compiler.parseExpression(sourceDescription, expression);
+        
+        return evaluate(parsedExpression);
+    }
+    
+    public Value evaluate(Expression e) throws ExecutionException {
+        ScriptEnvironment s = new ScriptEnvironment(myDecider);
+        
+        Value result;
+        try {
+            result = e.evaluate(myHostEnvironment, s);
+        }
+        catch (InternalExecutionException iee) {
+            throw iee.getExecutionException();
+        }
+        
+        return result;
+    }
+    
+    public static CompiledCode parseCode(String input)
+            throws StaticCodeException {
         StackTraceElement e = new RuntimeException().getStackTrace()[1];
         String sourceDesc = "string from " + e.getFileName() + ", line "
                 + e.getLineNumber();
@@ -75,9 +108,23 @@ public class Scedel {
         return parseCode(sourceDesc, input);
     }
     
-    public CompiledCode parseCode(
+    public static CompiledCode parseCode(
             String sourceDescription, String input) throws StaticCodeException {
         return Compiler.parseCode(sourceDescription, input);
+    }
+    
+    public static Expression parseExpression(String input)
+            throws StaticCodeException {
+        StackTraceElement e = new RuntimeException().getStackTrace()[1];
+        String sourceDesc = "string from " + e.getFileName() + ", line "
+                + e.getLineNumber();
+        
+        return parseExpression(sourceDesc, input);
+    }
+    
+    public static Expression parseExpression(
+            String sourceDescription, String input) throws StaticCodeException {
+        return Compiler.parseExpression(sourceDescription, input);
     }
     
     public class HostEnvironmentException extends Exception {
@@ -127,6 +174,10 @@ public class Scedel {
             myName = name;
             myBakedFlag = baked;
             myPosition = p;
+        }
+        
+        public Symbol(String name) {
+            this(name, false, ParseLocation.INTERNAL);
         }
         
         public String getName() {

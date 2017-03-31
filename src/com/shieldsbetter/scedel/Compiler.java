@@ -63,6 +63,11 @@ public class Compiler {
         return new Compiler(sourceDescription).doParseCode(input);
     }
     
+    public static Expression parseExpression(
+            String sourceDescription, String input) throws StaticCodeException {
+        return new Compiler(sourceDescription).doParseExpression(input);
+    }
+    
     private final String[] KEYWORDS =
             {"from", "if", "for", "each", "pick", "unique", "true", "false",
              "unavailable", "none", "intro", "bake", "not", "and", "or",
@@ -1324,6 +1329,52 @@ public class Compiler {
         }
         
         return new Scedel.CompiledCode(result);
+    }
+    
+    private Expression doParseExpression(String input)
+            throws StaticCodeException {
+        ParseHead h;
+        Expression result;
+        
+        if (DEBUG) {
+            h = new DebugParseHead(input);
+        }
+        else {
+            h = new ParseHead(input);
+        }
+        h.setSkip(DEFAULT_SKIPPER);
+        
+        try {
+            h.require(EXP);
+            
+            if (h.hasNextChar()) {
+                throw new StaticCodeException(
+                        StaticCodeException.ErrorType.GENERIC_SYNTAX_ERROR,
+                        "Don't understand: " + h.remainingText().split("\n")[0],
+                        loc(h));
+            }
+            
+            result = (Expression) h.popFromParseStack();
+            
+            if (!h.getParseStackCopy().isEmpty()) {
+                throw new RuntimeException();
+            }
+        }
+        catch (InternalStaticCodeException isce) {
+            throw isce.getStaticCodeException().copy();
+        }
+        catch (WellFormednessException wfe) {
+            throw new StaticCodeException(
+                    StaticCodeException.ErrorType.GENERIC_SYNTAX_ERROR,
+                    wfe.getMessage(), loc(wfe));
+        }
+        catch (NoMatchException nme) {
+            throw new StaticCodeException(
+                    StaticCodeException.ErrorType.GENERIC_SYNTAX_ERROR,
+                    nme.getMessage(), loc(h));
+        }
+        
+        return result;
     }
     
     private ParseLocation loc(WellFormednessException e) {

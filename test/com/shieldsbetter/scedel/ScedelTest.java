@@ -23,7 +23,7 @@ import com.shieldsbetter.scedel.values.Value;
 import java.util.Collections;
 import java.util.Scanner;
 
-public class SbsdlTest {
+public class ScedelTest {
     @Test
     public void unavailableLiteral() throws ExecutionException,
             StaticCodeException, Scedel.HostEnvironmentException {
@@ -1252,7 +1252,7 @@ public class SbsdlTest {
             throws ExecutionException, StaticCodeException {
         String code;
         try (Scanner s = new Scanner(
-                SbsdlTest.class.getResourceAsStream("tests.scedel"))) {
+                ScedelTest.class.getResourceAsStream("tests.scedel"))) {
             code = s.useDelimiter("\\A").hasNext() ? s.next() : "";
         }
         
@@ -1326,7 +1326,7 @@ public class SbsdlTest {
         Assert.assertEquals(expected, h.myOut.get(0));
     }
     
-    private void executionTest(
+    private static void executionTest(
             VFunction code, String expectedError, String testName) {
         TestEnvironment h = new TestEnvironment();
         TestDecider d = new TestDecider();
@@ -1373,7 +1373,7 @@ public class SbsdlTest {
         Mockito.verify(h).evaluate("out", list(expectedResult));
     }
     
-    private static class TestDecider implements Scedel.Decider {
+    public static class TestDecider implements Scedel.Decider {
         private Iterator<Boolean> myResults;
         
         public void setResults(boolean[] results) {
@@ -1391,53 +1391,7 @@ public class SbsdlTest {
         }
     }
     
-    private static class ExecutionTest extends EvaluationTest {
-        private final String mySetup;
-        
-        public ExecutionTest(String name, String setup, String expression,
-                Value expected, boolean... deciderResults) {
-            super(name, expression, expected, deciderResults);
-            
-            mySetup = setup;
-        }
-        
-        public String getSetup() {
-            return mySetup;
-        }
-    }
-    
-    private static class EvaluationTest {
-        private final String myName;
-        private final String myExpression;
-        private final Value myExpectedResult;
-        private final boolean[] myDeciderResults;
-        
-        public EvaluationTest(String name, String expression, Value expected,
-                boolean ... deciderResults) {
-            myName = name;
-            myExpression = expression;
-            myExpectedResult = expected;
-            myDeciderResults = deciderResults;
-        }
-        
-        public String getName() {
-            return myName;
-        }
-        
-        public String getExpression() {
-            return myExpression;
-        }
-        
-        public Value getExpected() {
-            return myExpectedResult;
-        }
-        
-        public boolean[] getDeciderValues() {
-            return myDeciderResults;
-        }
-    }
-    
-    private class TestEnvironment implements Scedel.HostEnvironment {
+    public static class TestEnvironment implements Scedel.HostEnvironment {
         private List<Value> myOut;
         private Value myMem = VUnavailable.INSTANCE;
         

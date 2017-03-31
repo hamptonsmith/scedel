@@ -103,7 +103,7 @@ public class Serializer implements Statement.Visitor, Expression.Visitor {
         
         Value result;
         try {
-            result = deserialize(new Input(r), new DeserializeState());
+            result = deserialize(i, new DeserializeState());
         }
         catch (Throwable t) {
             throw new IOException("Error deserializing.", t);
@@ -133,10 +133,11 @@ public class Serializer implements Statement.Visitor, Expression.Visitor {
     
     public Serializer(PrintWriter w) {
         myOut = w;
+        outToken("scedelv1");
     }
     
     private void outToken(String tkn) {
-        myOut.println(tkn + " ");
+        myOut.print(tkn + " ");
     }
     
     private void visitSymbol(Scedel.Symbol s) {
@@ -197,7 +198,7 @@ public class Serializer implements Statement.Visitor, Expression.Visitor {
             }
         } while (!done);
         
-        return Integer.parseInt(result.toString());
+        return Integer.parseInt(result.toString().trim());
     }
     
     private static String readSourceDescription(Input i) throws IOException {
@@ -763,9 +764,10 @@ public class Serializer implements Statement.Visitor, Expression.Visitor {
 
     @Override
     public void visitVariableNameExpression(VariableNameExpression e) {
+        visitSymbol(e.getSymbol());
+        
         assertLocation(e);
         outToken("lookup");
-        outToken(e.getSymbol().getName());
     }
     
     static {
@@ -846,7 +848,7 @@ public class Serializer implements Statement.Visitor, Expression.Visitor {
         
         outToken("closure");
         outToken("" + v.getBakedValueCount());
-        outToken("" + v.getArgumentNames());
+        outToken("" + v.getArgumentCount());
     }
     
     static {
@@ -1003,7 +1005,7 @@ public class Serializer implements Statement.Visitor, Expression.Visitor {
     }
     
     static {
-        DESERIALIZE_ACTIONS.put("str", new DeserializeAction() {
+        DESERIALIZE_ACTIONS.put("unavailable", new DeserializeAction() {
                     @Override
                     public void execute(DeserializeState s, Input i) {
                         s.push(VUnavailable.INSTANCE);
@@ -1128,8 +1130,9 @@ public class Serializer implements Statement.Visitor, Expression.Visitor {
         private final BufferedReader myReader;
         private int myNextChar;
         
-        public Input(Reader r) {
+        public Input(Reader r) throws IOException {
             myReader = toBufferedReader(r);
+            myNextChar = myReader.read();
         }
         
         public boolean hasNextToken() throws IOException {
