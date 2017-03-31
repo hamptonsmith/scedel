@@ -11,6 +11,7 @@ import org.junit.Test;
 import org.mockito.Mockito;
 import com.shieldsbetter.scedel.values.VBoolean;
 import com.shieldsbetter.scedel.values.VDict;
+import com.shieldsbetter.scedel.values.VFunction;
 import com.shieldsbetter.scedel.values.VNone;
 import com.shieldsbetter.scedel.values.VNumber;
 import com.shieldsbetter.scedel.values.VProxy;
@@ -19,6 +20,7 @@ import com.shieldsbetter.scedel.values.VString;
 import com.shieldsbetter.scedel.values.VToken;
 import com.shieldsbetter.scedel.values.VUnavailable;
 import com.shieldsbetter.scedel.values.Value;
+import java.util.Collections;
 import java.util.Scanner;
 
 public class SbsdlTest {
@@ -1324,6 +1326,23 @@ public class SbsdlTest {
         Assert.assertEquals(expected, h.myOut.get(0));
     }
     
+    private void executionTest(
+            VFunction code, String expectedError, String testName) {
+        TestEnvironment h = new TestEnvironment();
+        TestDecider d = new TestDecider();
+        
+        Scedel s = new Scedel(h, d);
+
+        try {
+            s.run(code, Collections.EMPTY_LIST);
+            Assert.fail(testName + " - Expected error " + expectedError);
+        }
+        catch (ExecutionException ee) {
+            Assert.assertEquals(
+                    testName, expectedError, ee.getErrorType().toString());
+        }
+    }
+    
     private void evaluationTest(String expression, Value expectedResult,
             boolean ... deciderResults)
             throws ExecutionException, StaticCodeException,
@@ -1461,6 +1480,15 @@ public class SbsdlTest {
                 if (!((VBoolean) parameters.get(0)).getValue()) {
                     Assert.fail(((VString) parameters.get(1)).getValue());
                 }
+                
+                result = VUnavailable.INSTANCE;
+            }
+            else if (name.equals("expectError")) {
+                VFunction f = (VFunction) parameters.get(0);
+                VString expectedError = (VString) parameters.get(1);
+                VString testName = (VString) parameters.get(2);
+                
+                executionTest(f, expectedError.getValue(), testName.getValue());
                 
                 result = VUnavailable.INSTANCE;
             }

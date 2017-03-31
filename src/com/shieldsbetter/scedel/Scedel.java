@@ -1,9 +1,14 @@
 package com.shieldsbetter.scedel;
 
+import com.shieldsbetter.scedel.expressions.Expression;
+import com.shieldsbetter.scedel.expressions.FunctionCallExpression;
+import com.shieldsbetter.scedel.statements.EvaluateStatement;
 import java.io.PrintWriter;
 import java.util.List;
 import com.shieldsbetter.scedel.statements.Statement;
+import com.shieldsbetter.scedel.values.VFunction;
 import com.shieldsbetter.scedel.values.Value;
+import java.util.ArrayList;
 
 public class Scedel {
     public static Decider buildRandomDecider() {
@@ -49,6 +54,17 @@ public class Scedel {
     public void run(String sourceDescription, String input)
             throws StaticCodeException, ExecutionException {
         run(parseCode(sourceDescription, input));
+    }
+    
+    public void run(VFunction f, List<Value> params) throws ExecutionException {
+        List<Expression> copiedParams = new ArrayList<>(params.size());
+        for (Value v : params) {
+            copiedParams.add(v.copy(null));
+        }
+        
+        run(new CompiledCode(new EvaluateStatement(f.getParseLocation(),
+                new FunctionCallExpression(
+                        f.getParseLocation(), f, copiedParams))));
     }
     
     public CompiledCode parseCode(String input) throws StaticCodeException {

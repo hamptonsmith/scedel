@@ -514,4 +514,13 @@ fn() {
         (pick from [x]).foo = 'def';
         assert(x.foo = 'def', 'proxy pick reference semantics');
     }
+
+    (* Proxy containment rules *)
+    #expectError(
+            fn() {
+                intro x = #proxy('x');
+                x.foo = #proxy('y');
+            },
+            'ILLEGAL_PROXY_CONTAINMENT',
+            'proxy cannot contain proxy field');
 }
