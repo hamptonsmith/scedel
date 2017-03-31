@@ -11,6 +11,10 @@ import com.shieldsbetter.scedel.ScriptEnvironment;
 import com.shieldsbetter.scedel.statements.MultiplexingStatement;
 import com.shieldsbetter.scedel.statements.ReturnStatement;
 import com.shieldsbetter.scedel.statements.Statement;
+import com.shieldsbetter.scedel.visitors.Serializer;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Collections;
 import java.util.LinkedList;
 
@@ -45,6 +49,18 @@ public class VFunction extends ImmutableValue<VFunction> {
         myArgumentNames = new ArrayList<>(argumentNames);
         myCode = code;
         myBakedValues = new HashMap<>(bakedVals);
+    }
+
+    @Override
+    public String toString() {
+        StringWriter w = new StringWriter();
+        try {
+            Serializer.serialize(this, new PrintWriter(w));
+        }
+        catch (IOException ioe) {
+            throw new RuntimeException(ioe);
+        }
+        return w.toString();
     }
     
     public List<Scedel.Symbol> getArgumentNames() {

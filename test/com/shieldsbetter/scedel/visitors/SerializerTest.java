@@ -10,6 +10,7 @@ import java.io.PrintWriter;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.Scanner;
+import junit.framework.Assert;
 import org.junit.Test;
 
 public class SerializerTest {
@@ -34,5 +35,13 @@ public class SerializerTest {
         }
         
         Value v2 = Serializer.deserialize(new StringReader(w.toString()));
+        
+        StringBuilder b1 = new StringBuilder();
+        v1.prettyRender(4, 0, b1);
+        
+        StringBuilder b2 = new StringBuilder();
+        v2.prettyRender(4, 0, b2);
+        
+        Assert.assertEquals(b1.toString(), b2.toString());
     }
 }
