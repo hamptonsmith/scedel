@@ -8,7 +8,6 @@ import com.shieldsbetter.scedel.ScriptEnvironment;
 import com.shieldsbetter.scedel.expressions.Expression;
 import com.shieldsbetter.scedel.values.VNone;
 import com.shieldsbetter.scedel.values.VSeq;
-import com.shieldsbetter.scedel.values.VUnavailable;
 import com.shieldsbetter.scedel.values.Value;
 import java.util.List;
 import java.util.Random;
