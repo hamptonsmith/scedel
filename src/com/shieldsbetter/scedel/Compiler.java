@@ -219,19 +219,22 @@ public class Compiler {
                         }
                     };
     
+    private final Matcher ID_CONTINUER =
+            new MAlternatives(CSet.LETTER_OR_DIGIT, new MLiteral("_"));
+    
     private final Matcher IDENTIFIER =
-            new MAction(
-                    new MExclude(
-                            KEYWORD,
-                            new MCapture(
-                                    new MWithSkipper(
-                                        new MAlternatives(
-                                                new MSequence(CSet.LETTER,
-                                                        new MRepeated(new MAlternatives(
-                                                                CSet.LETTER_OR_DIGIT,
-                                                                new MLiteral("_")))),
-                                                new MLiteral("@")),
-                                    null)))) {
+            new MAction(new MCapture(new MWithSkipper(
+                    new MAlternatives(
+                            new MSequence(
+                                    KEYWORD,
+                                    new MRepeated(ID_CONTINUER, 1, null)),
+                            new MExclude(KEYWORD,
+                                    new MAlternatives(
+                                        new MSequence(
+                                                CSet.LETTER,
+                                                new MRepeated(ID_CONTINUER)),
+                                        new MLiteral("@")))),
+                    null))) {
                 @Override
                 public void onMatched(ParseHead h) {
                     h.pushOnParseStack(h.popCapture());

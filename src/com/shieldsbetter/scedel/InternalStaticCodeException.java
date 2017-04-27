@@ -11,6 +11,14 @@ public class InternalStaticCodeException extends RuntimeException {
         return myStaticCodeException;
     }
     
+    public static InternalStaticCodeException illegalKeywordId(
+            ParseLocation detected) {
+        return new InternalStaticCodeException(
+                new StaticCodeException(
+                        StaticCodeException.ErrorType.GENERIC_SYNTAX_ERROR,
+                        "Cannot use keyword as id.", detected));
+    }
+    
     public static InternalStaticCodeException inaccessibleSymbol(
             ParseLocation detected, ParseLocation reference) {
         return new InternalStaticCodeException(

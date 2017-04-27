@@ -127,6 +127,45 @@ public class Scedel {
         return Compiler.parseExpression(sourceDescription, input);
     }
     
+    public static VFunction createFunction(
+            String innerCode, String ... argNames)
+            throws StaticCodeException {
+        String argString = "(";
+        boolean comma = false;
+        for (String arg : argNames) {
+            if (comma) {
+                argString += ", ";
+            }
+            else {
+                comma = true;
+            }
+            
+            argString += arg;
+        }
+        argString += ")";
+        
+        Expression fnExp = parseExpression(
+                "fn" + argString + "{ " + innerCode + "}");
+        
+        Scedel s = new Scedel(new HostEnvironment() {
+                    @Override
+                    public Value evaluate(String name, List<Value> parameters)
+                            throws HostEnvironmentException {
+                        throw new UnsupportedOperationException();
+                    }
+                });
+        
+        VFunction fnVal;
+        try {
+            fnVal = (VFunction) s.evaluate(fnExp);
+        }
+        catch (ExecutionException ee) {
+            throw new RuntimeException(ee);
+        }
+        
+        return fnVal;
+    }
+    
     public class HostEnvironmentException extends Exception {
         public HostEnvironmentException(String msg) {
             super(msg);

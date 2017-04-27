@@ -515,6 +515,11 @@ fn() {
         assert(x.foo = 'def', 'proxy pick reference semantics');
     }
 
+    (* Ok for an id to begin with a keyword. *)
+    {
+        intro forsooth;
+    }
+
     (* Proxy containment rules *)
     #expectError(
             fn() {
