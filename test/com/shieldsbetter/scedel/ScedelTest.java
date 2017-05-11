@@ -21,6 +21,7 @@ import com.shieldsbetter.scedel.values.VToken;
 import com.shieldsbetter.scedel.values.VUnavailable;
 import com.shieldsbetter.scedel.values.Value;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.Scanner;
 
 public class ScedelTest {
@@ -1245,6 +1246,27 @@ public class ScedelTest {
             throws ExecutionException, StaticCodeException,
                 Scedel.HostEnvironmentException {
         evaluationTest("not (0 = 1)", VBoolean.TRUE);
+    }
+    
+    @Test
+    public void clientFunctionReturnTest()
+            throws StaticCodeException, ExecutionException {
+        Scedel s = new Scedel(new Scedel.HostEnvironment() {
+                    @Override
+                    public Value evaluate(String name, List<Value> parameters)
+                            throws Scedel.HostEnvironmentException {
+                        throw new UnsupportedOperationException();
+                    }
+                });
+        
+        VFunction f = Scedel.createFunction("return x;", "x");
+        
+        List<Value> params = new LinkedList<>();
+        params.add(new VString("abc"));
+        
+        Value result = s.run(f, params);
+        
+        Assert.assertEquals(new VString("abc"), result);
     }
     
     @Test

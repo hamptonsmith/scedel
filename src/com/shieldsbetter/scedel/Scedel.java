@@ -2,7 +2,7 @@ package com.shieldsbetter.scedel;
 
 import com.shieldsbetter.scedel.expressions.Expression;
 import com.shieldsbetter.scedel.expressions.FunctionCallExpression;
-import com.shieldsbetter.scedel.statements.EvaluateStatement;
+import com.shieldsbetter.scedel.statements.ReturnStatement;
 import java.io.PrintWriter;
 import java.util.List;
 import com.shieldsbetter.scedel.statements.Statement;
@@ -34,6 +34,10 @@ public class Scedel {
     }
     
     public void run(CompiledCode c) throws ExecutionException {
+        runWithReturn(c);
+    }
+    
+    private Value runWithReturn(CompiledCode c) throws ExecutionException {
         Statement parsedInput = c.myStatement;
         
         ScriptEnvironment s = new ScriptEnvironment(myDecider);
@@ -44,6 +48,8 @@ public class Scedel {
         catch (InternalExecutionException iee) {
             throw iee.getExecutionException();
         }
+        
+        return s.getReturn();
     }
     
     public void run(String input)
@@ -56,17 +62,18 @@ public class Scedel {
         run(parseCode(sourceDescription, input));
     }
     
-    public void run(VFunction f, List<Value> params) throws ExecutionException {
+    public Value run(VFunction f, List<Value> params)
+            throws ExecutionException {
         List<Expression> copiedParams = new ArrayList<>(params.size());
         for (Value v : params) {
             copiedParams.add(v.copy(null));
         }
         
-        run(new CompiledCode(new EvaluateStatement(f.getParseLocation(),
-                new FunctionCallExpression(
-                        f.getParseLocation(), f, copiedParams))));
+        return runWithReturn(new CompiledCode(
+                new ReturnStatement(f.getParseLocation(),
+                        new FunctionCallExpression(
+                                f.getParseLocation(), f, copiedParams))));
     }
-    
     
     public Value evaluate(String expression)
             throws StaticCodeException, ExecutionException {
@@ -166,7 +173,7 @@ public class Scedel {
         return fnVal;
     }
     
-    public class HostEnvironmentException extends Exception {
+    public static class HostEnvironmentException extends Exception {
         public HostEnvironmentException(String msg) {
             super(msg);
         }

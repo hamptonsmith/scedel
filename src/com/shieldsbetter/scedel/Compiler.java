@@ -231,7 +231,9 @@ public class Compiler {
                             new MExclude(KEYWORD,
                                     new MAlternatives(
                                         new MSequence(
-                                                CSet.LETTER,
+                                                new MAlternatives(
+                                                        CSet.LETTER,
+                                                        new MLiteral("_")),
                                                 new MRepeated(ID_CONTINUER)),
                                         new MLiteral("@")))),
                     null))) {

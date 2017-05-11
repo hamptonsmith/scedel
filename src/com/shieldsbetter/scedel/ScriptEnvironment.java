@@ -38,7 +38,7 @@ public class ScriptEnvironment {
     
     public void pushScope(boolean root) {
         if (root) {
-            myCurrentScope= new RootScope(myCurrentScope);
+            myCurrentScope = new RootScope(myCurrentScope);
         }
         else {
             myCurrentScope = new Scope(myCurrentScope);

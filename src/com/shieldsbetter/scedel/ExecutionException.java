@@ -22,6 +22,7 @@ public class ExecutionException extends Exception {
         NOT_A_NUMBER,
         NOT_A_SEQUENCE,
         NOT_A_STRING,
+        OTHER,
         PICK_INDEX_OUT_OF_RANGE,
         PLUS_FIRST_PARAMETER_MUST_BE_NUMBER_OR_STRING,
         TOO_LARGE,

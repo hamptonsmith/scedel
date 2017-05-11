@@ -4,6 +4,7 @@ import java.math.BigInteger;
 import java.util.Objects;
 import com.shieldsbetter.scedel.InternalExecutionException;
 import com.shieldsbetter.scedel.ParseLocation;
+import com.shieldsbetter.scedel.Scedel;
 
 public class VNumber extends ImmutableValue<VNumber> {
     public static VNumber of(long numerator, long denominator) {
@@ -145,6 +146,22 @@ public class VNumber extends ImmutableValue<VNumber> {
     
     public BigInteger getNumerator() {
         return myNumerator;
+    }
+    
+    public long getAsLong() {
+        if (!myDenominator.equals(BigInteger.ONE)) {
+            throw new IllegalStateException("Not a long.");
+        }
+
+        if (myNumerator.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) > 0) {
+            throw new IllegalStateException("Not a long.");
+        }
+
+        if (myNumerator.compareTo(BigInteger.valueOf(Long.MIN_VALUE)) < 0) {
+            throw new IllegalStateException("Not a long.");
+        }
+        
+        return myNumerator.longValue();
     }
 
     @Override
