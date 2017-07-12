@@ -9,4 +9,9 @@ public class VUnavailable extends ImmutableValue<VUnavailable> {
     public void accept(Visitor v) {
         v.visitVUnavailable(this);
     }
+
+    @Override
+    public String getValueString() {
+        return "unavailable";
+    }
 }

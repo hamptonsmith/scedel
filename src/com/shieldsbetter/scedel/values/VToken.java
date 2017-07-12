@@ -43,4 +43,14 @@ public final class VToken extends SkeletonValue<VToken> {
     public void accept(Visitor v) {
         v.visitVToken(this);
     }
+
+    @Override
+    public String getValueString() {
+        return "(* token *) 1 / 0";
+    }
+
+    @Override
+    public String toString() {
+        return "VToken[" + myBackingKey + "]";
+    }
 }

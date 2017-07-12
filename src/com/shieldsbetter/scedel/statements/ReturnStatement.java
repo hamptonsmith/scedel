@@ -26,6 +26,7 @@ public class ReturnStatement extends SkeletonStatement {
     public void prettyRender(
             int indentUnit, int indentLevels, StringBuilder b) {
         b.append("STMT RETURN\n");
+        Statement.Util.indent(indentUnit, indentLevels + 1, b);
         myExpression.prettyRender(indentUnit, indentLevels + 1, b);
     }
 

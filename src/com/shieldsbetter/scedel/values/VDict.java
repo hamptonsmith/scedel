@@ -96,4 +96,25 @@ public class VDict extends ContainerValue<VDict> {
     public void accept(Visitor v) {
         v.visitVDict(this);
     }
+
+    @Override
+    public String getValueString() {
+        StringBuilder result = new StringBuilder();
+        result.append("{");
+        
+        boolean needComma = false;
+        for (Map.Entry<Value, Value> entry : myValue.entrySet()) {
+            if (needComma) {
+                result.append(",");
+            }
+            
+            result.append(" ");
+            result.append(entry.getKey().getValueString());
+            result.append(": ");
+            result.append(entry.getValue().getValueString());
+        }
+        
+        result.append(" }");
+        return result.toString();
+    }
 }

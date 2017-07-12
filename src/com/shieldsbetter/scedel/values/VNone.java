@@ -9,4 +9,9 @@ public class VNone extends ImmutableValue<VNone> {
     public void accept(Visitor v) {
         v.visitVNone(this);
     }
+
+    @Override
+    public String getValueString() {
+        return "none";
+    }
 }

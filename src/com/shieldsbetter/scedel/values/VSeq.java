@@ -105,4 +105,26 @@ public class VSeq extends ContainerValue<VSeq> {
     public void accept(Visitor v) {
         v.visitVSeq(this);
     }
+
+    @Override
+    public String getValueString() {
+        StringBuilder result = new StringBuilder();
+        result.append("[");
+        
+        boolean needComma = false;
+        for (Value v : myValue) {
+            if (needComma) {
+                result.append(",");
+            }
+            else {
+                needComma = true;
+            }
+            
+            result.append(" ");
+            result.append(v);
+        }
+        
+        result.append(" ]");
+        return result.toString();
+    }
 }

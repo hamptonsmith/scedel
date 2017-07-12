@@ -31,4 +31,9 @@ public class VProxy extends VDict {
     public void accept(Visitor v) {
         v.visitVProxy(this);
     }
+
+    @Override
+    public String getValueString() {
+        return "(* proxy *) 1 / 0";
+    }
 }

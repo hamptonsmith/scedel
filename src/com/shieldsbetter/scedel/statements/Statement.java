@@ -48,6 +48,7 @@ public interface Statement {
             indent(indentUnit, indentLevels + 1, b);
             b.append(label);
             b.append("\n");
+            indent(indentUnit, indentLevels + 2, b);
             child.prettyRender(indentUnit, indentLevels + 2, b);
             b.append("\n");
         }

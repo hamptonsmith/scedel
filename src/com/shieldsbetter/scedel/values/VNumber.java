@@ -148,6 +148,27 @@ public class VNumber extends ImmutableValue<VNumber> {
         return myNumerator;
     }
     
+    public long getNearestLong() {
+        BigInteger div = myNumerator.divide(myDenominator);
+        BigInteger rem = myNumerator.remainder(myDenominator);
+        if (rem.compareTo(myDenominator.divide(BigInteger.valueOf(2))) > 0) {
+            div = div.add(BigInteger.ONE);
+        }
+        
+        long result;
+        if (div.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) > 0) {
+            result = Long.MAX_VALUE;
+        }
+        else if (div.compareTo(BigInteger.valueOf(Long.MIN_VALUE)) < 0) {
+            result = Long.MIN_VALUE;
+        }
+        else {
+            result = div.longValue();
+        }
+        
+        return result;
+    }
+    
     public long getAsLong() {
         if (!myDenominator.equals(BigInteger.ONE)) {
             throw new IllegalStateException("Not a long.");
@@ -204,5 +225,17 @@ public class VNumber extends ImmutableValue<VNumber> {
     @Override
     public void accept(Visitor v) {
         v.visitVNumber(this);
+    }
+
+    @Override
+    public String getValueString() {
+        String result;
+        if (myDenominator.equals(BigInteger.ONE)) {
+            result = myNumerator.toString();
+        }
+        else {
+            result = myNumerator.toString() + " / " + myDenominator.toString();
+        }
+        return result;
     }
 }

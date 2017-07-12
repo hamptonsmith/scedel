@@ -48,4 +48,9 @@ public class VString extends ImmutableValue<VString> {
     public void accept(Visitor v) {
         v.visitVString(this);
     }
+
+    @Override
+    public String getValueString() {
+        return "\"" + myValue + "\"";
+    }
 }

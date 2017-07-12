@@ -64,7 +64,9 @@ public class InternalExecutionException extends RuntimeException {
         return new InternalExecutionException(
                 new ExecutionException(
                         ExecutionException.ErrorType.NOT_A_BOOLEAN,
-                        "Value is not a boolean.", detected, offendingValue));
+                        "Value is not a boolean.  Was: "
+                                + offendingValue.getValueString(),
+                        detected, offendingValue));
     }
     
     public static InternalExecutionException notADictionary(
@@ -72,8 +74,9 @@ public class InternalExecutionException extends RuntimeException {
         return new InternalExecutionException(
                 new ExecutionException(
                         ExecutionException.ErrorType.NOT_A_DICTIONARY,
-                        "Value is not a dictionary.", detected,
-                        offendingValue));
+                        "Value is not a dictionary.  Was: "
+                                + offendingValue.getValueString(),
+                        detected, offendingValue));
     }
     
     public static InternalExecutionException notAFunction(
@@ -81,7 +84,9 @@ public class InternalExecutionException extends RuntimeException {
         return new InternalExecutionException(
                 new ExecutionException(
                         ExecutionException.ErrorType.NOT_A_FUNCTION,
-                        "Value is not a function.", detected, offendingValue));
+                        "Value is not a function.  Was: "
+                                + offendingValue.getValueString(),
+                        detected, offendingValue));
     }
     
     public static InternalExecutionException notANumber(
@@ -89,7 +94,9 @@ public class InternalExecutionException extends RuntimeException {
         return new InternalExecutionException(
                 new ExecutionException(
                         ExecutionException.ErrorType.NOT_A_NUMBER,
-                        "Value is not a number.", detected, offendingValue));
+                        "Value is not a number.  Was: "
+                                + offendingValue.getValueString(),
+                        detected, offendingValue));
     }
     
     public static InternalExecutionException notASequence(
@@ -97,7 +104,9 @@ public class InternalExecutionException extends RuntimeException {
         return new InternalExecutionException(
                 new ExecutionException(
                         ExecutionException.ErrorType.NOT_A_SEQUENCE,
-                        "Value is not a sequence.", detected, offendingValue));
+                        "Value is not a sequence.  Was: "
+                                + offendingValue.getValueString(),
+                        detected, offendingValue));
     }
     
     public static InternalExecutionException notAString(
@@ -105,7 +114,9 @@ public class InternalExecutionException extends RuntimeException {
         return new InternalExecutionException(
                 new ExecutionException(
                         ExecutionException.ErrorType.NOT_A_STRING,
-                        "Value is not a string.", detected, offendingValue));
+                        "Value is not a string.  Was: "
+                                + offendingValue.getValueString(),
+                        detected, offendingValue));
     }
     
     public static InternalExecutionException invalidWeighter(

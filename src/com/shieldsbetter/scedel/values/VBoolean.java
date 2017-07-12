@@ -46,4 +46,9 @@ public class VBoolean extends ImmutableValue<VBoolean> {
     public void accept(Visitor v) {
         v.visitVBoolean(this);
     }
+
+    @Override
+    public String getValueString() {
+        return "" + myValue;
+    }
 }

@@ -123,4 +123,35 @@ public class VFunction extends ImmutableValue<VFunction> {
     public void accept(Visitor v) {
         v.visitVFunction(this);
     }
+
+    @Override
+    public void prettyRender(
+            int indentUnit, int indentLevels, StringBuilder b) {
+        b.append("FUNCTION DEF\n");
+        
+        Statement.Util.indent(indentUnit, indentLevels + 1, b);
+        b.append("Params: ");
+        b.append(myArgumentNames);
+        b.append("\n");
+        
+        Statement.Util.indent(indentUnit, indentLevels + 1, b);
+        b.append("Baked:\n");
+        for (Map.Entry<Scedel.Symbol, Value> be : myBakedValues.entrySet()) {
+            Statement.Util.indent(indentUnit, indentLevels + 2, b);
+            b.append(be.getKey().toString());
+            b.append("\n");
+            
+            Statement.Util.indent(indentUnit, indentLevels + 3, b);
+            be.getValue().prettyRender(indentUnit, indentLevels + 4, b);
+            b.append("\n");
+        }
+        
+        Statement.Util.labeledChild(
+                indentUnit, indentLevels, "Code:", myCode, b);
+    }
+
+    @Override
+    public String getValueString() {
+        return "fn () { (* compiled code *) return 1 / 0; }";
+    }
 }

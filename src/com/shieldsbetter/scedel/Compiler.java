@@ -71,7 +71,7 @@ public class Compiler {
     private final String[] KEYWORDS =
             {"from", "if", "for", "each", "pick", "unique", "true", "false",
              "unavailable", "none", "intro", "bake", "not", "and", "or",
-             "otherwise", "decide"};
+             "otherwise", "decide", "in"};
     
     private final Matcher KEYWORD;
     {
@@ -719,7 +719,14 @@ public class Compiler {
                                     BinaryExpression.Operator.OR),
                             AND_PRECEDENCE_EXP)));
     
-    private final Matcher BOOLEAN_LEVEL_EXPRESSION = OR_PRECEDENCE_EXP;
+    private final Matcher IN_PRECEDENCE_EXP =
+            new MSequence(OR_PRECEDENCE_EXP, new MRepeated(
+                    new MBinaryExpression(
+                            new MPush(new MLiteral("in"),
+                                    BinaryExpression.Operator.IN),
+                            OR_PRECEDENCE_EXP)));
+    
+    private final Matcher BOOLEAN_LEVEL_EXPRESSION = IN_PRECEDENCE_EXP;
     
     private final Matcher POOL_ELEMENT =
             new MSequence(EXP,

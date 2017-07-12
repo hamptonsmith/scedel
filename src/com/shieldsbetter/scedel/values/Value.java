@@ -13,4 +13,6 @@ public interface Value<C extends Value> extends Expression {
     public VString assertIsString(ParseLocation at);
     
     public C copy(ExecutionException onProxy);
+    
+    public String getValueString();
 }

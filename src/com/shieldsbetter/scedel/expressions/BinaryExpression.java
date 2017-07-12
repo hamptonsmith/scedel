@@ -12,6 +12,7 @@ import com.shieldsbetter.scedel.values.VSeq;
 import com.shieldsbetter.scedel.values.VString;
 import com.shieldsbetter.scedel.values.VUnavailable;
 import com.shieldsbetter.scedel.values.Value;
+import java.util.Iterator;
 
 public class BinaryExpression extends SkeletonExpression {
     public static enum Operator {
@@ -28,7 +29,7 @@ public class BinaryExpression extends SkeletonExpression {
                 else if (operand1.evaluate() instanceof VString) {
                     result = new VString(operand1.evaluate().assertIsString(
                                     operand1.getParseLocation())
-                            .getValue() + operand2.evaluate());
+                            .getValue() + operand2.evaluate().getValueString());
                 }
                 else {
                     throw InternalExecutionException
@@ -39,12 +40,6 @@ public class BinaryExpression extends SkeletonExpression {
                 
                 return result;
             }
-
-            @Override
-            public void accept(
-                    OperatorVisitor v, Expression op1, Expression op2) {
-                v.visitPlus(op1, op2);
-            }
         },
         MINUS(false, "-") {
             @Override
@@ -54,12 +49,6 @@ public class BinaryExpression extends SkeletonExpression {
                         .subtract(operand2.evaluate().assertIsNumber(
                             operand2.getParseLocation()));
             }
-            
-            @Override
-            public void accept(
-                    OperatorVisitor v, Expression op1, Expression op2) {
-                v.visitMinus(op1, op2);
-            }
         },
         TIMES(false, "*") {
             @Override
@@ -68,12 +57,6 @@ public class BinaryExpression extends SkeletonExpression {
                             operand1.getParseLocation())
                         .multiply(operand2.evaluate().assertIsNumber(
                             operand2.getParseLocation()));
-            }
-            
-            @Override
-            public void accept(
-                    OperatorVisitor v, Expression op1, Expression op2) {
-                v.visitTimes(op1, op2);
             }
         },
         DIVIDED_BY(false, "/") {
@@ -85,12 +68,6 @@ public class BinaryExpression extends SkeletonExpression {
                                     operand2.getParseLocation()),
                                 operand2.getParseLocation());
             }
-            
-            @Override
-            public void accept(
-                    OperatorVisitor v, Expression op1, Expression op2) {
-                v.visitDividedBy(op1, op2);
-            }
         },
         RAISED_TO(false, "^") {
             @Override
@@ -100,12 +77,6 @@ public class BinaryExpression extends SkeletonExpression {
                         .raiseTo(operand2.evaluate().assertIsNumber(
                                 operand2.getParseLocation()),
                                 operand2.getParseLocation());
-            }
-
-            @Override
-            public void accept(
-                    OperatorVisitor v, Expression op1, Expression op2) {
-                v.visitRaisedTo(op1, op2);
             }
         },
         AND(false, "and") {
@@ -117,12 +88,6 @@ public class BinaryExpression extends SkeletonExpression {
                                 && operand2.evaluate().assertIsBoolean(
                                     operand2.getParseLocation()).getValue());
             }
-
-            @Override
-            public void accept(
-                    OperatorVisitor v, Expression op1, Expression op2) {
-                v.visitAnd(op1, op2);
-            }
         },
         OR(false, "or") {
             @Override
@@ -133,11 +98,21 @@ public class BinaryExpression extends SkeletonExpression {
                                 || operand2.evaluate().assertIsBoolean(
                                     operand2.getParseLocation()).getValue());
             }
-            
+        },
+        IN(false, "in") {
             @Override
-            public void accept(
-                    OperatorVisitor v, Expression op1, Expression op2) {
-                v.visitOr(op1, op2);
+            public Value apply(Lazy operand1, Lazy operand2) {
+                Value v1 = operand1.evaluate();
+                VSeq v2 = operand2.evaluate().assertIsSeq(
+                        operand2.getParseLocation());
+                
+                boolean found = false;
+                Iterator<Value> v2ElIter = v2.elements().iterator();
+                while (!found && v2ElIter.hasNext()) {
+                    found = v2ElIter.next().equals(v1);
+                }
+                
+                return VBoolean.of(found);
             }
         },
         LOOK_UP_KEY(true, "accessfield") {
@@ -145,12 +120,6 @@ public class BinaryExpression extends SkeletonExpression {
             public Value apply(Lazy operand1, Lazy operand2) {
                 return operand1.evaluate().assertIsDict(
                         operand1.getParseLocation()).get(operand2.evaluate());
-            }
-
-            @Override
-            public void accept(
-                    OperatorVisitor v, Expression op1, Expression op2) {
-                v.visitLookUpKey(op1, op2);
             }
         },
         INDEX_SEQ(true, "accessindex") {
@@ -178,12 +147,6 @@ public class BinaryExpression extends SkeletonExpression {
 
                 return sequenceValue.get(indexValue.getNumerator().intValue());
             }
-
-            @Override
-            public void accept(
-                    OperatorVisitor v, Expression op1, Expression op2) {
-                v.visitIndexSequence(op1, op2);
-            }
         },
         EQUAL(false, "=") {
             @Override
@@ -191,24 +154,12 @@ public class BinaryExpression extends SkeletonExpression {
                 return VBoolean.of(operand1.evaluate().equals(
                         operand2.evaluate()));
             }
-
-            @Override
-            public void accept(
-                    OperatorVisitor v, Expression op1, Expression op2) {
-                v.visitEqual(op1, op2);
-            }
         },
         NOT_EQUAL(false, "!=") {
             @Override
             public Value apply(Lazy operand1, Lazy operand2) {
                 return VBoolean.of(!operand1.evaluate().equals(
                         operand2.evaluate()));
-            }
-            
-            @Override
-            public void accept(
-                    OperatorVisitor v, Expression op1, Expression op2) {
-                v.visitNotEqual(op1, op2);
             }
         },
         LESS_THAN(false, "<") {
@@ -219,12 +170,6 @@ public class BinaryExpression extends SkeletonExpression {
                         .compareTo(operand2.evaluate().assertIsNumber(
                             operand2.getParseLocation())) < 0);
             }
-            
-            @Override
-            public void accept(
-                    OperatorVisitor v, Expression op1, Expression op2) {
-                v.visitLessThan(op1, op2);
-            }
         },
         LESS_THAN_EQ(false, "<=") {
             @Override
@@ -233,12 +178,6 @@ public class BinaryExpression extends SkeletonExpression {
                             operand1.getParseLocation())
                         .compareTo(operand2.evaluate().assertIsNumber(
                             operand2.getParseLocation())) <= 0);
-            }
-            
-            @Override
-            public void accept(
-                    OperatorVisitor v, Expression op1, Expression op2) {
-                v.visitLessThanEqual(op1, op2);
             }
         },
         GREATER_THAN_EQ(false, ">=") {
@@ -249,12 +188,6 @@ public class BinaryExpression extends SkeletonExpression {
                         .compareTo(operand2.evaluate().assertIsNumber(
                             operand2.getParseLocation())) >= 0);
             }
-            
-            @Override
-            public void accept(
-                    OperatorVisitor v, Expression op1, Expression op2) {
-                v.visitGreaterThanEqual(op1, op2);
-            }
         },
         GREATER_THAN(false, ">") {
             @Override
@@ -263,12 +196,6 @@ public class BinaryExpression extends SkeletonExpression {
                             operand1.getParseLocation())
                         .compareTo(operand2.evaluate().assertIsNumber(
                             operand2.getParseLocation())) > 0);
-            }
-            
-            @Override
-            public void accept(
-                    OperatorVisitor v, Expression op1, Expression op2) {
-                v.visitGreaterThan(op1, op2);
             }
         },
         OTHERWISE(false, "otherwise") {
@@ -284,12 +211,6 @@ public class BinaryExpression extends SkeletonExpression {
                 }
                 
                 return result;
-            }
-            
-            @Override
-            public void accept(
-                    OperatorVisitor v, Expression op1, Expression op2) {
-                v.visitOtherwise(op1, op2);
             }
         };
     
@@ -310,8 +231,6 @@ public class BinaryExpression extends SkeletonExpression {
         }
         
         abstract Value apply(Lazy operand1, Lazy operand2);
-        public abstract void accept(
-                OperatorVisitor v, Expression op1, Expression op2);
     }
     
     private final Expression myOperand1;
@@ -415,24 +334,5 @@ public class BinaryExpression extends SkeletonExpression {
         
         public abstract Value noCacheEvaluate();
         public abstract ParseLocation getParseLocation();
-    }
-    
-    public static interface OperatorVisitor {
-        public void visitPlus(Expression op1, Expression op2);
-        public void visitMinus(Expression op1, Expression op2);
-        public void visitTimes(Expression op1, Expression op2);
-        public void visitDividedBy(Expression op1, Expression op2);
-        public void visitRaisedTo(Expression op1, Expression op2);
-        public void visitAnd(Expression op1, Expression op2);
-        public void visitOr(Expression op1, Expression op2);
-        public void visitLookUpKey(Expression op1, Expression op2);
-        public void visitIndexSequence(Expression op1, Expression op2);
-        public void visitEqual(Expression op1, Expression op2);
-        public void visitNotEqual(Expression op1, Expression op2);
-        public void visitLessThan(Expression op1, Expression op2);
-        public void visitLessThanEqual(Expression op1, Expression op2);
-        public void visitGreaterThanEqual(Expression op1, Expression op2);
-        public void visitGreaterThan(Expression op1, Expression op2);
-        public void visitOtherwise(Expression op1, Expression op2);
     }
 }

@@ -33,6 +33,7 @@ public class MultiplexingStatement extends SkeletonStatement {
             int indentUnit, int indentLevels, StringBuilder b) {
         b.append("STMT MUX\n");
         for (Statement s : mySubStatements) {
+            Statement.Util.indent(indentUnit, indentLevels + 1, b);
             s.prettyRender(indentUnit, indentLevels + 1, b);
         }
     }

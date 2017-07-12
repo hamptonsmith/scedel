@@ -75,9 +75,15 @@ public class HostExpression extends SkeletonExpression {
         Statement.Util.indent(indentUnit, indentLevels + 1, b);
         b.append("parameters:\n");
         
-        for (Expression e : myParameters) {
+        if (myParameters == null) {
             Statement.Util.indent(indentUnit, indentLevels + 2, b);
-            e.prettyRender(indentUnit, indentLevels + 2, b);
+            b.append("N/A\n");
+        }
+        else {
+            for (Expression e : myParameters) {
+                Statement.Util.indent(indentUnit, indentLevels + 2, b);
+                e.prettyRender(indentUnit, indentLevels + 2, b);
+            }
         }
     }
 
