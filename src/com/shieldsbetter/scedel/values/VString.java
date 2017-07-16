@@ -51,6 +51,6 @@ public class VString extends ImmutableValue<VString> {
 
     @Override
     public String getValueString() {
-        return "\"" + myValue + "\"";
+        return myValue;
     }
 }

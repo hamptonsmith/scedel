@@ -52,7 +52,7 @@ public class HostExpression extends SkeletonExpression {
         }
         catch (Scedel.HostEnvironmentException hee) {
             throw InternalExecutionException.hostEnvironmentException(
-                    getParseLocation(), myId);
+                    getParseLocation(), hee.getMessage());
         }
         
         return result;
