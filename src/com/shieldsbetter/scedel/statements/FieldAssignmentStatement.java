@@ -46,16 +46,13 @@ public class FieldAssignmentStatement extends SkeletonStatement {
         
         Value newVal = myValue.evaluate(h, s);
         
-        ExecutionException proxyGuard;
-        if (baseDict.forbidsProxies()) {
-            proxyGuard = InternalExecutionException.illegalProxyContainment(
-                    getParseLocation()).getExecutionException();
+        try {
+            baseDict.put(field, newVal.copy(baseDict.forbidsProxies()));
         }
-        else {
-            proxyGuard = null;
+        catch (Value.CannotCopyVProxyException ccvpe) {
+            throw InternalExecutionException.illegalProxyContainment(
+                    getParseLocation());
         }
-        
-        baseDict.put(field, newVal.copy(proxyGuard));
     }
 
     @Override

@@ -49,16 +49,13 @@ public class SequenceAssignmentStatement extends SkeletonStatement {
         
         Value newVal = myValue.evaluate(h, s);
         
-        ExecutionException proxyGuard;
-        if (baseSeq.forbidsProxies()) {
-            proxyGuard = InternalExecutionException.illegalProxyContainment(
-                    getParseLocation()).getExecutionException();
+        try {
+            baseSeq.set(index, newVal.copy(baseSeq.forbidsProxies()));
         }
-        else {
-            proxyGuard = null;
+        catch (Value.CannotCopyVProxyException ccvpe) {
+            throw InternalExecutionException.illegalProxyContainment(
+                    getParseLocation());
         }
-        
-        baseSeq.set(index, newVal.copy(proxyGuard));
     }
 
     @Override

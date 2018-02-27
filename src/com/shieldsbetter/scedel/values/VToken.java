@@ -1,7 +1,6 @@
 package com.shieldsbetter.scedel.values;
 
 import java.util.Objects;
-import com.shieldsbetter.scedel.ExecutionException;
 
 public final class VToken extends SkeletonValue<VToken> {
     private final String myBackingKey;
@@ -15,7 +14,7 @@ public final class VToken extends SkeletonValue<VToken> {
     }
     
     @Override
-    public VToken copy(ExecutionException onProxy) {
+    public VToken copy(boolean errorOnVProy) {
         return this;
     }
 

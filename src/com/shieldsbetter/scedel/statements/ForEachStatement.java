@@ -44,7 +44,7 @@ public class ForEachStatement extends SkeletonStatement {
                 myCollection.getParseLocation());
         for (Value v : pool.elements()) {
             s.pushScope(false);
-            s.introduceSymbol(myExemplar, v.copy(null));
+            s.introduceSymbol(myExemplar, v.copy(false));
             
             boolean include = myWhere.evaluate(h, s)
                     .assertIsBoolean(myWhere.getParseLocation()).getValue();

@@ -34,7 +34,7 @@ public class HostExpression extends SkeletonExpression {
         if (myParameters != null) {
             evaluatedParams = new ArrayList<>(myParameters.size());
             for (Expression p : myParameters) {
-                evaluatedParams.add(p.evaluate(h, s).copy(null));
+                evaluatedParams.add(p.evaluate(h, s).copy(false));
             }
         }
         

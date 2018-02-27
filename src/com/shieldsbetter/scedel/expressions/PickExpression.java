@@ -43,7 +43,7 @@ import java.util.LinkedList;
  *         the unique flag expression is {@code true}.  If the
  *         <strong>unique</strong> keyword itself is also omitted, the default
  *         value of the unique flag expression is {@code false}.</li>
- *     <li><strong>examplar</strong>: &#64;</li>
+ *     <li><strong>exemplar</strong>: &#64;</li>
  *     <li><strong>selection predicate</strong>: {@code true}</li>
  *     <li><strong>weighted by</strong>: {@code fn(index, value) { return 1; }}
  * </ul>
@@ -235,7 +235,7 @@ public class PickExpression extends SkeletonExpression {
                 }
                 
                 Picker.Option pickedOption = selectedList.get(pickedIndex);
-                picked.enqueue(pickedOption.getValue().copy(null));
+                picked.enqueue(pickedOption.getValue().copy(false));
 
                 if (unique) {
                     totalWeight -= pickedOption.getWeight();
@@ -322,7 +322,7 @@ public class PickExpression extends SkeletonExpression {
         if (weighter instanceof VFunction) {
             List<Value> parameters = new LinkedList<>();
             parameters.add(VNumber.of(index, 1));
-            parameters.add(v.copy(null));
+            parameters.add(v.copy(false));
             resultVal = ((VFunction) weighter).call(
                     weighter.getParseLocation(), h, s, parameters);
         }

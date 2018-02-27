@@ -30,16 +30,13 @@ public class VariableIntroductionStatement extends SkeletonStatement {
     public void execute(Scedel.HostEnvironment h, ScriptEnvironment s) {
         Value initialValue = myInitialValue.evaluate(h, s);
         
-        ExecutionException proxyGuard;
-        if (myName.isBaked()) {
-            proxyGuard = InternalExecutionException.cannotBakeProxy(
-                    getParseLocation()).getExecutionException();
+        try {
+            s.introduceSymbol(myName, initialValue.copy(myName.isBaked()));
         }
-        else {
-            proxyGuard = null;
+        catch (Value.CannotCopyVProxyException ccvpe) {
+            throw InternalExecutionException.cannotBakeProxy(
+                    getParseLocation());
         }
-        
-        s.introduceSymbol(myName, initialValue.copy(proxyGuard));
     }
     
     private String cannotContainProxyMessage(boolean bake, Value v) {

@@ -66,7 +66,7 @@ public class Scedel {
             throws ExecutionException {
         List<Expression> copiedParams = new ArrayList<>(params.size());
         for (Value v : params) {
-            copiedParams.add(v.copy(null));
+            copiedParams.add(v.copy(false));
         }
         
         return runWithReturn(new CompiledCode(
@@ -134,9 +134,8 @@ public class Scedel {
         return Compiler.parseExpression(sourceDescription, input);
     }
     
-    public static VFunction createFunction(
-            String innerCode, String ... argNames)
-            throws StaticCodeException {
+    public static String createFunctionCode(
+            String innerCode, String ... argNames) {
         String argString = "(";
         boolean comma = false;
         for (String arg : argNames) {
@@ -151,9 +150,12 @@ public class Scedel {
         }
         argString += ")";
         
-        Expression fnExp = parseExpression(
-                "fn" + argString + "{ " + innerCode + "}");
-        
+        return "fn" + argString + "{ " + innerCode + "}";
+    }
+    
+    public static VFunction createFunction(
+            String innerCode, String ... argNames)
+            throws StaticCodeException {
         Scedel s = new Scedel(new HostEnvironment() {
                     @Override
                     public Value evaluate(String name, List<Value> parameters)
@@ -164,7 +166,8 @@ public class Scedel {
         
         VFunction fnVal;
         try {
-            fnVal = (VFunction) s.evaluate(fnExp);
+            fnVal = (VFunction) s.evaluate(
+                    parseExpression(createFunctionCode(innerCode, argNames)));
         }
         catch (ExecutionException ee) {
             throw new RuntimeException(ee);

@@ -958,7 +958,7 @@ public class Serializer implements Statement.Visitor, Expression.Visitor {
                             elements.addFirst((Value) s.pop());
                         }
                         
-                        s.push(new VSeq(null, elements));
+                        s.push(new VSeq(false, elements));
                     }
                 });
     }

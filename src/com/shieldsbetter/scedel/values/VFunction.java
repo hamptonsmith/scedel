@@ -28,7 +28,7 @@ public class VFunction extends ImmutableValue<VFunction> {
         
         List<Statement> code = new LinkedList<>();
         code.add(new ReturnStatement(
-                ParseLocation.INTERNAL, result.copy(null)));
+                ParseLocation.INTERNAL, result.copy(false)));
         
         return new VFunction(args,
                 new MultiplexingStatement(ParseLocation.INTERNAL, code),

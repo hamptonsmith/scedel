@@ -12,32 +12,15 @@
     </editor-bookmarks>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/com/shieldsbetter/scedel/values/VFunction.java</file>
-            <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/com/shieldsbetter/scedel/values/SkeletonValue.java</file>
-            <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/com/shieldsbetter/scedel/statements/MultiplexingStatement.java</file>
-            <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/com/shieldsbetter/scedel/expressions/SkeletonExpression.java</file>
-            <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/com/shieldsbetter/scedel/expressions/HostExpression.java</file>
-            <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/com/shieldsbetter/scedel/InternalExecutionException.java</file>
-            <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/com/shieldsbetter/scedel/statements/ReturnStatement.java</file>
-            <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/com/shieldsbetter/scedel/values/VNumber.java</file>
-            <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/com/shieldsbetter/scedel/ScriptEnvironment.java</file>
-            <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/com/shieldsbetter/scedel/values/VToken.java</file>
-            <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/com/shieldsbetter/scedel/ExecutionException.java</file>
-            <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/com/shieldsbetter/scedel/values/VProxy.java</file>
-            <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/com/shieldsbetter/scedel/values/VString.java</file>
-            <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/com/shieldsbetter/scedel/values/VDict.java</file>
-            <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/com/shieldsbetter/scedel/values/VNone.java</file>
-            <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/com/shieldsbetter/scedel/values/Value.java</file>
-            <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/com/shieldsbetter/scedel/values/VUnavailable.java</file>
-            <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/com/shieldsbetter/scedel/visitors/Serializer.java</file>
-            <file>file:/home/hamptos/NetBeansProjects/sbsdl/test/com/shieldsbetter/scedel/tests.scedel</file>
             <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/com/shieldsbetter/scedel/Scedel.java</file>
-            <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/com/shieldsbetter/scedel/statements/ForEachStatement.java</file>
-            <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/com/shieldsbetter/scedel/expressions/BinaryExpression.java</file>
-            <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/com/shieldsbetter/scedel/values/VSeq.java</file>
-            <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/com/shieldsbetter/scedel/Compiler.java</file>
-            <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/com/shieldsbetter/scedel/values/VBoolean.java</file>
-            <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/com/shieldsbetter/scedel/statements/Statement.java</file>
+            <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/com/shieldsbetter/scedel/values/VToken.java</file>
+            <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/com/shieldsbetter/scedel/values/VProxy.java</file>
+            <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/com/shieldsbetter/scedel/statements/EvaluateStatement.java</file>
+            <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/com/shieldsbetter/scedel/statements/FieldAssignmentStatement.java</file>
+            <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/com/shieldsbetter/scedel/values/Value.java</file>
+            <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/com/shieldsbetter/scedel/statements/VariableIntroductionStatement.java</file>
+            <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/com/shieldsbetter/scedel/InternalExecutionException.java</file>
+            <file>file:/home/hamptos/NetBeansProjects/sbsdl/src/com/shieldsbetter/scedel/statements/TopLevelVariableAssignmentStatement.java</file>
         </group>
     </open-files>
 </project-private>

@@ -4,7 +4,7 @@ import com.shieldsbetter.scedel.ExecutionException;
 
 public abstract class ImmutableValue<C extends Value> extends SkeletonValue {
     @Override
-    public Value copy(ExecutionException onProxy) {
+    public Value copy(boolean errorOnVProxy) {
         return this;
     }
 }

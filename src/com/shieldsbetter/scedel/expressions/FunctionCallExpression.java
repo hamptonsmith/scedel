@@ -36,7 +36,7 @@ public class FunctionCallExpression extends SkeletonExpression {
         
         List<Value> paramVals = new ArrayList<>(myParameters.size());
         for (Expression p : myParameters) {
-            paramVals.add(p.evaluate(h, s).copy(null));
+            paramVals.add(p.evaluate(h, s).copy(false));
         }
         
         if (myParameters.size() != fValue.getArgumentCount()) {

@@ -3,7 +3,6 @@ package com.shieldsbetter.scedel.values;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import com.shieldsbetter.scedel.ExecutionException;
 import com.shieldsbetter.scedel.ParseLocation;
 
 public class VDict extends ContainerValue<VDict> {
@@ -17,12 +16,12 @@ public class VDict extends ContainerValue<VDict> {
         super(forbidsProxies);
     }
     
-    public VDict(ExecutionException onProxy, Map<Value, Value> value) {
-        super(onProxy != null);
+    public VDict(boolean forbidsProxies, Map<Value, Value> value) {
+        super(forbidsProxies);
         
         for (Map.Entry<Value, Value> entry : value.entrySet()) {
-            myValue.put(entry.getKey().copy(onProxy),
-                    entry.getValue().copy(onProxy));
+            myValue.put(entry.getKey().copy(forbidsProxies),
+                    entry.getValue().copy(forbidsProxies));
         }
     }
     
@@ -88,8 +87,8 @@ public class VDict extends ContainerValue<VDict> {
     }
 
     @Override
-    public VDict copy(ExecutionException onProxy) {
-        return new VDict(onProxy, myValue);
+    public VDict copy(boolean errorOnVProxy) {
+        return new VDict(errorOnVProxy, myValue);
     }
 
     @Override

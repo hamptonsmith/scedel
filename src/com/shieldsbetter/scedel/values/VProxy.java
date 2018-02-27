@@ -1,8 +1,5 @@
 package com.shieldsbetter.scedel.values;
 
-import com.shieldsbetter.scedel.ExecutionException;
-import com.shieldsbetter.scedel.InternalExecutionException;
-
 public class VProxy extends VDict {
     public VProxy() {
         super(true);
@@ -19,9 +16,9 @@ public class VProxy extends VDict {
     }
     
     @Override
-    public final VDict copy(ExecutionException onProxy) {
-        if (onProxy != null) {
-            throw new InternalExecutionException(onProxy);
+    public final VDict copy(boolean errorOnVProxy) {
+        if (errorOnVProxy) {
+            throw new CannotCopyVProxyException();
         }
         
         return this;

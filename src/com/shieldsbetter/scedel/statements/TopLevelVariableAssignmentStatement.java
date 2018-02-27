@@ -30,7 +30,7 @@ public class TopLevelVariableAssignmentStatement extends SkeletonStatement {
     
     @Override
     public void execute(Scedel.HostEnvironment h, ScriptEnvironment s) {
-        s.assignValue(myVarName, myExpression.evaluate(h, s).copy(null));
+        s.assignValue(myVarName, myExpression.evaluate(h, s).copy(false));
     }
 
     @Override

@@ -6,20 +6,46 @@ import java.util.List;
 import java.util.Objects;
 import com.shieldsbetter.scedel.ExecutionException;
 import com.shieldsbetter.scedel.ParseLocation;
+import java.util.Iterator;
 
-public class VSeq extends ContainerValue<VSeq> {
+// Note as changes are made here that mutator methods must be overridden in
+// VImmutableSeq.
+public class VSeq extends ContainerValue<VSeq> implements Iterable<Value> {
     public final LinkedList<Value> myValue = new LinkedList<>();
     
-    public VSeq(ExecutionException onProxy, List<Value> vs) {
-        super(onProxy != null);
+    public VSeq(boolean forbidsProxies, List<Value> vs) {
+        super(forbidsProxies);
         
         for (Value v : vs) {
-            myValue.add(v.copy(onProxy));
+            myValue.add(v.copy(forbidsProxies));
         }
     }
     
     public VSeq(Value ... vs) {
-        this(null, Arrays.asList(vs));
+        this(false, Arrays.asList(vs));
+    }
+    
+    @Override
+    public Iterator<Value> iterator() {
+        return new Iterator<Value>() {
+            private final Iterator<Value> myBaseIterator = myValue.iterator();
+            
+            @Override
+            public boolean hasNext() {
+                return myBaseIterator.hasNext();
+            }
+
+            @Override
+            public Value next() {
+                return myBaseIterator.next();
+            }
+
+            @Override
+            public void remove() {
+                throw new UnsupportedOperationException(
+                        "Unmodifiable view iterator.");
+            }
+        };
     }
     
     public int length() {
@@ -97,8 +123,8 @@ public class VSeq extends ContainerValue<VSeq> {
     }
 
     @Override
-    public VSeq copy(ExecutionException onProxy) {
-        return new VSeq(onProxy, myValue);
+    public VSeq copy(boolean errorOnVProxy) {
+        return new VSeq(errorOnVProxy, myValue);
     }
 
     @Override
