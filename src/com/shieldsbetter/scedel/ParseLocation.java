@@ -44,6 +44,10 @@ public class ParseLocation {
         return myColumnNumber;
     }
     
+    public boolean hasColumnNumber() {
+        return myColumnNumber != null;
+    }
+    
     public String getLineContents() {
         return myLineContents;
     }

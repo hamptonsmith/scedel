@@ -318,8 +318,10 @@ public class Compiler {
                 public void run(ParseHead h) {
                     Expression value = (Expression) h.popFromParseStack();
                     VString fieldName = (VString) h.popFromParseStack();
-                    ((Map<Expression, Expression>) h.peekFromParseStack())
-                            .put(fieldName, value);
+                    ((List<DictionaryExpression.Mapping>)
+                            h.peekFromParseStack()).add(
+                                    new DictionaryExpression.Mapping(
+                                            fieldName, value));
                 }
             });
     
@@ -328,7 +330,7 @@ public class Compiler {
             new MDo() {
                 @Override
                 public void run(ParseHead h) {
-                    h.pushOnParseStack(new HashMap());
+                    h.pushOnParseStack(new LinkedList());
                 }
             },
             new MOptional(DICTIONARY_FIELD_PAIR,
@@ -341,8 +343,8 @@ public class Compiler {
             new MLiteral("}"))) {
                 @Override
                 public void onMatched(ParseHead h) {
-                    Map<Expression, Expression> fields =
-                            (Map<Expression, Expression>) h.popFromParseStack();
+                    List<DictionaryExpression.Mapping> fields =
+                            (List) h.popFromParseStack();
                     
                     DictionaryExpression dict = new DictionaryExpression(
                             loc(getNotedPosition()), fields);

@@ -234,7 +234,8 @@ public class VNumber extends ImmutableValue<VNumber> {
             result = myNumerator.toString();
         }
         else {
-            result = myNumerator.toString() + " / " + myDenominator.toString();
+            result = "(" + myNumerator.toString() + " / "
+                    + myDenominator.toString() + ")";
         }
         return result;
     }

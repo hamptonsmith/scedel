@@ -1,6 +1,5 @@
 package com.shieldsbetter.scedel.statements;
 
-import com.shieldsbetter.scedel.ExecutionException;
 import com.shieldsbetter.scedel.InternalExecutionException;
 import com.shieldsbetter.scedel.ParseLocation;
 import com.shieldsbetter.scedel.Scedel;

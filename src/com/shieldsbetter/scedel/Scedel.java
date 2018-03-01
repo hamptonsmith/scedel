@@ -229,6 +229,11 @@ public class Scedel {
             this(name, false, ParseLocation.INTERNAL);
         }
         
+        public boolean isEquivalentTo(Symbol other) {
+            return myName.equals(other.getName())
+                    && myBakedFlag == other.isBaked();
+        }
+        
         public String getName() {
             return myName;
         }
@@ -259,9 +264,15 @@ public class Scedel {
         
         @Override
         public String toString() {
-            return myName + " (" + myPosition.getLineNumber() + ":"
-                    + myPosition.getColumnNumber() + ") "
-                    + (myBakedFlag ? "bake" : "intro");
+            String result =  myName + " (" + myPosition.getLineNumber() + ":";
+            
+            if (myPosition.hasColumnNumber()) {
+                result += myPosition.getColumnNumber();
+            }
+            
+            result += ") " + (myBakedFlag ? "bake" : "intro");
+            
+            return result;
         }
     }
     

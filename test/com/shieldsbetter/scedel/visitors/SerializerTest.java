@@ -43,7 +43,7 @@ public class SerializerTest {
         StringBuilder b2 = new StringBuilder();
         v2.prettyRender(4, 0, b2);
         
-        Assert.assertEquals(b1.toString(), b2.toString());
+        Assert.assertEquals(v1, v2);
     }
     
     @Test

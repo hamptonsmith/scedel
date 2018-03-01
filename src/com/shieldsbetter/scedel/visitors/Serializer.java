@@ -44,6 +44,7 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
@@ -552,9 +553,9 @@ public class Serializer implements Statement.Visitor, Expression.Visitor {
     
     @Override
     public void visitDictionaryExpression(DictionaryExpression e) {
-        for (Map.Entry<Expression, Expression> entry : e.entries()) {
-            entry.getKey().accept(this);
-            entry.getValue().accept(this);
+        for (DictionaryExpression.Mapping m : e.entries()) {
+            m.getKey().accept(this);
+            m.getValue().accept(this);
         }
         
         assertLocation(e);
@@ -569,17 +570,18 @@ public class Serializer implements Statement.Visitor, Expression.Visitor {
                             throws IOException {
                         int entryCt = Integer.parseInt(i.nextToken());
                         
-                        Map<Expression, Expression> entries =
-                                new HashMap<>();
+                        List<DictionaryExpression.Mapping> mappings =
+                                new LinkedList<>();
                         for (int j = 0; j < entryCt; j++) {
                             Expression value = (Expression) s.pop();
                             Expression key = (Expression) s.pop();
                             
-                            entries.put(key, value);
+                            mappings.add(new DictionaryExpression.Mapping(
+                                    key, value));
                         }
                         
-                        s.push(new DictionaryExpression(s.getParseLocation(),
-                                entries));
+                        s.push(new DictionaryExpression(
+                                s.getParseLocation(), mappings));
                     }
                 });
     }
