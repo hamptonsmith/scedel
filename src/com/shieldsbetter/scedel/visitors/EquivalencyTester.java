@@ -1,6 +1,7 @@
 package com.shieldsbetter.scedel.visitors;
 
 import com.shieldsbetter.scedel.Scedel;
+import com.shieldsbetter.scedel.Utils;
 import com.shieldsbetter.scedel.expressions.BinaryExpression;
 import com.shieldsbetter.scedel.expressions.ClosureBuildingExpression;
 import com.shieldsbetter.scedel.expressions.DictionaryExpression;
@@ -12,16 +13,7 @@ import com.shieldsbetter.scedel.expressions.PickExpression;
 import com.shieldsbetter.scedel.expressions.SequenceExpression;
 import com.shieldsbetter.scedel.expressions.UnaryExpression;
 import com.shieldsbetter.scedel.expressions.VariableNameExpression;
-import com.shieldsbetter.scedel.statements.DecideStatement;
-import com.shieldsbetter.scedel.statements.EvaluateStatement;
-import com.shieldsbetter.scedel.statements.FieldAssignmentStatement;
-import com.shieldsbetter.scedel.statements.ForEachStatement;
-import com.shieldsbetter.scedel.statements.IfStatement;
-import com.shieldsbetter.scedel.statements.MultiplexingStatement;
-import com.shieldsbetter.scedel.statements.ReturnStatement;
-import com.shieldsbetter.scedel.statements.SequenceAssignmentStatement;
-import com.shieldsbetter.scedel.statements.TopLevelVariableAssignmentStatement;
-import com.shieldsbetter.scedel.statements.VariableIntroductionStatement;
+import com.shieldsbetter.scedel.statements.Statement;
 import com.shieldsbetter.scedel.values.VBoolean;
 import com.shieldsbetter.scedel.values.VDict;
 import com.shieldsbetter.scedel.values.VFunction;
@@ -32,9 +24,10 @@ import com.shieldsbetter.scedel.values.VSeq;
 import com.shieldsbetter.scedel.values.VString;
 import com.shieldsbetter.scedel.values.VToken;
 import com.shieldsbetter.scedel.values.VUnavailable;
-import java.util.Deque;
+import com.shieldsbetter.scedel.values.Value;
+import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedList;
+import java.util.Map;
 
 /**
  * <p>A visitor to test the structural equivalency of
@@ -112,12 +105,21 @@ public class EquivalencyTester implements Expression.Visitor {
                             throw new NotEquivalentException();
                         }
 
-                        StatementEquivalencyTester.areEquivalent(
-                                e1.getCode(), e2.getCode());
+                        checkStatementEquivalece(e1.getCode(), e2.getCode());
                     }
                 });
     }
 
+    private static void checkStatementEquivalece(
+            Statement s1, Statement s2) {
+        try {
+            StatementEquivalencyTester.checkEquivalence(s1, s2);
+        }
+        catch (StatementEquivalencyTester.NotEquivalentException nee) {
+            throw new NotEquivalentException(nee);
+        }
+    }
+    
     @Override
     public void visitDictionaryExpression(final DictionaryExpression e1) {
         myStartExpression.accept(new SubExpressionEquivalenceTester() {
@@ -175,83 +177,255 @@ public class EquivalencyTester implements Expression.Visitor {
     }
 
     @Override
-    public void visitHostExpression(HostExpression e) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public void visitHostExpression(final HostExpression e1) {
+        myStartExpression.accept(new SubExpressionEquivalenceTester() {
+            @Override
+            public void visitHostExpression(HostExpression e2) {
+                if (!e1.getId().equals(e2.getId())) {
+                    throw new NotEquivalentException();
+                }
+                
+                Utils.elementsConformant(
+                        e1.getParameters(), e2.getParameters(),
+                        new Utils.BinaryPredicate<Expression>() {
+                            @Override
+                            public boolean satisfy(
+                                    Expression t1, Expression t2) {
+                                checkEquivalence(t1, t2);
+                                return true;
+                            }
+                        });
+            }
+        });
     }
 
     @Override
-    public void visitLiteralExpression(LiteralExpression e) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public void visitLiteralExpression(final LiteralExpression e1) {
+        myStartExpression.accept(new SubExpressionEquivalenceTester() {
+            @Override
+            public void visitLiteralExpression(LiteralExpression e2) {
+                checkEquivalence(e1.getValue(), e2.getValue());
+            }
+        });
     }
 
     @Override
-    public void visitPickExpression(PickExpression e) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public void visitPickExpression(final PickExpression e1) {
+        myStartExpression.accept(new SubExpressionEquivalenceTester() {
+            @Override
+            public void visitPickExpression(PickExpression e2) {
+                if (!e1.getExamplar().isEquivalentTo(e2.getExamplar())) {
+                    throw new NotEquivalentException();
+                }
+                
+                checkEquivalence(e1.getCollection(), e2.getCollection());
+                checkEquivalence(e1.getCount(), e2.getCount());
+                checkEquivalence(e1.getUnique(), e2.getUnique());
+                checkEquivalence(
+                        e1.getWeighExpression(), e2.getWeighExpression());
+                checkEquivalence(e1.getWhere(), e2.getWhere());
+            }
+        });
     }
 
     @Override
-    public void visitSequenceExpression(SequenceExpression e) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public void visitSequenceExpression(final SequenceExpression e1) {
+        myStartExpression.accept(new SubExpressionEquivalenceTester() {
+            @Override
+            public void visitSequenceExpression(SequenceExpression e2) {
+                if (!Utils.elementsConformant(
+                        e1.getElements(), e2.getElements(),
+                        new Utils.BinaryPredicate<Expression>() {
+                            @Override
+                            public boolean satisfy(
+                                    Expression t1, Expression t2) {
+                                return areEquivalent(t1, t2);
+                            }
+                        })) {
+                    throw new NotEquivalentException();
+                }
+            }
+        });
     }
 
     @Override
-    public void visitUnaryExpression(UnaryExpression e) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public void visitUnaryExpression(final UnaryExpression e1) {
+        myStartExpression.accept(new SubExpressionEquivalenceTester() {
+            @Override
+            public void visitUnaryExpression(UnaryExpression e2) {
+                if (!e1.getOperator().equals(e2.getOperator())) {
+                    throw new NotEquivalentException();
+                }
+                
+                checkEquivalence(e1.getOperand(), e2.getOperand());
+            }
+        });
     }
 
     @Override
-    public void visitVariableNameExpression(VariableNameExpression e) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public void visitVariableNameExpression(final VariableNameExpression e1) {
+        myStartExpression.accept(new SubExpressionEquivalenceTester() {
+            @Override
+            public void visitVariableNameExpression(VariableNameExpression e2) {
+                if (!e1.getSymbol().isEquivalentTo(e2.getSymbol())) {
+                    throw new NotEquivalentException();
+                }
+            }
+        });
     }
 
     @Override
-    public void visitVBoolean(VBoolean v) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public void visitVBoolean(final VBoolean e1) {
+        myStartExpression.accept(new SubExpressionEquivalenceTester() {
+            @Override
+            public void visitVBoolean(VBoolean e2) {
+                if (e1.getValue() != e2.getValue()) {
+                    throw new NotEquivalentException();
+                }
+            }
+        });
     }
 
     @Override
-    public void visitVDict(VDict v) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public void visitVDict(final VDict e1) {
+        myStartExpression.accept(new SubExpressionEquivalenceTester() {
+            @Override
+            public void visitVDict(VDict e2) {
+                Map<Value, Value> e1Copy = dictCopy(e1);
+                Map<Value, Value> e2Copy = dictCopy(e2);
+                
+                for (Map.Entry<Value, Value> e1Entry : e1Copy.entrySet()) {
+                    Value e2Value = removeEquivalent(e2Copy, e1Entry.getKey());
+                    
+                    if (e2Value == null
+                            || !areEquivalent(e1Entry.getValue(), e2Value)) {
+                        throw new NotEquivalentException();
+                    }
+                }
+                
+                if (!e2Copy.isEmpty()) {
+                    throw new NotEquivalentException();
+                }
+            }
+        });
+    }
+    
+    private static Map<Value, Value> dictCopy(VDict d) {
+        Map<Value, Value> result = new HashMap<>();
+        for (Map.Entry<Value, Value> e : d.entries()) {
+            result.put(e.getKey(), e.getValue());
+        }
+        return result;
+    }
+    
+    private static Value removeEquivalent(Map<Value, Value> m, Value v) {
+        Iterator<Map.Entry<Value, Value>> iIter = m.entrySet().iterator();
+        Value result = null;
+        while (result == null && iIter.hasNext()) {
+            Map.Entry<Value, Value> entry = iIter.next();
+            if (areEquivalent(entry.getKey(), v)) {
+                iIter.remove();
+                result = entry.getValue();
+            }
+        }
+        return result;
     }
 
     @Override
-    public void visitVFunction(VFunction v) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public void visitVFunction(final VFunction e1) {
+        myStartExpression.accept(new SubExpressionEquivalenceTester() {
+            @Override
+            public void visitVFunction(VFunction e2) {
+                if (e1.getArgumentCount() != e2.getArgumentCount()) {
+                    throw new NotEquivalentException();
+                }
+                
+                Iterator<Scedel.Symbol> e1Args =
+                        e1.getArgumentNames().iterator();
+                Iterator<Scedel.Symbol> e2Args =
+                        e2.getArgumentNames().iterator();
+                while (e1Args.hasNext()) {
+                    if (!e1Args.next().isEquivalentTo(e2Args.next())) {
+                        throw new NotEquivalentException();
+                    }
+                }
+                
+                checkStatementEquivalece(e1.getCode(), e2.getCode());
+            }
+        });
     }
 
     @Override
     public void visitVNone(VNone v) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        myStartExpression.accept(new SubExpressionEquivalenceTester() {
+            @Override
+            public void visitVNone(VNone e2) { }
+        });
     }
 
     @Override
-    public void visitVNumber(VNumber v) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public void visitVNumber(final VNumber e1) {
+        myStartExpression.accept(new SubExpressionEquivalenceTester() {
+            @Override
+            public void visitVNumber(VNumber e2) {
+                if (!e1.equals(e2)) {
+                    throw new NotEquivalentException();
+                }
+            }
+        });
     }
 
     @Override
-    public void visitVProxy(VProxy v) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public void visitVProxy(final VProxy e1) {
+        myStartExpression.accept(new SubExpressionEquivalenceTester() {
+            @Override
+            public void visitVProxy(VProxy e2) {
+                if (!e1.equals(e2)) {
+                    throw new NotEquivalentException();
+                }
+            }
+        });
     }
 
     @Override
-    public void visitVSeq(VSeq v) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public void visitVSeq(final VSeq e1) {
+        myStartExpression.accept(new SubExpressionEquivalenceTester() {
+            @Override
+            public void visitVSeq(VSeq e2) {
+                if (e1.getElementCount() != e2.getElementCount()) {
+                    throw new NotEquivalentException();
+                }
+                
+                Iterator<Value> e1Iter = e1.iterator();
+                Iterator<Value> e2Iter = e2.iterator();
+                while (e1Iter.hasNext()) {
+                    if (areEquivalent(e1Iter.next(), e2Iter.next())) {
+                        throw new NotEquivalentException();
+                    }
+                }
+            }
+        });
     }
 
     @Override
     public void visitVString(VString v) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        if (!v.equals(myStartExpression)) {
+            throw new NotEquivalentException();
+        }
     }
 
     @Override
     public void visitVToken(VToken v) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        if (!v.equals(myStartExpression)) {
+            throw new NotEquivalentException();
+        }
     }
 
     @Override
     public void visitVUnavailable(VUnavailable v) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        if (myStartExpression != VUnavailable.INSTANCE) {
+            throw new NotEquivalentException();
+        }
     }
     
     private static class SubExpressionEquivalenceTester
@@ -359,6 +533,9 @@ public class EquivalencyTester implements Expression.Visitor {
     }
     
     private static class NotEquivalentException extends RuntimeException {
-        
+        public NotEquivalentException() {}
+        public NotEquivalentException(Exception cause) {
+            super(cause);
+        }
     }
 }

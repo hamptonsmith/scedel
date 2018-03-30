@@ -44,7 +44,6 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
@@ -143,7 +142,14 @@ public class Serializer implements Statement.Visitor, Expression.Visitor {
     
     private void visitSymbol(Scedel.Symbol s) {
         assertLocation(s.getPosition());
-        outToken("sym");
+        
+        if (s.isBaked()) {
+            outToken("sym-baked");
+        }
+        else {
+            outToken("sym");
+        }
+        
         outToken(s.getName());
     }
     
@@ -155,6 +161,16 @@ public class Serializer implements Statement.Visitor, Expression.Visitor {
                         String name = i.nextToken();
                         s.push(new Scedel.Symbol(
                                 name, false, s.getParseLocation()));
+                    }
+                });
+        
+        DESERIALIZE_ACTIONS.put("sym-baked", new DeserializeAction() {
+                    @Override
+                    public void execute(DeserializeState s, Input i)
+                            throws IOException {
+                        String name = i.nextToken();
+                        s.push(new Scedel.Symbol(
+                                name, true, s.getParseLocation()));
                     }
                 });
     }
@@ -570,13 +586,13 @@ public class Serializer implements Statement.Visitor, Expression.Visitor {
                             throws IOException {
                         int entryCt = Integer.parseInt(i.nextToken());
                         
-                        List<DictionaryExpression.Mapping> mappings =
+                        LinkedList<DictionaryExpression.Mapping> mappings =
                                 new LinkedList<>();
                         for (int j = 0; j < entryCt; j++) {
                             Expression value = (Expression) s.pop();
                             Expression key = (Expression) s.pop();
                             
-                            mappings.add(new DictionaryExpression.Mapping(
+                            mappings.addFirst(new DictionaryExpression.Mapping(
                                     key, value));
                         }
                         

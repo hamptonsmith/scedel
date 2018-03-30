@@ -28,7 +28,7 @@ class StatementEquivalencyTester implements Statement.Visitor {
         return result;
     }
     
-    private static void checkEquivalence(Statement s1, Statement s2) {
+    public static void checkEquivalence(Statement s1, Statement s2) {
         s2.accept(new StatementEquivalencyTester(s1));
     }
     
@@ -263,5 +263,5 @@ class StatementEquivalencyTester implements Statement.Visitor {
         }
     }
     
-    private static class NotEquivalentException extends RuntimeException { }
+    public static class NotEquivalentException extends RuntimeException { }
 }

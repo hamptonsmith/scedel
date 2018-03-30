@@ -36,14 +36,7 @@ public class SerializerTest {
         }
         
         Value v2 = Serializer.deserialize(new StringReader(w.toString()));
-        
-        StringBuilder b1 = new StringBuilder();
-        v1.prettyRender(4, 0, b1);
-        
-        StringBuilder b2 = new StringBuilder();
-        v2.prettyRender(4, 0, b2);
-        
-        Assert.assertEquals(v1, v2);
+        EquivalencyTester.checkEquivalence(v1, v2);
     }
     
     @Test
